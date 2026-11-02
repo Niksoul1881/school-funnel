@@ -317,12 +317,12 @@ function renderAuth() {
         </div>
         <form id="auth-form">
           ${!isLogin ? `<div class="field"><label>Имя</label><input name="name" placeholder="Как тебя зовут" autocomplete="name"></div>` : ''}
-          <div class="field"><label>Email</label><input name="email" type="email" required placeholder="you@example.com" autocomplete="email" value="${isLogin ? 'demo@school.local' : ''}"></div>
-          <div class="field"><label>Пароль</label><input name="password" type="password" required minlength="6" placeholder="Минимум 6 символов" autocomplete="${isLogin ? 'current-password' : 'new-password'}" value="${isLogin ? 'demo1234' : ''}"></div>
+          <div class="field"><label>Email</label><input name="email" type="email" required placeholder="you@example.com" autocomplete="email"></div>
+          <div class="field"><label>Пароль</label><input name="password" type="password" required ${!isLogin ? 'minlength="8"' : ''} placeholder="${isLogin ? 'Твой пароль' : 'Минимум 8 символов'}" autocomplete="${isLogin ? 'current-password' : 'new-password'}"></div>
           <div id="auth-error"></div>
           <button class="btn primary auth-submit" type="submit">${isLogin ? 'Войти' : 'Зарегистрироваться'} ${svg('arrow')}</button>
         </form>
-        <div class="demo-note">Демо: <b>demo@school.local</b> / <b>demo1234</b><br>Или зарегистрируй свой аккаунт — 1 млн токенов внутри.</div>
+        <div class="demo-note">Нет аккаунта? Нажми «Регистрация» — внутри 1 млн токенов.<br>Демо-режим — кнопкой «Посмотреть демо».</div>
         <div class="auth-legal">Безопасный вход · данные не передаются третьим лицам</div>
       </div>
     </section>
@@ -1182,7 +1182,7 @@ function chatView(p) {
           <button data-quick="включи оплату Stars">Включи оплату</button>
         `}
       </div>` : ''}
-      ${state.sending ? `<div class="live-steps" id="live-steps">${state.liveSteps.length ? state.liveSteps.map((s) => `<div class="live-step"><span>${s.type === 'thinking' ? 'Размышление' : s.type === 'status' ? 'Статус' : esc(s.tool || 'Инструмент')}</span><b>${esc(s.text || '')}</b></div>`).join('') : `<div class="live-thinking"><span class="spinner"></span> Агент читает проект…</div>`}</div>` : ''}
+      ${state.sending ? `<div class="live-steps" id="live-steps"><div class="live-head"><span class="spinner"></span><b>Агент работает</b><span class="live-count" id="live-count">${state.liveSteps.length} шагов</span></div><div class="live-current" id="live-current">${state.liveSteps.length ? `<b>${esc(liveStepLabel(state.liveSteps[state.liveSteps.length - 1]))}</b><span>${esc(liveStepDetail(state.liveSteps[state.liveSteps.length - 1]))}</span>` : 'Агент читает проект…'}</div></div>` : ''}
     </div>
     <form class="chat-form" id="chat-form">
       ${state.chatImage ? `<div class="chat-attachment"><img src="${esc(state.chatImage)}" alt="Скриншот"><button type="button" id="remove-shot" title="Убрать">×</button></div>` : ''}
@@ -1646,16 +1646,27 @@ function bindResizers() {
   }
 }
 
+function liveStepLabel(s) {
+  if (s.type === 'status') return 'Статус';
+  if (s.type === 'thinking') return 'Думает';
+  return s.tool || 'Инструмент';
+}
+
+function liveStepDetail(s) {
+  if (s.type === 'thinking') return '';
+  const text = String(s.text || '').replace(/\s+/g, ' ').trim();
+  return text.length > 90 ? text.slice(0, 90) + '…' : text;
+}
+
 function appendLiveStep(ev) {
   const box = $('#live-steps');
   if (!box) return;
-  const placeholder = box.querySelector('.live-thinking');
-  if (placeholder) placeholder.remove();
-  const row = document.createElement('div');
-  row.className = 'live-step';
-  const label = ev.type === 'thinking' ? 'Размышление' : ev.type === 'status' ? 'Статус' : (ev.tool || 'Инструмент');
-  row.innerHTML = `<span>${esc(label)}</span><b>${esc(ev.text || '')}</b>`;
-  box.appendChild(row);
+  const count = box.querySelector('#live-count');
+  const current = box.querySelector('#live-current');
+  if (count) count.textContent = `${state.liveSteps.length} шагов`;
+  if (current) {
+    current.innerHTML = `<b>${esc(liveStepLabel(ev))}</b><span>${esc(liveStepDetail(ev))}</span>`;
+  }
   scrollChat();
 }
 
@@ -2488,7 +2499,8 @@ async function render() {
 }
 
 async function boot() {
-  if (localStorage.getItem('school-theme') === 'dark') document.body.classList.remove('theme-light');
+  const savedTheme = localStorage.getItem('school-theme');
+  document.body.classList.toggle('theme-light', savedTheme === 'light');
   try {
     const me = await api('/api/me');
     state.user = me.user;

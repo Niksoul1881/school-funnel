@@ -182,8 +182,8 @@ async def register(request: Request):
     email = _clean_email(data.get("email", ""))
     password = str(data.get("password", ""))
     name = str(data.get("name", "")).strip() or email.split("@")[0]
-    if len(password) < 6:
-        raise HTTPException(status_code=400, detail="Пароль должен быть не короче 6 символов")
+    if len(password) < 8:
+        raise HTTPException(status_code=400, detail="Пароль должен быть не короче 8 символов")
     if fetch_one("SELECT id FROM users WHERE email = ?", (email,)):
         raise HTTPException(status_code=409, detail="Такой email уже зарегистрирован")
     user_id = execute(
@@ -557,7 +557,7 @@ async def chat_stream(project_id: int, request: Request):
 
     async def events():
         yield ": connected\n\n"
-        yield "data: " + json.dumps({"type": "step", "event": {"type": "status", "text": "Задача принята. Агент читает проект… обычно 10–20 секунд."}}, ensure_ascii=False) + "\n\n"
+        yield "data: " + json.dumps({"type": "step", "event": {"type": "status", "text": "Обычно 10–20 секунд"}}, ensure_ascii=False) + "\n\n"
         while True:
             kind, payload = await asyncio.to_thread(q.get)
             if kind == "step":

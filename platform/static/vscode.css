@@ -658,3 +658,14 @@ body.theme-light .term-form input{color:#e7e7e7!important}
 .shared-badge{display:inline-flex;align-items:center;height:15px;padding:0 5px;border-radius:999px;border:1px solid rgba(111,191,154,.35);background:rgba(111,191,154,.1);color:#2f9e7a;font:700 7.5px Manrope,sans-serif;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
 body:not(.theme-light) .shared-badge{color:#8fd2b3}
 .vsc-side-title .shared-badge{margin-left:4px;vertical-align:1px}
+
+/* compact live progress: one current action, no wall of reasoning */
+.live-steps{padding:8px 10px!important;gap:5px!important}
+.live-head{display:flex;align-items:center;gap:7px;font-size:10.5px;color:var(--vsc-muted)}
+.live-head b{font-weight:700;color:var(--vsc-text)}
+.live-head .spinner{width:14px;height:14px;border-width:2px}
+.live-count{margin-left:auto;font-size:9px;color:var(--vsc-muted);white-space:nowrap}
+.live-current{display:flex;align-items:baseline;gap:6px;min-height:14px;font-size:10.5px;line-height:1.35}
+.live-current b{flex:none;color:var(--vsc-blue);font-weight:700}
+.live-current span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--vsc-muted)}
+body.theme-light .live-current b{color:#d94b63}
