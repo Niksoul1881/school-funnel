@@ -115,6 +115,7 @@ def get_project(user_id: int, project_id: int, is_admin: bool = False) -> dict |
     if row["user_id"] != user_id and not is_admin:
         return None
     files = fetch_all("SELECT path, content, updated_at FROM files WHERE project_id = ? ORDER BY path", (project_id,))
+    folders = fetch_all("SELECT path FROM folders WHERE project_id = ? ORDER BY path", (project_id,))
     messages = fetch_all("SELECT * FROM messages WHERE project_id = ? ORDER BY id", (project_id,))
     deploy = fetch_one("SELECT * FROM deployments WHERE project_id = ?", (project_id,))
     deployment = None
@@ -137,6 +138,7 @@ def get_project(user_id: int, project_id: int, is_admin: bool = False) -> dict |
         "status": row["status"],
         "brief": json.loads(row["brief_json"] or "{}"),
         "files": [dict(f) for f in files],
+        "folders": [f["path"] for f in folders],
         "messages": [
             {"id": m["id"], "role": m["role"], "content": m["content"], "meta": json.loads(m["meta_json"] or "{}"), "created_at": m["created_at"]}
             for m in messages
@@ -171,6 +173,50 @@ def write_file(project_id: int, path: str, content: str) -> None:
     else:
         execute("INSERT INTO files(project_id, path, content, updated_at) VALUES (?,?,?,?)", (project_id, path, content, ts))
     touch_project(project_id)
+
+
+def create_folder(project_id: int, path: str) -> None:
+    parts = [p for p in path.split("/") if p]
+    for i in range(1, len(parts) + 1):
+        sub = "/".join(parts[:i])
+        exists = fetch_one("SELECT id FROM folders WHERE project_id = ? AND path = ?", (project_id, sub))
+        if not exists:
+            execute("INSERT INTO folders(project_id, path, created_at) VALUES (?,?,?)", (project_id, sub, now()))
+    touch_project(project_id)
+
+
+def delete_file(project_id: int, path: str) -> None:
+    execute("DELETE FROM files WHERE project_id = ? AND path = ?", (project_id, path))
+    touch_project(project_id)
+
+
+def delete_folder(project_id: int, path: str) -> None:
+    execute("DELETE FROM files WHERE project_id = ? AND (path = ? OR path LIKE ?)", (project_id, path, path + "/%"))
+    execute("DELETE FROM folders WHERE project_id = ? AND (path = ? OR path LIKE ?)", (project_id, path, path + "/%"))
+    touch_project(project_id)
+
+
+def rename_path(project_id: int, old: str, new: str) -> None:
+    if not old or not new or old == new:
+        return
+    conflict_file = fetch_one("SELECT id FROM files WHERE project_id = ? AND (path = ? OR path LIKE ?)", (project_id, new, new + "/%"))
+    conflict_folder = fetch_one("SELECT id FROM folders WHERE project_id = ? AND (path = ? OR path LIKE ?)", (project_id, new, new + "/%"))
+    if conflict_file or conflict_folder:
+        raise ValueError("Такое имя уже существует")
+    for table in ("files", "folders"):
+        rows = fetch_all(f"SELECT id, path FROM {table} WHERE project_id = ? AND (path = ? OR path LIKE ?)", (project_id, old, old + "/%"))
+        for row in rows:
+            target = new + row["path"][len(old):]
+            execute(f"UPDATE {table} SET path = ? WHERE id = ?", (target, row["id"]))
+    touch_project(project_id)
+
+
+def rename_project(user_id: int, project_id: int, name: str, is_admin: bool = False) -> bool:
+    row = fetch_one("SELECT user_id FROM projects WHERE id = ?", (project_id,))
+    if not row or (row["user_id"] != user_id and not is_admin):
+        return False
+    execute("UPDATE projects SET name = ?, updated_at = ? WHERE id = ?", (name, now(), project_id))
+    return True
 
 
 def add_message(project_id: int, role: str, content: str, meta: dict | None = None) -> int:

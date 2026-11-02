@@ -10,6 +10,7 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip python3-venv git ripgrep curl ca-certificates \
+    tesseract-ocr tesseract-ocr-rus \
     && rm -rf /var/lib/apt/lists/*
 
 # DeepSeek Harness: тот самый агент, который читает/меняет файлы проекта.

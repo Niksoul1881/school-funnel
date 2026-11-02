@@ -12,13 +12,14 @@ const state = {
   packages: [],
   project: null,
   activeFile: 'content.json',
+  fileFilter: '',
   activeTab: 'chat',
   auxTab: 'chat',
   dirty: false,
   folderHandle: null,
   folderProjectId: null,
   auxWidth: Number(localStorage.getItem('school-aux-w')) || 380,
-  panelHeight: Number(localStorage.getItem('school-panel-h')) || 146,
+  panelHeight: Number(localStorage.getItem('school-panel-h')) || 210,
   sideWidth: Number(localStorage.getItem('school-side-w')) || 248,
   collapsedDirs: new Set(),
   filter: 'all',
@@ -26,6 +27,8 @@ const state = {
   preview: null,
   sending: false,
   liveSteps: [],
+  chatImage: null,
+  termSocket: null,
   lesson: null,
   admin: null,
 };
@@ -66,6 +69,8 @@ const ICONS = {
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
   mic: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"/>',
+  image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/>',
+  paperclip: '<path d="M21.4 11.6 12.3 20.7a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/>',
 };
 
 function svg(name, cls = '') {
@@ -421,8 +426,8 @@ function defaultSidebar(current) {
     </div>
     <div class="vsc-side-section">
       <div class="vsc-side-title">Проекты <span class="grow">${state.projects.length}</span><button data-go="#/templates" title="Новый проект">+</button></div>
-      <div class="tree-row" data-action="open-folder">${svg('folder')}Открыть папку</div>
-      ${state.projects.length ? state.projects.slice(0, 8).map((p) => `<a class="tree-row ${current === '#/project/' + p.id ? 'active' : ''}" data-go="#/project/${p.id}">${svg(p.template?.icon || 'bot')}<span style="overflow:hidden;text-overflow:ellipsis">${esc(p.name)}</span></a>`).join('') : `<div class="vsc-side-empty">Пока нет проектов. Создай первый из шаблона.</div>`}
+      <button class="tree-row open-folder-row" data-action="open-folder">${svg('folder')}Открыть папку с диска</button>
+      ${state.projects.length ? state.projects.map((p) => `<div class="project-item ${current === '#/project/' + p.id ? 'active' : ''}"><a class="tree-row" data-go="#/project/${p.id}">${svg(p.template?.icon || 'bot')}<span class="tree-name">${esc(p.name)}</span><span class="project-count">${p.files_count || 0}</span></a><button class="tree-more project-more" data-project-menu="${p.id}" title="Действия">⋯</button></div>`).join('') : `<div class="vsc-side-empty">Пока нет проектов. Создай первый из шаблона.</div>`}
     </div>
     <div class="vsc-side-section">
       <div class="vsc-side-title">Обучение <span class="grow">${done}/${total}</span></div>
@@ -698,6 +703,7 @@ async function renderProject(projectId) {
   bindCommon();
   bindResizers();
   bindDrop(p);
+  bindTerminal(p);
 
   $$('[data-aux]').forEach((b) => b.onclick = () => { state.auxTab = b.dataset.aux; renderProject(p.id); });
   $$('[data-dir]').forEach((el) => el.onclick = () => {
@@ -708,6 +714,15 @@ async function renderProject(projectId) {
     renderProject(p.id);
   });
   $$('[data-file]').forEach((el) => el.onclick = () => { state.activeFile = el.dataset.file; state.dirty = false; renderProject(p.id); });
+  $$('[data-menu]').forEach((el) => el.onclick = (e) => { e.stopPropagation(); openTreeMenu(el); });
+  const fileSearch = $('#file-search');
+  if (fileSearch) fileSearch.oninput = () => {
+    const value = fileSearch.value;
+    state.fileFilter = value;
+    renderProject(p.id);
+    const next = $('#file-search');
+    if (next) { next.focus(); next.setSelectionRange(value.length, value.length); }
+  };
   $$('[data-tg-action]').forEach((b) => b.onclick = () => tgAction(b.dataset.tgAction));
   const chatForm = $('#chat-form');
   if (chatForm) { chatForm.onsubmit = sendChat; bindChatForm(chatForm); }
@@ -771,8 +786,16 @@ async function renderProject(projectId) {
   scrollChat();
 }
 
-function buildFileTree(files) {
+function buildFileTree(files, folders = []) {
   const root = { dirs: new Map(), files: [] };
+  const ensure = (parts) => {
+    let node = root;
+    for (const dir of parts) {
+      if (!node.dirs.has(dir)) node.dirs.set(dir, { dirs: new Map(), files: [] });
+      node = node.dirs.get(dir);
+    }
+  };
+  for (const folder of folders) ensure(String(folder).split('/').filter(Boolean));
   for (const file of files) {
     const parts = file.path.split('/');
     let node = root;
@@ -788,28 +811,142 @@ function buildFileTree(files) {
 
 function renderTree(node, depth, prefix) {
   let html = '';
+  const q = (state.fileFilter || '').toLowerCase();
   const dirs = [...node.dirs.entries()].sort((a, b) => a[0].localeCompare(b[0], 'ru'));
   for (const [name, child] of dirs) {
     const key = prefix ? `${prefix}/${name}` : name;
     const open = !state.collapsedDirs.has(key);
-    html += `<div class="tree-row tree-folder" data-dir="${esc(key)}" style="padding-left:${8 + depth * 12}px" title="${esc(key)}">${chevron(open)}${folderIcon(open)}<span class="tree-name">${esc(name)}</span></div>`;
+    html += `<div class="tree-row tree-folder" data-dir="${esc(key)}" style="padding-left:${8 + depth * 12}px" title="${esc(key)}">${chevron(open)}${folderIcon(open)}<span class="tree-name">${esc(name)}</span><button class="tree-more" data-menu="folder" data-path="${esc(key)}" title="Действия">⋯</button></div>`;
     if (open) html += renderTree(child, depth + 1, key);
   }
   const files = [...node.files].sort((a, b) => a.name.localeCompare(b.name, 'ru'));
   for (const file of files) {
-    html += `<div class="tree-row tree-file ${state.activeFile === file.path ? 'active' : ''}" data-file="${esc(file.path)}" title="${esc(file.path)}" style="padding-left:${22 + depth * 12}px">${fileIcon(file.path)}<span class="tree-name">${esc(file.name)}</span></div>`;
+    if (q && !file.path.toLowerCase().includes(q)) continue;
+    html += `<div class="tree-row tree-file ${state.activeFile === file.path ? 'active' : ''}" data-file="${esc(file.path)}" title="${esc(file.path)}" style="padding-left:${22 + depth * 12}px">${fileIcon(file.path)}<span class="tree-name">${esc(file.name)}</span><button class="tree-more" data-menu="file" data-path="${esc(file.path)}" title="Действия">⋯</button></div>`;
   }
   return html;
 }
 
+async function refreshProjectView() {
+  const p = state.project;
+  if (!p) return;
+  const data = await api('/api/projects/' + p.id);
+  state.project = data.project;
+  try { state.projects = (await api('/api/projects')).projects; } catch (_) {}
+  if (!state.project.files.some((f) => f.path === state.activeFile)) state.activeFile = state.project.files[0]?.path || '';
+  renderProject(p.id);
+}
+
+function closeTreeMenu() {
+  document.querySelectorAll('.tree-menu').forEach((el) => el.remove());
+}
+
+async function createFileIn(folder) {
+  const name = prompt(folder ? `Новый файл в «${folder}»` : 'Новый файл', 'new.txt');
+  if (!name) return;
+  const path = folder ? `${folder}/${name.replace(/^\/+/, '')}` : name.replace(/^\/+/, '');
+  try {
+    await api(`/api/projects/${state.project.id}/files`, { method: 'POST', body: { path, content: '' } });
+    state.activeFile = path;
+    state.dirty = false;
+    await refreshProjectView();
+    toast('Файл создан');
+  } catch (err) { toast(err.message, 'err'); }
+}
+
+async function createFolderIn(folder) {
+  const name = prompt(folder ? `Новая папка в «${folder}»` : 'Новая папка', 'new-folder');
+  if (!name) return;
+  const path = folder ? `${folder}/${name.replace(/^\/+/, '')}` : name.replace(/^\/+/, '');
+  try {
+    await api(`/api/projects/${state.project.id}/folders`, { method: 'POST', body: { path } });
+    await refreshProjectView();
+    toast('Папка создана');
+  } catch (err) { toast(err.message, 'err'); }
+}
+
+async function renameEntry(path, isDir) {
+  const next = prompt('Новый путь', path);
+  if (!next || next === path) return;
+  try {
+    await api(`/api/projects/${state.project.id}/rename`, { method: 'POST', body: { path, new_path: next } });
+    if (state.activeFile === path || state.activeFile.startsWith(path + '/')) {
+      state.activeFile = next + state.activeFile.slice(path.length);
+    }
+    await refreshProjectView();
+    toast('Переименовано');
+  } catch (err) { toast(err.message, 'err'); }
+}
+
+async function deleteEntry(path, isDir) {
+  if (!confirm(`Удалить «${path}»${isDir ? ' со всем содержимым' : ''}?`)) return;
+  try {
+    await api(`/api/projects/${state.project.id}/${isDir ? 'folders' : 'files'}?path=${encodeURIComponent(path)}`, { method: 'DELETE' });
+    await refreshProjectView();
+    toast('Удалено');
+  } catch (err) { toast(err.message, 'err'); }
+}
+
+function downloadEntry(path) {
+  const file = state.project.files.find((f) => f.path === path);
+  if (!file) return;
+  const blob = new Blob([file.content], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = path.split('/').pop();
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function openTreeMenu(btn) {
+  closeTreeMenu();
+  const path = btn.dataset.path;
+  const isDir = btn.dataset.menu === 'folder';
+  const parent = isDir ? path : path.split('/').slice(0, -1).join('/');
+  const items = isDir
+    ? [
+      ['Новый файл', () => createFileIn(path)],
+      ['Новая папка', () => createFolderIn(path)],
+      ['Переименовать', () => renameEntry(path, true)],
+      ['Удалить папку', () => deleteEntry(path, true), true],
+    ]
+    : [
+      ['Открыть', () => { state.activeFile = path; renderProject(state.project.id); }],
+      ['Переименовать', () => renameEntry(path, false)],
+      ['Скачать', () => downloadEntry(path)],
+      ['Удалить', () => deleteEntry(path, false), true],
+    ];
+  const menu = document.createElement('div');
+  menu.className = 'tree-menu';
+  items.forEach(([label, fn, danger]) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    if (danger) b.className = 'danger';
+    b.onclick = (e) => { e.stopPropagation(); closeTreeMenu(); fn(); };
+    menu.appendChild(b);
+  });
+  document.body.appendChild(menu);
+  const r = btn.getBoundingClientRect();
+  const width = 180;
+  menu.style.left = Math.max(8, Math.min(window.innerWidth - width - 8, r.right - width)) + 'px';
+  menu.style.top = Math.min(window.innerHeight - menu.offsetHeight - 8, r.bottom + 4) + 'px';
+  setTimeout(() => document.addEventListener('click', closeTreeMenu, { once: true }), 0);
+}
+
 function projectSidebar(p) {
-  const others = state.projects.filter((x) => x.id !== p.id).slice(0, 5);
+  const others = state.projects.filter((x) => x.id !== p.id);
   return `<div class="vsc-side-head">Файлы проекта</div>
+  <div class="vsc-side-actions">
+    <button data-action="new-file" title="Новый файл">${svg('plus')} Файл</button>
+    <button data-action="new-folder" title="Новая папка">${svg('folder')} Папка</button>
+    <button data-action="open-deploy" title="Опубликовать">${svg('rocket')}</button>
+  </div>
+  <div class="tree-search"><input id="file-search" type="search" placeholder="Поиск по файлам…" value="${esc(state.fileFilter || '')}" autocomplete="off"></div>
   <div class="vsc-side-scroll">
     <div class="vsc-side-section">
       <div class="vsc-side-title">${esc(p.name)} <span class="grow">${p.files.length}</span></div>
       <div class="tree-row tree-folder tree-root" data-dir="">${chevron(true)}${folderIcon(true)}<span class="tree-name">${esc(p.name)}</span></div>
-      ${renderTree(buildFileTree(p.files), 1, '')}
+      ${renderTree(buildFileTree(p.files, p.folders || []), 1, '')}
     </div>
     <div class="vsc-side-section">
       <div class="vsc-side-title">Проект</div>
@@ -817,8 +954,151 @@ function projectSidebar(p) {
       <div class="tree-row" data-action="open-deploy">${svg('rocket')}Опубликовать</div>
       <div class="tree-row" data-action="delete-project">${svg('trash')}Удалить проект</div>
     </div>
-    ${others.length ? `<div class="vsc-side-section"><div class="vsc-side-title">Другие проекты</div>${others.map((x) => `<a class="tree-row" data-go="#/project/${x.id}">${svg(x.template?.icon || 'bot')}<span class="tree-name">${esc(x.name)}</span></a>`).join('')}</div>` : ''}
+    ${others.length ? `<div class="vsc-side-section"><div class="vsc-side-title">Другие проекты <span class="grow">${others.length}</span></div>${others.map((x) => `<a class="tree-row" data-go="#/project/${x.id}">${svg(x.template?.icon || 'bot')}<span class="tree-name">${esc(x.name)}</span></a>`).join('')}</div>` : ''}
   </div>`;
+}
+
+function stripAnsi(value) {
+  return String(value || '')
+    .replace(/\x1b\][^\x07]*(?:\x07|\x1b\\)/g, '')
+    .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '')
+    .replace(/\r/g, '');
+}
+
+function detectRunCommand(p) {
+  const files = p.files || [];
+  const has = (path) => files.some((f) => f.path === path);
+  const pkg = files.find((f) => f.path === 'package.json');
+  if (pkg) {
+    try {
+      const parsed = JSON.parse(pkg.content);
+      const script = parsed?.scripts?.start || parsed?.scripts?.dev;
+      if (script) return parsed?.scripts?.start ? 'npm start' : 'npm run dev';
+    } catch (_) {}
+  }
+  if (has('src/calculator.js')) return 'node src/calculator.js';
+  if (has('main.py')) return 'python3 main.py';
+  if (has('bot.py')) return 'python3 bot.py';
+  if (has('app.js')) return 'node app.js';
+  if (has('index.js')) return 'node index.js';
+  return '';
+}
+
+function bindTerminal(p) {
+  if (state.termSocket) {
+    try { state.termSocket.close(); } catch (_) {}
+    state.termSocket = null;
+  }
+  const form = $('#term-form');
+  const input = $('#term-input');
+  const output = $('#term-output');
+  const status = $('#term-status');
+  const runBtn = $('#term-run');
+  if (!form || !input || !output || !status) return;
+  let socket = null;
+  let pendingCommand = '';
+
+  const sendCommand = (command) => {
+    if (socket?.readyState === WebSocket.OPEN) {
+      pendingCommand = '';
+      socket.send(command + '\r');
+      input.focus();
+    } else {
+      pendingCommand = command;
+    }
+  };
+
+  const setStatus = (text, stateName) => {
+    status.textContent = text;
+    status.className = 'term-status ' + (stateName || '');
+  };
+  const append = (text) => {
+    output.textContent += stripAnsi(text);
+    output.scrollTop = output.scrollHeight;
+  };
+
+  const connect = () => {
+    if (socket) { try { socket.close(); } catch (_) {} }
+    const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+    socket = new WebSocket(proto + location.host + `/api/projects/${p.id}/terminal`);
+    state.termSocket = socket;
+    setStatus('подключаюсь…', 'connecting');
+    input.disabled = true;
+    socket.onopen = () => {
+      if (state.termSocket !== socket) return;
+      setStatus('на связи', 'online');
+      input.disabled = false;
+      input.focus();
+      if (pendingCommand) {
+        const command = pendingCommand;
+        pendingCommand = '';
+        socket.send(command + '\r');
+      }
+    };
+    socket.onmessage = (e) => {
+      if (state.termSocket !== socket) return;
+      append(e.data);
+    };
+    socket.onerror = () => {
+      if (state.termSocket !== socket) return;
+      setStatus('ошибка', 'offline');
+    };
+    socket.onclose = () => {
+      if (state.termSocket !== socket) return;
+      setStatus('отключено · нажми, чтобы переподключиться', 'offline');
+      input.disabled = true;
+      append('\n[соединение закрыто]\n');
+      status.onclick = connect;
+    };
+  };
+
+  const runCommand = detectRunCommand(p);
+  if (runBtn) {
+    runBtn.disabled = !runCommand;
+    runBtn.title = runCommand ? `Запустить: ${runCommand}` : 'Нет команды запуска';
+    runBtn.onclick = () => {
+      if (!runCommand) return;
+      const panel = $('.vsc-panel');
+      if (panel) {
+        panel.classList.remove('collapsed');
+        const toggle = panel.querySelector('[data-action="toggle-panel"]');
+        if (toggle) toggle.textContent = '⌄';
+      }
+      pendingCommand = runCommand;
+      if (!socket || socket.readyState !== WebSocket.OPEN) connect();
+      else sendCommand(runCommand);
+    };
+  }
+
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    if (!socket || socket.readyState !== WebSocket.OPEN) return;
+    const command = input.value;
+    if (command.trim() === 'clear') {
+      output.textContent = '';
+      input.value = '';
+      return;
+    }
+    socket.send(command + '\r');
+    input.value = '';
+  };
+  input.onkeydown = (e) => {
+    if (e.key === 'c' && e.ctrlKey) {
+      e.preventDefault();
+      if (socket?.readyState === WebSocket.OPEN) socket.send('\x03');
+    }
+  };
+  output.onclick = () => input.focus();
+  status.onclick = null;
+  connect();
+  // Терминал должен получить размер панели, чтобы переносы были нормальными.
+  const sendSize = () => {
+    if (socket?.readyState !== WebSocket.OPEN) return;
+    const cols = Math.max(40, Math.floor(output.clientWidth / 7.2));
+    const rows = Math.max(8, Math.floor(output.clientHeight / 16));
+    socket.send(`__resize__:${rows}x${cols}`);
+  };
+  setTimeout(sendSize, 300);
 }
 
 function projectPanel(p) {
@@ -832,9 +1112,19 @@ function projectPanel(p) {
   if (deploy.length) {
     deploy.forEach((x) => lines.push(`<div class="term-line"><span class="term-time">deploy</span><span class="${x.status === 'error' ? 'term-err' : x.status === 'warn' ? 'term-warn' : 'term-ok'}">${x.status === 'error' ? '✗' : x.status === 'warn' ? '!' : '✓'}</span> ${esc(x.message)}</div>`));
   }
-  if (!lines.length) lines.push(`<div class="term-line"><span class="term-prompt">$</span> project ready — напиши AI-помощнику или открой файл</div>`);
-  return `<div class="vsc-panel-head"><span class="on">Терминал</span><span class="grow"></span><button data-action="toggle-panel" title="Свернуть">⌄</button></div>
-  <div class="vsc-panel-body">${lines.join('')}</div>`;
+  if (!lines.length) lines.push(`<div class="term-line"><span class="term-prompt">$</span> проект готов — открой файл или напиши AI-помощнику</div>`);
+  return `<div class="vsc-panel-head"><span class="on">Терминал</span><span class="grow"></span><span class="term-status" id="term-status">подключаюсь…</span><button id="term-run" title="Запустить проект в терминале">▶</button><button data-action="toggle-panel" title="Свернуть">⌄</button></div>
+  <div class="vsc-panel-body term-body">
+    <div class="term-live">
+      <pre class="term-output" id="term-output"></pre>
+      <form class="term-form" id="term-form" autocomplete="off">
+        <span class="term-prompt">$</span>
+        <input id="term-input" type="text" placeholder="Введи команду, например node src/calculator.js" autocomplete="off" spellcheck="false" ${p ? '' : 'disabled'}>
+        <button type="submit" title="Выполнить">↵</button>
+      </form>
+    </div>
+    <details class="term-actions-log"><summary>Действия агента</summary>${lines.join('')}</details>
+  </div>`;
 }
 
 function renderMarkdown(text) {
@@ -872,8 +1162,10 @@ function chatView(p) {
   return `<div class="chat">
     <div class="chat-log" id="chat-log">
       ${p.messages.map((m, idx) => `<div class="msg ${m.role === 'user' ? 'user' : ''}">
+        ${m.meta?.image ? `<img class="msg-shot" src="${esc(m.meta.image)}" alt="Скриншот">` : ''}
+        ${m.meta?.ocr ? `<details class="msg-ocr"><summary>Текст со скриншота</summary><span>${esc(m.meta.ocr)}</span></details>` : ''}
         <div class="b">${m.role === 'user' ? esc(m.content) : renderMarkdown(m.content)}</div>
-        ${m.meta?.steps?.length ? `<details class="agent-steps" ${idx === p.messages.length - 1 && m.meta.steps.length <= 6 ? 'open' : ''}><summary>${svg('spark')} Шаги агента · ${m.meta.steps.length}</summary><div class="step-list">${m.meta.steps.map((s) => `<div class="step-row ${s.kind}">${s.kind === 'thinking' ? svg('spark') : svg('terminal')}<div><b>${s.kind === 'thinking' ? 'Размышление' : esc(s.tool || 'Инструмент')}</b><span>${esc(s.text || '')}</span></div></div>`).join('')}</div></details>` : ''}
+        ${m.meta?.steps?.length ? `<details class="agent-steps"><summary>${svg('spark')} Шаги агента · ${m.meta.steps.length}</summary><div class="step-list">${m.meta.steps.map((s) => `<div class="step-row ${s.kind}">${s.kind === 'thinking' ? svg('spark') : svg('terminal')}<div><b>${s.kind === 'thinking' ? 'Размышление' : esc(s.tool || 'Инструмент')}</b><span>${esc(s.text || '')}</span></div></div>`).join('')}</div></details>` : ''}
         ${m.meta?.actions?.length ? `<div class="acts">${m.meta.actions.map((a) => `<span>✓ ${esc(a.summary || a.path)}</span>`).join('')}</div>` : ''}
         <div class="meta">${m.role === 'user' ? 'Ты' : 'AI-помощник'} · ${ago(m.created_at)}${m.meta?.mode ? ' · ' + m.meta.mode : ''}${m.meta?.tokens ? ' · ' + tokensFull(m.meta.tokens) + ' токенов' : ''}</div>
       </div>`).join('')}
@@ -893,12 +1185,15 @@ function chatView(p) {
       ${state.sending ? `<div class="live-steps" id="live-steps">${state.liveSteps.length ? state.liveSteps.map((s) => `<div class="live-step"><span>${s.type === 'thinking' ? 'Размышление' : s.type === 'status' ? 'Статус' : esc(s.tool || 'Инструмент')}</span><b>${esc(s.text || '')}</b></div>`).join('') : `<div class="live-thinking"><span class="spinner"></span> Агент читает проект…</div>`}</div>` : ''}
     </div>
     <form class="chat-form" id="chat-form">
+      ${state.chatImage ? `<div class="chat-attachment"><img src="${esc(state.chatImage)}" alt="Скриншот"><button type="button" id="remove-shot" title="Убрать">×</button></div>` : ''}
+      <input type="file" id="shot-input" accept="image/png,image/jpeg,image/webp" hidden>
       <div class="chat-input-row">
+        <button class="btn ghost shot" type="button" id="shot-btn" title="Прикрепить скриншот" aria-label="Прикрепить скриншот" ${state.sending ? 'disabled' : ''}>${svg('paperclip')}</button>
         <textarea name="message" rows="1" placeholder="${isCode ? 'Опиши задачу: создай файл, объясни код…' : 'Напиши задачу: «добавь меню: Услуги, Записаться, Цены, Связаться»'}" ${state.sending ? 'disabled' : ''}></textarea>
         <button class="btn ghost mic" type="button" id="voice-btn" title="Голосовой ввод" ${state.sending ? 'disabled' : ''}>${svg('mic')}</button>
         <button class="btn primary" type="submit" ${state.sending ? 'disabled' : ''}>${svg('send')}</button>
       </div>
-      <div class="chat-hint">Enter — отправить · Shift+Enter — новая строка · микрофон — голосом</div>
+      <div class="chat-hint">Enter — отправить · Shift+Enter — строка · микрофон — голосом · скрепка или Ctrl+V — скриншот</div>
     </form>
   </div>`;
 }
@@ -1094,14 +1389,93 @@ function tgAction(action) {
   renderProject(p.id);
 }
 
+function compressChatImage(file) {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) return reject(new Error('Это не изображение'));
+    if (file.size > 10 * 1024 * 1024) return reject(new Error('Скриншот больше 10 МБ'));
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Не удалось прочитать файл'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Не удалось открыть изображение'));
+      img.onload = () => {
+        const max = 1600;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        let data = '';
+        for (const q of [0.86, 0.72, 0.58]) {
+          data = canvas.toDataURL('image/webp', q);
+          if (data.length < 2_400_000) break;
+        }
+        resolve(data);
+      };
+      img.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function attachChatImage(file) {
+  const image = await compressChatImage(file);
+  state.chatImage = image;
+  const form = $('#chat-form');
+  if (!form) return image;
+  form.querySelector('.chat-attachment')?.remove();
+  const box = document.createElement('div');
+  box.className = 'chat-attachment';
+  box.innerHTML = `<img src="${esc(image)}" alt="Скриншот"><button type="button" id="remove-shot" title="Убрать">×</button>`;
+  box.querySelector('button').onclick = () => {
+    state.chatImage = null;
+    box.remove();
+  };
+  form.insertBefore(box, form.querySelector('.chat-input-row'));
+  return image;
+}
+
 function bindChatForm(form) {
   if (!form) return;
   const ta = form.message;
+  const shotInput = form.querySelector('#shot-input');
+  const shotBtn = form.querySelector('#shot-btn');
+  const removeShot = () => {
+    state.chatImage = null;
+    form.querySelector('.chat-attachment')?.remove();
+  };
+  form.querySelector('#remove-shot')?.addEventListener('click', removeShot);
+  if (shotBtn && shotInput) {
+    shotBtn.onclick = () => shotInput.click();
+    shotInput.onchange = async () => {
+      const file = shotInput.files?.[0];
+      shotInput.value = '';
+      if (!file) return;
+      try {
+        await attachChatImage(file);
+        toast('Скриншот прикреплён');
+      } catch (err) {
+        toast(err.message || 'Не удалось прикрепить скриншот', 'err');
+      }
+    };
+  }
   const grow = () => {
     ta.style.height = 'auto';
     ta.style.height = Math.min(170, Math.max(38, ta.scrollHeight)) + 'px';
   };
   ta.addEventListener('input', grow);
+  ta.addEventListener('paste', async (e) => {
+    const item = Array.from(e.clipboardData?.items || []).find((x) => x.type.startsWith('image/'));
+    if (!item) return;
+    e.preventDefault();
+    try {
+      await attachChatImage(item.getAsFile());
+      toast('Скриншот из буфера прикреплён');
+    } catch (err) {
+      toast(err.message || 'Не удалось вставить скриншот', 'err');
+    }
+  });
   grow();
   ta.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
@@ -1112,30 +1486,71 @@ function bindChatForm(form) {
   const mic = form.querySelector('#voice-btn');
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!mic) return;
-  if (!SR) { mic.style.display = 'none'; return; }
+  if (!SR) {
+    mic.onclick = () => toast('Голосовой ввод поддерживают Chrome и Edge', 'err');
+    return;
+  }
   let rec = null;
+  let guard = null;
+  let started = false;
   let base = '';
+  const resetMic = () => {
+    if (guard) clearTimeout(guard);
+    guard = null;
+    started = false;
+    rec = null;
+    mic.classList.remove('recording');
+    mic.title = 'Голосовой ввод';
+  };
   mic.onclick = () => {
-    if (rec) { rec.stop(); return; }
+    if (rec) {
+      try { rec.stop(); } catch (_) {}
+      return;
+    }
     rec = new SR();
     rec.lang = 'ru-RU';
     rec.interimResults = true;
     rec.continuous = false;
+    rec.maxAlternatives = 1;
     base = ta.value.trim();
+    mic.classList.add('recording');
+    mic.title = 'Слушаю… нажми, чтобы остановить';
+    toast('Говори…');
+    rec.onstart = () => {
+      started = true;
+      if (guard) clearTimeout(guard);
+      guard = null;
+    };
     rec.onresult = (e) => {
       let text = '';
       for (let i = e.resultIndex; i < e.results.length; i += 1) text += e.results[i][0].transcript;
       ta.value = (base ? base + ' ' : '') + text.trim();
       grow();
     };
-    rec.onend = () => { rec = null; mic.classList.remove('recording'); };
+    rec.onend = resetMic;
     rec.onerror = (e) => {
-      rec = null;
-      mic.classList.remove('recording');
-      toast(e.error === 'not-allowed' ? 'Разреши микрофон в браузере' : 'Не удалось распознать голос', 'err');
+      const map = {
+        'not-allowed': 'Разреши микрофон в адресной строке браузера',
+        'service-not-allowed': 'Браузер заблокировал сервис распознавания',
+        'audio-capture': 'Микрофон не найден',
+        'no-speech': 'Ничего не услышал, попробуй ещё раз',
+        network: 'Нет связи с сервисом распознавания речи',
+      };
+      toast(map[e.error] || 'Не удалось распознать голос', 'err');
+      resetMic();
     };
-    mic.classList.add('recording');
-    rec.start();
+    try {
+      rec.start();
+      guard = setTimeout(() => {
+        if (!rec || started) return;
+        toast('Браузер не дал доступ к микрофону. Разреши его в адресной строке.', 'err');
+        try { rec.stop(); } catch (_) {}
+        resetMic();
+      }, 8000);
+    } catch (err) {
+      toast('Не удалось запустить микрофон: ' + (err?.message || err), 'err');
+      resetMic();
+    }
   };
 }
 
@@ -1225,20 +1640,22 @@ function appendLiveStep(ev) {
 async function sendChat(e) {
   e.preventDefault();
   const form = e.target;
-  const message = form.message.value.trim();
+  const message = form.message.value.trim() || (state.chatImage ? 'Посмотри скриншот' : '');
   if (!message || state.sending) return;
   state.sending = true;
   state.liveSteps = [];
+  const image = state.chatImage;
+  state.chatImage = null;
   const p = state.project;
   const beforeFiles = Object.fromEntries(p.files.map((f) => [f.path, f.content]));
-  p.messages.push({ role: 'user', content: message, created_at: new Date().toISOString(), meta: {} });
+  p.messages.push({ role: 'user', content: message, created_at: new Date().toISOString(), meta: image ? { image } : {} });
   renderProject(p.id);
   try {
     const res = await fetch(`/api/projects/${p.id}/chat/stream`, {
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, image }),
     });
     if (!res.ok) {
       let detail = 'Агент не ответил';
@@ -1292,6 +1709,7 @@ async function sendChat(e) {
   } catch (err) {
     state.sending = false;
     state.liveSteps = [];
+    state.chatImage = image;
     state.project.messages.pop();
     renderProject(p.id);
     toast(err.message, 'err');
@@ -1334,7 +1752,7 @@ async function uploadFiles(fileList, p) {
   let skipped = 0;
   for (const f of files) {
     const ext = f.name.split('.').pop().toLowerCase();
-    if (BINARY_EXT.has(ext) || f.name === '.env' || f.size > 300_000) { skipped += 1; continue; }
+    if (BINARY_EXT.has(ext) || f.name === '.env' || f.size > 1_000_000) { skipped += 1; continue; }
     try {
       const text = await f.text();
       if (text.includes('\u0000')) { skipped += 1; continue; }
@@ -1384,7 +1802,16 @@ function bindDrop(p) {
     e.preventDefault();
     depth = 0;
     overlay.classList.remove('on');
-    if (e.dataTransfer?.files?.length) uploadFiles(e.dataTransfer.files, p);
+    const files = Array.from(e.dataTransfer?.files || []);
+    if (!files.length) return;
+    const images = files.filter((f) => f.type.startsWith('image/'));
+    const rest = files.filter((f) => !f.type.startsWith('image/'));
+    if (images.length) {
+      attachChatImage(images[0])
+        .then(() => toast('Скриншот прикреплён к сообщению'))
+        .catch((err) => toast(err.message, 'err'));
+    }
+    if (rest.length) uploadFiles(rest, p);
   });
 }
 
@@ -1418,7 +1845,7 @@ function openFolderFallback() {
     for (const f of all) {
       const rel = (f.webkitRelativePath || f.name).split('/').slice(1).join('/') || f.name;
       const ext = f.name.split('.').pop().toLowerCase();
-      if (!rel || rel.startsWith('.git/') || rel.includes('/node_modules/') || BINARY_EXT.has(ext) || f.name === '.env' || f.size > 300_000) {
+      if (!rel || rel.startsWith('.git/') || rel.includes('/node_modules/') || BINARY_EXT.has(ext) || f.name === '.env' || f.size > 1_000_000) {
         skipped += 1;
         continue;
       }
@@ -1429,7 +1856,7 @@ function openFolderFallback() {
       } catch (_) {
         skipped += 1;
       }
-      if (files.length >= 300) break;
+      if (files.length >= 1500) break;
     }
     await importProjectFiles(root, files, skipped, null);
   };
@@ -1446,7 +1873,7 @@ async function importDirectoryHandle(handle) {
   const update = () => { const s = note.querySelector('span'); if (s) s.textContent = `${files.length} файлов · ${skipped} пропущено`; };
   async function walk(dir, prefix) {
     for await (const [name, entry] of dir.entries()) {
-      if (files.length >= 300) return;
+      if (files.length >= 1500) return;
       if (name === '.git' || name === 'node_modules' || name === '.dsh') { skipped += 1; continue; }
       const rel = prefix ? `${prefix}/${name}` : name;
       if (entry.kind === 'directory') {
@@ -1457,7 +1884,7 @@ async function importDirectoryHandle(handle) {
       if (!rel || BINARY_EXT.has(ext) || name === '.env') { skipped += 1; continue; }
       try {
         const file = await entry.getFile();
-        if (file.size > 300_000) { skipped += 1; continue; }
+        if (file.size > 1_000_000) { skipped += 1; continue; }
         const text = await file.text();
         if (text.includes('\u0000')) { skipped += 1; continue; }
         files.push({ path: rel, content: text });
@@ -1874,6 +2301,45 @@ async function openUserDetail(userId) {
 }
 
 /* ---------- common actions ---------- */
+function openProjectMenu(btn) {
+  closeTreeMenu();
+  const id = Number(btn.dataset.projectMenu);
+  const project = state.projects.find((p) => p.id === id);
+  if (!project) return;
+  const items = [
+    ['Открыть', () => { location.hash = '#/project/' + id; }],
+    ['Переименовать', async () => {
+      const name = prompt('Название проекта', project.name);
+      if (!name || name === project.name) return;
+      try { await api('/api/projects/' + id, { method: 'PATCH', body: { name } }); await refreshBase(); render(); } catch (err) { toast(err.message, 'err'); }
+    }],
+    ['Удалить', async () => {
+      if (!confirm(`Удалить проект «${project.name}»?`)) return;
+      try {
+        await api('/api/projects/' + id, { method: 'DELETE' });
+        await refreshBase();
+        if (location.hash === '#/project/' + id) { location.hash = '#/dashboard'; }
+        else { render(); }
+        toast('Проект удалён');
+      } catch (err) { toast(err.message, 'err'); }
+    }, true],
+  ];
+  const menu = document.createElement('div');
+  menu.className = 'tree-menu project-menu';
+  items.forEach(([label, fn, danger]) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    if (danger) b.className = 'danger';
+    b.onclick = (e) => { e.stopPropagation(); closeTreeMenu(); fn(); };
+    menu.appendChild(b);
+  });
+  document.body.appendChild(menu);
+  const r = btn.getBoundingClientRect();
+  menu.style.left = Math.max(8, Math.min(window.innerWidth - 188, r.right - 180)) + 'px';
+  menu.style.top = Math.min(window.innerHeight - menu.offsetHeight - 8, r.bottom + 4) + 'px';
+  setTimeout(() => document.addEventListener('click', closeTreeMenu, { once: true }), 0);
+}
+
 function bindCommon() {
   // delegated data-go handled globally
 }
@@ -1885,6 +2351,8 @@ document.addEventListener('click', async (e) => {
     if (ta) { ta.value = quick.dataset.quick; ta.focus(); }
     return;
   }
+  const pm = e.target.closest('[data-project-menu]');
+  if (pm) { e.preventDefault(); e.stopPropagation(); openProjectMenu(pm); return; }
   const go = e.target.closest('[data-go]');
   if (go) { e.preventDefault(); location.hash = go.dataset.go; return; }
   const action = e.target.closest('[data-action]');
@@ -1916,6 +2384,19 @@ document.addEventListener('click', async (e) => {
     if (state.project) renderProject(state.project.id);
   } else if (a === 'add-files') {
     if (state.project) addFilesPicker(state.project);
+  } else if (a === 'new-file') {
+    if (state.project) createFileIn('');
+  } else if (a === 'new-folder') {
+    if (state.project) createFolderIn('');
+  } else if (a === 'rename-project') {
+    if (!state.project) return;
+    const name = prompt('Название проекта', state.project.name);
+    if (!name || name === state.project.name) return;
+    try {
+      await api('/api/projects/' + state.project.id, { method: 'PATCH', body: { name } });
+      await refreshProjectView();
+      toast('Проект переименован');
+    } catch (err) { toast(err.message, 'err'); }
   } else if (a === 'toggle-theme') {
     document.body.classList.toggle('theme-light');
     localStorage.setItem('school-theme', document.body.classList.contains('theme-light') ? 'light' : 'dark');
@@ -1983,4 +2464,6 @@ async function boot() {
 }
 
 boot();
+
+
 

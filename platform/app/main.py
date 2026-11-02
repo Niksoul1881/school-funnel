@@ -7,21 +7,23 @@ import hmac
 import json
 import queue
 import re
+import subprocess
+import tempfile
 import threading
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
-from . import agent, catalog, config, lessons, security, store, telegram
+from . import agent, catalog, config, lessons, security, store, telegram, terminal
 from .db import execute, fetch_all, fetch_one, init_db
 from .security import public_user, require_admin, require_user
 
-MAX_FILE_BYTES = 300_000
+MAX_FILE_BYTES = 1_000_000
 
 
 @asynccontextmanager
@@ -102,6 +104,58 @@ def _clean_email(value: str) -> str:
     if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
         raise HTTPException(status_code=400, detail="Проверьте email")
     return email
+
+
+def _safe_path(value: str, field: str = "путь") -> str:
+    path = str(value or "").replace("\\", "/").strip()
+    if not path or path.startswith("/") or ".." in Path(path).parts or len(path) > 400:
+        raise HTTPException(status_code=400, detail=f"Некорректный {field}")
+    return path
+
+
+def _image_data(value) -> str:
+    if not value:
+        return ""
+    image = str(value)
+    if len(image) > 3_000_000:
+        raise HTTPException(status_code=413, detail="Скриншот слишком большой")
+    if not re.match(r"^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$", image):
+        raise HTTPException(status_code=400, detail="Некорректный формат скриншота")
+    return image
+
+
+def _ocr_image(image: str) -> str:
+    """Распознаём текст со скриншота, чтобы DSH мог его прочитать."""
+    if not image:
+        return ""
+    m = re.match(r"^data:image/(png|jpeg|webp);base64,(.+)$", image)
+    if not m:
+        return ""
+    tmp_png = None
+    try:
+        from io import BytesIO
+        from PIL import Image
+
+        raw = base64.b64decode(m.group(2))
+        img = Image.open(BytesIO(raw)).convert("RGB")
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+            tmp_png = f.name
+            img.save(tmp_png, "PNG")
+        proc = subprocess.run(
+            ["tesseract", tmp_png, "stdout", "-l", "rus+eng", "--psm", "6"],
+            capture_output=True,
+            text=True,
+            timeout=25,
+        )
+        return (proc.stdout or "").strip()[:4000]
+    except Exception:
+        return ""
+    finally:
+        if tmp_png:
+            try:
+                Path(tmp_png).unlink(missing_ok=True)
+            except Exception:
+                pass
 
 
 def _user_payload(user: dict) -> dict:
@@ -244,7 +298,7 @@ async def import_project(request: Request):
     name = str(data.get("name", "")).strip() or "Мой проект"
     cleaned: list[dict] = []
     total = 0
-    for item in raw[:300]:
+    for item in raw[:1500]:
         if not isinstance(item, dict):
             continue
         path = str(item.get("path", "")).replace("\\", "/").strip()
@@ -257,8 +311,8 @@ async def import_project(request: Request):
         if size > MAX_FILE_BYTES:
             continue
         total += size
-        if total > 5_000_000:
-            raise HTTPException(status_code=413, detail="Папка слишком большая (лимит 5 МБ)")
+        if total > 20_000_000:
+            raise HTTPException(status_code=413, detail="Папка слишком большая: больше 20 МБ текстовых файлов. Видео, private и БД не загружаются.")
         cleaned.append({"path": path[:300], "content": content})
     if not cleaned:
         raise HTTPException(status_code=400, detail="Не удалось прочитать текстовые файлы")
@@ -284,6 +338,20 @@ def delete_project(project_id: int, request: Request):
     return {"ok": True}
 
 
+@app.patch("/api/projects/{project_id}")
+async def rename_project(project_id: int, request: Request):
+    user = require_user(request)
+    data = await _body(request)
+    name = str(data.get("name", "")).strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Название не может быть пустым")
+    if len(name) > 120:
+        raise HTTPException(status_code=413, detail="Слишком длинное название")
+    if not store.rename_project(user["id"], project_id, name, is_admin=user["role"] == "admin"):
+        raise HTTPException(status_code=404, detail="Проект не найден")
+    return {"ok": True, "name": name}
+
+
 @app.put("/api/projects/{project_id}/files")
 async def save_file(project_id: int, request: Request):
     user = require_user(request)
@@ -300,6 +368,81 @@ async def save_file(project_id: int, request: Request):
     store.write_file(project_id, path, content)
     store.log_event(user["id"], "file_save", project_id, {"path": path[:200]})
     return {"ok": True, "path": path}
+
+
+@app.post("/api/projects/{project_id}/files")
+async def create_file(project_id: int, request: Request):
+    user = require_user(request)
+    project = store.get_project(user["id"], project_id, is_admin=user["role"] == "admin")
+    if not project:
+        raise HTTPException(status_code=404, detail="Проект не найден")
+    data = await _body(request)
+    path = _safe_path(data.get("path"), "путь файла")
+    if any(f["path"] == path for f in project["files"]):
+        raise HTTPException(status_code=409, detail="Файл уже существует")
+    content = str(data.get("content", ""))
+    if len(content.encode("utf-8")) > MAX_FILE_BYTES:
+        raise HTTPException(status_code=413, detail="Файл слишком большой")
+    parent = path.rsplit("/", 1)[0] if "/" in path else ""
+    if parent:
+        store.create_folder(project_id, parent)
+    store.write_file(project_id, path, content)
+    store.log_event(user["id"], "file_create", project_id, {"path": path[:200]})
+    return {"ok": True, "path": path}
+
+
+@app.delete("/api/projects/{project_id}/files")
+def remove_file(project_id: int, path: str, request: Request):
+    user = require_user(request)
+    project = store.get_project(user["id"], project_id, is_admin=user["role"] == "admin")
+    if not project:
+        raise HTTPException(status_code=404, detail="Проект не найден")
+    safe = _safe_path(path, "путь файла")
+    store.delete_file(project_id, safe)
+    store.log_event(user["id"], "file_delete", project_id, {"path": safe[:200]})
+    return {"ok": True}
+
+
+@app.post("/api/projects/{project_id}/folders")
+async def create_folder(project_id: int, request: Request):
+    user = require_user(request)
+    project = store.get_project(user["id"], project_id, is_admin=user["role"] == "admin")
+    if not project:
+        raise HTTPException(status_code=404, detail="Проект не найден")
+    data = await _body(request)
+    path = _safe_path(data.get("path"), "путь папки")
+    store.create_folder(project_id, path)
+    store.log_event(user["id"], "folder_create", project_id, {"path": path[:200]})
+    return {"ok": True, "path": path}
+
+
+@app.delete("/api/projects/{project_id}/folders")
+def remove_folder(project_id: int, path: str, request: Request):
+    user = require_user(request)
+    project = store.get_project(user["id"], project_id, is_admin=user["role"] == "admin")
+    if not project:
+        raise HTTPException(status_code=404, detail="Проект не найден")
+    safe = _safe_path(path, "путь папки")
+    store.delete_folder(project_id, safe)
+    store.log_event(user["id"], "folder_delete", project_id, {"path": safe[:200]})
+    return {"ok": True}
+
+
+@app.post("/api/projects/{project_id}/rename")
+async def rename_path(project_id: int, request: Request):
+    user = require_user(request)
+    project = store.get_project(user["id"], project_id, is_admin=user["role"] == "admin")
+    if not project:
+        raise HTTPException(status_code=404, detail="Проект не найден")
+    data = await _body(request)
+    old = _safe_path(data.get("path"), "старый путь")
+    new = _safe_path(data.get("new_path"), "новый путь")
+    try:
+        store.rename_path(project_id, old, new)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+    store.log_event(user["id"], "file_rename", project_id, {"from": old[:200], "to": new[:200]})
+    return {"ok": True, "path": new}
 
 
 def _apply_chat_result(user: dict, project: dict, result) -> dict:
@@ -326,6 +469,21 @@ def _apply_chat_result(user: dict, project: dict, result) -> dict:
     return {"project": fresh, "message": result.text, "actions": result.actions, "steps": result.steps, "tokens": cost["tokens"], "price_rub": cost["price_rub"], "cost_rub": cost["cost_rub"], "mode": result.mode}
 
 
+@app.websocket("/api/projects/{project_id}/terminal")
+async def terminal_socket(websocket: WebSocket, project_id: int):
+    user = terminal.user_from_websocket(websocket)
+    if not user:
+        await websocket.close(code=1008)
+        return
+    project = store.get_project(user["id"], project_id, is_admin=user["role"] == "admin")
+    if not project:
+        await websocket.close(code=1008)
+        return
+    await websocket.accept()
+    await run_in_threadpool(terminal.sync_workspace, project)
+    await terminal.run_shell(websocket, project)
+
+
 @app.post("/api/projects/{project_id}/chat")
 async def chat(project_id: int, request: Request):
     user = require_user(request)
@@ -334,14 +492,21 @@ async def chat(project_id: int, request: Request):
         raise HTTPException(status_code=404, detail="Проект не найден")
     data = await _body(request)
     message = str(data.get("message", "")).strip()
+    image = _image_data(data.get("image"))
+    if not message and image:
+        message = "Посмотри скриншот"
     if not message:
         raise HTTPException(status_code=400, detail="Пустое сообщение")
     if len(message) > 4000:
         raise HTTPException(status_code=413, detail="Слишком длинное сообщение")
 
-    store.add_message(project_id, "user", message)
+    ocr = _ocr_image(image)
+    agent_message = message + (f"\n\n[Текст, распознанный со скриншота]\n{ocr}" if ocr else "")
+    terminal.import_workspace(project_id)
+    project = store.get_project(user["id"], project_id, is_admin=user["role"] == "admin") or project
+    store.add_message(project_id, "user", message, {"image": image, "ocr": ocr} if image else {})
     try:
-        result = await run_in_threadpool(agent.respond, project, message)
+        result = await run_in_threadpool(agent.respond, project, agent_message)
     except Exception as exc:
         store.add_message(project_id, "assistant", f"Ошибка агента: {exc}", {"error": True})
         raise HTTPException(status_code=500, detail=f"Агент не ответил: {exc}")
@@ -356,12 +521,19 @@ async def chat_stream(project_id: int, request: Request):
         raise HTTPException(status_code=404, detail="Проект не найден")
     data = await _body(request)
     message = str(data.get("message", "")).strip()
+    image = _image_data(data.get("image"))
+    if not message and image:
+        message = "Посмотри скриншот"
     if not message:
         raise HTTPException(status_code=400, detail="Пустое сообщение")
     if len(message) > 4000:
         raise HTTPException(status_code=413, detail="Слишком длинное сообщение")
 
-    store.add_message(project_id, "user", message)
+    ocr = _ocr_image(image)
+    agent_message = message + (f"\n\n[Текст, распознанный со скриншота]\n{ocr}" if ocr else "")
+    terminal.import_workspace(project_id)
+    project = store.get_project(user["id"], project_id, is_admin=user["role"] == "admin") or project
+    store.add_message(project_id, "user", message, {"image": image, "ocr": ocr} if image else {})
     q: queue.Queue = queue.Queue()
 
     def progress(event: dict) -> None:
@@ -369,7 +541,7 @@ async def chat_stream(project_id: int, request: Request):
 
     def work() -> None:
         try:
-            result = agent.respond(project, message, on_event=progress)
+            result = agent.respond(project, agent_message, on_event=progress)
             payload = _apply_chat_result(user, project, result)
             q.put(("done", payload))
         except Exception as exc:
@@ -536,3 +708,4 @@ def spa(full_path: str):
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404, detail="Not found")
     return FileResponse(config.STATIC_DIR / "index.html")
+

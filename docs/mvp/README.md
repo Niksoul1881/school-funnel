@@ -52,6 +52,10 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 | Карточка пользователя | [`45_user_detail.png`](screenshots/45_user_detail.png) |
 | Рабочее окно: ресайз, шаги, голос | [`46_workspace_improved.png`](screenshots/46_workspace_improved.png) |
 | Живые шаги агента | [`48_live_steps.png`](screenshots/48_live_steps.png) |
+| Файловый менеджер и меню | [`53_file_manager.png`](screenshots/53_file_manager.png) |
+| Чистый блок проектов | [`54_projects_sidebar.png`](screenshots/54_projects_sidebar.png) |
+| Живой терминал проекта | [`55_terminal.png`](screenshots/55_terminal.png) |
+| Запуск проекта одной кнопкой | [`56_terminal_run.png`](screenshots/56_terminal_run.png) |
 
 ## Что дальше
 
