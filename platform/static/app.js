@@ -322,7 +322,7 @@ function renderAuth() {
           <div id="auth-error"></div>
           <button class="btn primary auth-submit" type="submit">${isLogin ? 'Войти' : 'Зарегистрироваться'} ${svg('arrow')}</button>
         </form>
-        <div class="demo-note">Демо-доступ: <b>demo@school.local</b> / <b>demo1234</b><br>админ: <b>admin@school.local</b> / <b>admin1234</b></div>
+        <div class="demo-note">Демо: <b>demo@school.local</b> / <b>demo1234</b><br>Или зарегистрируй свой аккаунт — 1 млн токенов внутри.</div>
         <div class="auth-legal">Безопасный вход · данные не передаются третьим лицам</div>
       </div>
     </section>
@@ -1436,6 +1436,25 @@ async function attachChatImage(file) {
   return image;
 }
 
+document.addEventListener('paste', async (e) => {
+  const form = $('#chat-form');
+  if (!form || form.contains(e.target)) return;
+  if (e.target?.closest?.('.vsc-editor-area')) return;
+  const items = Array.from(e.clipboardData?.items || []);
+  const fromItem = items.find((x) => x.type.startsWith('image/'))?.getAsFile();
+  const fromFiles = Array.from(e.clipboardData?.files || []).find((f) => f.type.startsWith('image/'));
+  const file = fromItem || fromFiles;
+  if (!file) return;
+  e.preventDefault();
+  try {
+    await attachChatImage(file);
+    form.querySelector('textarea')?.focus();
+    toast('Скриншот из буфера прикреплён');
+  } catch (err) {
+    toast(err.message || 'Не удалось вставить скриншот', 'err');
+  }
+});
+
 function bindChatForm(form) {
   if (!form) return;
   const ta = form.message;
@@ -1466,11 +1485,14 @@ function bindChatForm(form) {
   };
   ta.addEventListener('input', grow);
   ta.addEventListener('paste', async (e) => {
-    const item = Array.from(e.clipboardData?.items || []).find((x) => x.type.startsWith('image/'));
-    if (!item) return;
+    const items = Array.from(e.clipboardData?.items || []);
+    const fromItem = items.find((x) => x.type.startsWith('image/'))?.getAsFile();
+    const fromFiles = Array.from(e.clipboardData?.files || []).find((f) => f.type.startsWith('image/'));
+    const file = fromItem || fromFiles;
+    if (!file) return;
     e.preventDefault();
     try {
-      await attachChatImage(item.getAsFile());
+      await attachChatImage(file);
       toast('Скриншот из буфера прикреплён');
     } catch (err) {
       toast(err.message || 'Не удалось вставить скриншот', 'err');
@@ -1866,6 +1888,8 @@ function openFolderFallback() {
 async function importDirectoryHandle(handle) {
   const files = [];
   let skipped = 0;
+  const skipDirs = new Set(['.git', 'node_modules', '.dsh', '__pycache__', '.venv', 'venv', 'private']);
+  const skipPaths = new Set(['data/db', 'data/competitors', 'docs/course/video', 'docs/research/media', 'platform/data']);
   const note = document.createElement('div');
   note.className = 'folder-progress';
   note.innerHTML = `<div class="spinner"></div><div><b>Читаю папку «${esc(handle.name)}»</b><span>0 файлов…</span></div>`;
@@ -1874,9 +1898,9 @@ async function importDirectoryHandle(handle) {
   async function walk(dir, prefix) {
     for await (const [name, entry] of dir.entries()) {
       if (files.length >= 1500) return;
-      if (name === '.git' || name === 'node_modules' || name === '.dsh') { skipped += 1; continue; }
       const rel = prefix ? `${prefix}/${name}` : name;
       if (entry.kind === 'directory') {
+        if (skipDirs.has(name) || [...skipPaths].some((p) => rel === p || rel.startsWith(p + '/'))) { skipped += 1; continue; }
         await walk(entry, rel);
         continue;
       }
