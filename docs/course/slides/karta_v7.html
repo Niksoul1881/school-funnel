@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><title>v7 журнал</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800;900&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#f3efe6}
+.s{position:relative;width:1920px;height:1080px;padding:70px 84px;font-family:"Inter Tight",sans-serif;color:#111}
+.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #111;padding-bottom:26px}
+.top h1{font-size:96px;font-weight:900;letter-spacing:-.05em;line-height:.95}
+.top h1 em{font-family:"Instrument Serif",serif;font-weight:400;font-style:italic;letter-spacing:-.02em;color:#e8452c}
+.top .meta{text-align:right;font-size:20px;font-weight:700;line-height:1.5;text-transform:uppercase;letter-spacing:.08em}
+.top .meta b{display:block;font-size:64px;letter-spacing:-.04em;text-transform:none;font-weight:900}
+.cols{display:grid;grid-template-columns:repeat(6,1fr) 1.25fr;margin-top:26px;height:700px}
+.col{border-right:1px solid #cfc8b8;padding:0 20px;position:relative}
+.col:first-child{padding-left:0}
+.col .num{font-size:150px;font-weight:900;letter-spacing:-.07em;line-height:.85}
+.col h2{margin-top:14px;font-size:27px;font-weight:800;letter-spacing:-.02em;line-height:1.08}
+.col p{margin-top:8px;font-size:17px;line-height:1.35;color:#5d574c;font-weight:500}
+.col .k{display:inline-block;margin-top:10px;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#e8452c}
+.shot{position:absolute;left:20px;right:20px;bottom:0;height:330px;border-radius:18px;overflow:hidden;border:2px solid #111;background:#fff}
+.shot img{width:100%;height:100%;object-fit:cover;object-position:top}
+.col.fin{background:#111;color:#f3efe6;border:0;padding:28px 30px;border-radius:0}
+.col.fin .num{color:#e8452c;font-size:120px}
+.col.fin h2{font-size:38px}
+.col.fin p{color:#c9c2b2;font-size:19px}
+.col.fin .it{font-family:"Instrument Serif",serif;font-style:italic;font-size:30px;color:#f3efe6;margin-top:22px;line-height:1.2}
+.foot{position:absolute;left:84px;right:84px;bottom:40px;display:flex;justify-content:space-between;font-size:16px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#7a7365}
+</style></head><body><div class="s">
+<div class="top"><h1>Тест-драйв,<br>в котором <em>делаешь</em>, а не смотришь</h1><div class="meta"><b>48 ч</b>6 уроков · 3 продукта<br>личный план в финале</div></div>
+<div class="cols">
+ <div class="col"><div class="num">0</div><h2>Старт</h2><p>Правила, цель, главное задание</p></div>
+ <div class="col"><div class="num">1</div><h2>Профессия</h2><p>Техспец и AI-автоматизатор: кто платит</p><span class="k">цифра кода</span></div>
+ <div class="col"><div class="num">2</div><h2>Чат-боты</h2><p>Первый бот за вечер</p><span class="k">практика</span><div class="shot"><img src="screens/kvasich.png"></div></div>
+ <div class="col"><div class="num">3</div><h2>AI-агенты</h2><p>Виртуальный сотрудник</p><span class="k">практика</span><div class="shot"><img src="screens/pulse.png" style="object-position:50% 12%"></div></div>
+ <div class="col"><div class="num">4</div><h2>Mini Apps</h2><p>Приложение в Telegram</p><span class="k">практика</span><div class="shot"><img src="screens/manekken.png" style="object-position:50% 8%"></div></div>
+ <div class="col"><div class="num">5</div><h2>Клиенты</h2><p>Где искать и сколько просить</p><div class="shot"><img src="screens/gym.png"></div></div>
+ <div class="col fin"><div class="num">★</div><h2>Анкета и разбор</h2><p>Какие заказы брать первыми, где искать, сколько просить — под тебя.</p><div class="it">«Уроки — подготовка. Самое ценное — в конце.»</div></div>
+</div>
+<div class="foot"><span>Профессор Квасич · Пульс мира · Манекен · Школа гимнастики — сделано нашей командой</span><span>Маршрут</span></div>
+</div></body></html>

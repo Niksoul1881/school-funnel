@@ -1,0 +1,107 @@
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Слайды тест-драйва</title><style>
+:root { --bg: #f4f6fb; --card: #fff; --ink: #1d2433; --muted: #6b7389; --line: #e3e7f0; --accent: #f08c00; --accent-soft: #fff1db; --dark: #14182e; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.55; font-size: 15.5px; }
+.w { max-width: 860px; margin: 0 auto; padding: 28px 16px 60px; }
+h1 { margin: 0 0 6px; font-size: 28px; color: var(--dark); }
+.lead { color: var(--muted); margin: 0 0 18px; }
+.who { background: var(--card); border-radius: 12px; padding: 12px 14px; margin: 0 0 22px; box-shadow: 0 2px 8px rgba(20,24,46,.06); font-size: 14px; }
+.who input { border: 1px solid #d6dae5; border-radius: 8px; padding: 6px 10px; font-size: 14px; width: 200px; max-width: 100%; }
+.card { background: var(--card); border-radius: 14px; padding: 18px 18px 14px; margin: 0 0 18px; box-shadow: 0 2px 10px rgba(20,24,46,.07); border-left: 5px solid var(--accent); }
+.card.general { border-left-color: var(--dark); }
+.num { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.card h2 { margin: 2px 0 6px; font-size: 20px; color: var(--dark); }
+.time { display: inline-block; background: var(--accent-soft); color: #8a4b00; border-radius: 8px; padding: 2px 9px; font-size: 13px; margin-bottom: 8px; }
+.card p { margin: 6px 0; }
+.card ul { margin: 6px 0 6px 20px; padding: 0; }
+.cm { border-top: 1px dashed var(--line); margin-top: 12px; padding-top: 10px; }
+.cm h3 { font-size: 13px; color: var(--muted); margin: 0 0 6px; font-weight: 700; }
+.c { background: #f7f8fb; border-radius: 10px; padding: 8px 11px; margin: 6px 0; font-size: 14px; }
+.c .m { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.c .m b { color: var(--ink); }
+.c .x { float: right; color: #c0392b; cursor: pointer; font-size: 12px; }
+.c .t { white-space: pre-wrap; }
+.empty { color: var(--muted); font-size: 13px; font-style: italic; }
+textarea { width: 100%; min-height: 58px; border: 1px solid #d6dae5; border-radius: 10px; padding: 8px 10px; font: inherit; font-size: 14px; resize: vertical; margin-top: 6px; }
+button { background: var(--dark); color: #fff; border: 0; border-radius: 9px; padding: 7px 14px; font-size: 14px; cursor: pointer; margin-top: 6px; }
+button:disabled { opacity: .5; }
+.err { color: #c0392b; font-size: 13px; margin-left: 8px; }
+.foot { text-align: center; color: var(--muted); font-size: 13px; margin-top: 26px; }
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:10px 0 6px}@media(max-width:800px){.tiles{grid-template-columns:1fr 1fr}}.sl{display:block;text-decoration:none;color:var(--muted);font-size:13px}.sl img{display:block;width:100%;border-radius:10px;box-shadow:0 4px 14px rgba(20,24,46,.25)}.sl span{display:block;margin-top:5px;line-height:1.3}.w{max-width:1100px}#lb{position:fixed;inset:0;background:rgba(5,7,15,.94);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:99}#lb img{max-width:96vw;max-height:84vh;border-radius:10px}#lb div{color:#fff;margin-top:14px;font-size:15px}#lb button{position:absolute;top:50%;background:rgba(255,255,255,.12);color:#fff;border:0;font-size:34px;width:56px;height:56px;border-radius:50%;cursor:pointer}#lb .p{left:16px}#lb .nx{right:16px}#lb .c{top:16px;right:16px}</style></head><body><div class="w"><h1>Слайды тест-драйва</h1><p class="lead">Все слайды всех видео в одном стиле (тёмный, «светящаяся дорога» — как карта v1/v4). 45 слайдов. Нажмите на слайд — откроется на весь экран, листать стрелками. Жёлтым пунктиром — что нужно вставить команде. Правки — в комментариях под уроком.</p><div class="who">Как вас подписать: <input id="name" placeholder="Ваше имя" maxlength="40"></div><div class="card" id="u0" data-block="u0"><div class="num" style="color:#ff8a3d">Вводный урок</div><h2>7 слайдов</h2><div class="tiles"><a class="sl" href="slides/deck/l0_cover.jpg" data-i="0"><img src="slides/deck/l0_cover.jpg" loading="lazy" alt=""><span>Обложка: вводный урок</span></a><a class="sl" href="slides/deck/l0_map.jpg" data-i="1"><img src="slides/deck/l0_map.jpg" loading="lazy" alt=""><span>Карта тест-драйва</span></a><a class="sl" href="slides/deck/l0_razbor.jpg" data-i="2"><img src="slides/deck/l0_razbor.jpg" loading="lazy" alt=""><span>Уроки → анкета → разбор → план</span></a><a class="sl" href="slides/deck/l0_timer.jpg" data-i="3"><img src="slides/deck/l0_timer.jpg" loading="lazy" alt=""><span>Таймер 48:00:00</span></a><a class="sl" href="slides/deck/l0_free.jpg" data-i="4"><img src="slides/deck/l0_free.jpg" loading="lazy" alt=""><span>Свобода = право выбора + фото Егора</span></a><a class="sl" href="slides/deck/l0_idea.jpg" data-i="5"><img src="slides/deck/l0_idea.jpg" loading="lazy" alt=""><span>Золотая жила</span></a><a class="sl" href="slides/deck/l0_rules.jpg" data-i="6"><img src="slides/deck/l0_rules.jpg" loading="lazy" alt=""><span>3 правила + «+» в чат</span></a></div></div><div class="card" id="u1" data-block="u1"><div class="num" style="color:#34d399">Урок 1 · Профессия</div><h2>9 слайдов</h2><div class="tiles"><a class="sl" href="slides/deck/l1_cover.jpg" data-i="7"><img src="slides/deck/l1_cover.jpg" loading="lazy" alt=""><span>Обложка урока 1</span></a><a class="sl" href="slides/deck/l1_code.jpg" data-i="8"><img src="slides/deck/l1_code.jpg" loading="lazy" alt=""><span>Игра: код _ _ _ _</span></a><a class="sl" href="slides/deck/l1_story.jpg" data-i="9"><img src="slides/deck/l1_story.jpg" loading="lazy" alt=""><span>История Егора: таймлайн + места под фото</span></a><a class="sl" href="slides/deck/l1_market.jpg" data-i="10"><img src="slides/deck/l1_market.jpg" loading="lazy" alt=""><span>Рынок: места под скрины новостей</span></a><a class="sl" href="slides/deck/l1_two.jpg" data-i="11"><img src="slides/deck/l1_two.jpg" loading="lazy" alt=""><span>Два направления</span></a><a class="sl" href="slides/deck/l1_price.jpg" data-i="12"><img src="slides/deck/l1_price.jpg" loading="lazy" alt=""><span>Прайс по услугам</span></a><a class="sl" href="slides/deck/l1_100k.jpg" data-i="13"><img src="slides/deck/l1_100k.jpg" loading="lazy" alt=""><span>100 тысяч — три способа</span></a><a class="sl" href="slides/deck/l1_digit.jpg" data-i="14"><img src="slides/deck/l1_digit.jpg" loading="lazy" alt=""><span>Первая цифра кода</span></a><a class="sl" href="slides/deck/l1_sum.jpg" data-i="15"><img src="slides/deck/l1_sum.jpg" loading="lazy" alt=""><span>Итог урока 1</span></a></div></div><div class="card" id="u2" data-block="u2"><div class="num" style="color:#3ec7ff">Урок 2 · Чат-боты</div><h2>6 слайдов</h2><div class="tiles"><a class="sl" href="slides/deck/l2_cover.jpg" data-i="16"><img src="slides/deck/l2_cover.jpg" loading="lazy" alt=""><span>Обложка урока 2</span></a><a class="sl" href="slides/deck/l2_bots.jpg" data-i="17"><img src="slides/deck/l2_bots.jpg" loading="lazy" alt=""><span>Примеры ботов + Профессор Квасич</span></a><a class="sl" href="slides/deck/l2_why.jpg" data-i="18"><img src="slides/deck/l2_why.jpg" loading="lazy" alt=""><span>Почему не делают сами</span></a><a class="sl" href="slides/deck/l2_tz.jpg" data-i="19"><img src="slides/deck/l2_tz.jpg" loading="lazy" alt=""><span>ТЗ: бот-визитка за 5 шагов</span></a><a class="sl" href="slides/deck/l2_digit.jpg" data-i="20"><img src="slides/deck/l2_digit.jpg" loading="lazy" alt=""><span>Вторая цифра кода</span></a><a class="sl" href="slides/deck/l2_sum.jpg" data-i="21"><img src="slides/deck/l2_sum.jpg" loading="lazy" alt=""><span>Итог урока 2</span></a></div></div><div class="card" id="u3" data-block="u3"><div class="num" style="color:#8b5cf6">Урок 3 · AI-агенты</div><h2>8 слайдов</h2><div class="tiles"><a class="sl" href="slides/deck/l3_cover.jpg" data-i="22"><img src="slides/deck/l3_cover.jpg" loading="lazy" alt=""><span>Обложка урока 3</span></a><a class="sl" href="slides/deck/l3_vs.jpg" data-i="23"><img src="slides/deck/l3_vs.jpg" loading="lazy" alt=""><span>Нейросеть vs агент</span></a><a class="sl" href="slides/deck/l3_trend.jpg" data-i="24"><img src="slides/deck/l3_trend.jpg" loading="lazy" alt=""><span>Было → стало → почему заплатит</span></a><a class="sl" href="slides/deck/l3_magic.jpg" data-i="25"><img src="slides/deck/l3_magic.jpg" loading="lazy" alt=""><span>Что умеют агенты + Пульс мира</span></a><a class="sl" href="slides/deck/l3_steps.jpg" data-i="26"><img src="slides/deck/l3_steps.jpg" loading="lazy" alt=""><span>Свой агент за 5 шагов</span></a><a class="sl" href="slides/deck/l3_digit.jpg" data-i="27"><img src="slides/deck/l3_digit.jpg" loading="lazy" alt=""><span>Третья цифра кода</span></a><a class="sl" href="slides/deck/l3_anketa.jpg" data-i="28"><img src="slides/deck/l3_anketa.jpg" loading="lazy" alt=""><span>Больше половины пути + анкета</span></a><a class="sl" href="slides/deck/l3_sum.jpg" data-i="29"><img src="slides/deck/l3_sum.jpg" loading="lazy" alt=""><span>Итог урока 3</span></a></div></div><div class="card" id="u4" data-block="u4"><div class="num" style="color:#ff4f8b">Урок 4 · Mini Apps</div><h2>7 слайдов</h2><div class="tiles"><a class="sl" href="slides/deck/l4_cover.jpg" data-i="30"><img src="slides/deck/l4_cover.jpg" loading="lazy" alt=""><span>Обложка урока 4</span></a><a class="sl" href="slides/deck/l4_what.jpg" data-i="31"><img src="slides/deck/l4_what.jpg" loading="lazy" alt=""><span>Приложение внутри Telegram</span></a><a class="sl" href="slides/deck/l4_gallery.jpg" data-i="32"><img src="slides/deck/l4_gallery.jpg" loading="lazy" alt=""><span>Галерея мини-приложений команды</span></a><a class="sl" href="slides/deck/l4_myth.jpg" data-i="33"><img src="slides/deck/l4_myth.jpg" loading="lazy" alt=""><span>Миф: нужно программировать</span></a><a class="sl" href="slides/deck/l4_combo.jpg" data-i="34"><img src="slides/deck/l4_combo.jpg" loading="lazy" alt=""><span>Бот + агент + приложение = продукт</span></a><a class="sl" href="slides/deck/l4_digit.jpg" data-i="35"><img src="slides/deck/l4_digit.jpg" loading="lazy" alt=""><span>Четвёртая цифра — код собран</span></a><a class="sl" href="slides/deck/l4_sum.jpg" data-i="36"><img src="slides/deck/l4_sum.jpg" loading="lazy" alt=""><span>Итог урока 4</span></a></div></div><div class="card" id="u5" data-block="u5"><div class="num" style="color:#facc15">Урок 5 · Клиенты</div><h2>8 слайдов</h2><div class="tiles"><a class="sl" href="slides/deck/l5_cover.jpg" data-i="37"><img src="slides/deck/l5_cover.jpg" loading="lazy" alt=""><span>Обложка урока 5</span></a><a class="sl" href="slides/deck/l5_fear.jpg" data-i="38"><img src="slides/deck/l5_fear.jpg" loading="lazy" alt=""><span>Страх → действие → уверенность (плашка к Егору в кадре)</span></a><a class="sl" href="slides/deck/l5_why.jpg" data-i="39"><img src="slides/deck/l5_why.jpg" loading="lazy" alt=""><span>Почему возьмут тебя</span></a><a class="sl" href="slides/deck/l5_ladder.jpg" data-i="40"><img src="slides/deck/l5_ladder.jpg" loading="lazy" alt=""><span>Лестница способов</span></a><a class="sl" href="slides/deck/l5_msg.jpg" data-i="41"><img src="slides/deck/l5_msg.jpg" loading="lazy" alt=""><span>Шаблон сообщения из 4 частей</span></a><a class="sl" href="slides/deck/l5_price.jpg" data-i="42"><img src="slides/deck/l5_price.jpg" loading="lazy" alt=""><span>Цена и безопасный выход</span></a><a class="sl" href="slides/deck/l5_paths.jpg" data-i="43"><img src="slides/deck/l5_paths.jpg" loading="lazy" alt=""><span>Два пути</span></a><a class="sl" href="slides/deck/l5_final.jpg" data-i="44"><img src="slides/deck/l5_final.jpg" loading="lazy" alt=""><span>Финал: анкета + код → бонус</span></a></div></div><div class="card general" data-block="general"><div class="num">Общее</div><h2>Комментарии к стилю в целом</h2></div><div class="foot"><a href="/course/test_drive_script.html">Сценарий тест-драйва</a> · <a href="/materials.html">Все материалы</a></div></div><script>
+(function () {
+  var PAGE = 'slides_deck';
+  var data = [];
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+  var key = store('cm_key');
+  if (!key) { key = String(Math.random()).slice(2) + String(new Date().getTime()); store('cm_key', key); }
+  var mine = {};
+  try { mine = JSON.parse(store('cm_mine_' + PAGE) || '{}') || {}; } catch (e) { mine = {}; }
+  var nameInp = document.getElementById('name');
+  nameInp.value = store('cm_name') || '';
+  nameInp.onchange = function () { store('cm_name', nameInp.value); };
+
+  function esc(s) { return String(s || '').replace(/[&<>"]/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
+
+  function req(method, url, body, cb) {
+    var x = new XMLHttpRequest();
+    x.open(method, url, true);
+    x.setRequestHeader('Content-Type', 'application/json');
+    x.onreadystatechange = function () {
+      if (x.readyState !== 4) return;
+      var r = null; try { r = JSON.parse(x.responseText); } catch (e) {}
+      cb(x.status === 200 ? null : ((r && r.error) || ('ошибка ' + x.status)), r);
+    };
+    x.send(body ? JSON.stringify(body) : null);
+  }
+
+  function render() {
+    var cards = document.querySelectorAll('.card');
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i], b = card.getAttribute('data-block');
+      var box = card.querySelector('.cm');
+      if (!box) {
+        box = document.createElement('div'); box.className = 'cm';
+        box.innerHTML = '<h3>Комментарии</h3><div class="list"></div>' +
+          '<textarea placeholder="Ваш комментарий к этому блоку…"></textarea>' +
+          '<button>Отправить</button><span class="err"></span>';
+        card.appendChild(box);
+        (function (b, box) {
+          var btn = box.querySelector('button'), ta = box.querySelector('textarea'), err = box.querySelector('.err');
+          btn.onclick = function () {
+            var t = ta.value.replace(/^\s+|\s+$/g, '');
+            if (!t) return;
+            btn.disabled = true; err.innerHTML = '';
+            store('cm_name', nameInp.value);
+            req('POST', '/api/comments', {page: PAGE, block: b, name: nameInp.value, text: t, key: key}, function (e, r) {
+              btn.disabled = false;
+              if (e) { err.innerHTML = esc(e); return; }
+              var last = r[r.length - 1]; if (last) { mine[last.id] = 1; store('cm_mine_' + PAGE, JSON.stringify(mine)); }
+              ta.value = ''; data = r; render();
+            });
+          };
+        })(b, box);
+      }
+      var list = box.querySelector('.list'), h = '';
+      for (var j = 0; j < data.length; j++) {
+        var c = data[j]; if (c.block !== b) continue;
+        h += '<div class="c">' + (mine[c.id] ? '<span class="x" data-id="' + esc(c.id) + '">удалить</span>' : '') +
+          '<div class="m"><b>' + esc(c.name) + '</b> · ' + esc(c.time) + '</div><div class="t">' + esc(c.text) + '</div></div>';
+      }
+      list.innerHTML = h || '<div class="empty">Пока нет комментариев</div>';
+      var xs = list.querySelectorAll('.x');
+      for (var k = 0; k < xs.length; k++) xs[k].onclick = function () {
+        if (!confirm('Удалить комментарий?')) return;
+        req('POST', '/api/comments', {page: PAGE, 'delete': this.getAttribute('data-id'), key: key}, function (e, r) { if (!e) { data = r; render(); } });
+      };
+    }
+  }
+
+  function load() { req('GET', '/api/comments?page=' + PAGE, null, function (e, r) { if (!e && r) { data = r; render(); } }); }
+  render(); load();
+  setInterval(function () {
+    var a = document.activeElement;
+    if (a && a.tagName === 'TEXTAREA' && a.value) return;  // не мешаем, пока человек пишет
+    load();
+  }, 20000);
+})();
+</script><div id="lb"><img><div></div><button class="p">‹</button><button class="nx">›</button><button class="c">×</button></div><script>(function(){var S=[["slides/deck/l0_cover.jpg", "Обложка: вводный урок"], ["slides/deck/l0_map.jpg", "Карта тест-драйва"], ["slides/deck/l0_razbor.jpg", "Уроки → анкета → разбор → план"], ["slides/deck/l0_timer.jpg", "Таймер 48:00:00"], ["slides/deck/l0_free.jpg", "Свобода = право выбора + фото Егора"], ["slides/deck/l0_idea.jpg", "Золотая жила"], ["slides/deck/l0_rules.jpg", "3 правила + «+» в чат"], ["slides/deck/l1_cover.jpg", "Обложка урока 1"], ["slides/deck/l1_code.jpg", "Игра: код _ _ _ _"], ["slides/deck/l1_story.jpg", "История Егора: таймлайн + места под фото"], ["slides/deck/l1_market.jpg", "Рынок: места под скрины новостей"], ["slides/deck/l1_two.jpg", "Два направления"], ["slides/deck/l1_price.jpg", "Прайс по услугам"], ["slides/deck/l1_100k.jpg", "100 тысяч — три способа"], ["slides/deck/l1_digit.jpg", "Первая цифра кода"], ["slides/deck/l1_sum.jpg", "Итог урока 1"], ["slides/deck/l2_cover.jpg", "Обложка урока 2"], ["slides/deck/l2_bots.jpg", "Примеры ботов + Профессор Квасич"], ["slides/deck/l2_why.jpg", "Почему не делают сами"], ["slides/deck/l2_tz.jpg", "ТЗ: бот-визитка за 5 шагов"], ["slides/deck/l2_digit.jpg", "Вторая цифра кода"], ["slides/deck/l2_sum.jpg", "Итог урока 2"], ["slides/deck/l3_cover.jpg", "Обложка урока 3"], ["slides/deck/l3_vs.jpg", "Нейросеть vs агент"], ["slides/deck/l3_trend.jpg", "Было → стало → почему заплатит"], ["slides/deck/l3_magic.jpg", "Что умеют агенты + Пульс мира"], ["slides/deck/l3_steps.jpg", "Свой агент за 5 шагов"], ["slides/deck/l3_digit.jpg", "Третья цифра кода"], ["slides/deck/l3_anketa.jpg", "Больше половины пути + анкета"], ["slides/deck/l3_sum.jpg", "Итог урока 3"], ["slides/deck/l4_cover.jpg", "Обложка урока 4"], ["slides/deck/l4_what.jpg", "Приложение внутри Telegram"], ["slides/deck/l4_gallery.jpg", "Галерея мини-приложений команды"], ["slides/deck/l4_myth.jpg", "Миф: нужно программировать"], ["slides/deck/l4_combo.jpg", "Бот + агент + приложение = продукт"], ["slides/deck/l4_digit.jpg", "Четвёртая цифра — код собран"], ["slides/deck/l4_sum.jpg", "Итог урока 4"], ["slides/deck/l5_cover.jpg", "Обложка урока 5"], ["slides/deck/l5_fear.jpg", "Страх → действие → уверенность (плашка к Егору в кадре)"], ["slides/deck/l5_why.jpg", "Почему возьмут тебя"], ["slides/deck/l5_ladder.jpg", "Лестница способов"], ["slides/deck/l5_msg.jpg", "Шаблон сообщения из 4 частей"], ["slides/deck/l5_price.jpg", "Цена и безопасный выход"], ["slides/deck/l5_paths.jpg", "Два пути"], ["slides/deck/l5_final.jpg", "Финал: анкета + код → бонус"]],i=0,lb=document.getElementById("lb"),im=lb.querySelector("img"),cp=lb.querySelector("div");function show(k){i=(k+S.length)%S.length;im.src=S[i][0];cp.textContent=(i+1)+" / "+S.length+" · "+S[i][1];lb.style.display="flex";}document.querySelectorAll(".sl").forEach(function(a){a.onclick=function(e){e.preventDefault();show(+a.dataset.i);};});lb.querySelector(".p").onclick=function(){show(i-1)};lb.querySelector(".nx").onclick=function(){show(i+1)};lb.querySelector(".c").onclick=function(){lb.style.display="none"};document.addEventListener("keydown",function(e){if(lb.style.display!=="flex")return;if(e.key==="ArrowRight")show(i+1);if(e.key==="ArrowLeft")show(i-1);if(e.key==="Escape")lb.style.display="none";});})();</script></body></html>

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Собери своего бота за час и заработай 10к — программа курса</title>
+<style>
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: "Segoe UI", Roboto, Arial, sans-serif; font-size: 15.5px; line-height: 1.55; color: #1d2433; background: #f4f6fb; }
+.wrap { max-width: 1100px; margin: 0 auto; }
+a { color: inherit; text-decoration: none; }
+
+.hero { background: #14182e; background: linear-gradient(135deg, #14182e 0%, #2b2f6b 55%, #f08c00 150%); color: #fff; padding: 60px 24px 92px; }
+.hero .tag { display: inline-block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; background: rgba(255,255,255,.16); padding: 4px 10px; border-radius: 20px; margin-bottom: 16px; }
+.hero h1 { font-size: 42px; line-height: 1.12; margin: 0 0 14px; }
+.hero p { font-size: 18px; margin: 0; opacity: .93; max-width: 760px; }
+
+.stats { display: flex; flex-wrap: wrap; margin: -58px auto 0; max-width: 1100px; padding: 0 12px; }
+.stat { flex: 1 1 200px; margin: 0 12px 16px; background: #fff; border-radius: 14px; padding: 18px 22px; box-shadow: 0 6px 24px rgba(31,42,90,.10); }
+.stat b { display: block; font-size: 30px; color: #f08c00; line-height: 1.15; }
+.stat span { color: #5c6478; font-size: 14px; }
+
+.nav { position: sticky; top: 0; z-index: 10; background: rgba(244,246,251,.97); border-bottom: 1px solid #e1e5ee; margin-top: 14px; }
+.nav .wrap { display: flex; flex-wrap: wrap; padding: 10px 24px; }
+.nav a { font-size: 14px; color: #3a4257; padding: 6px 12px; margin: 2px 4px 2px 0; border-radius: 8px; white-space: nowrap; }
+.nav a:hover { background: #fff1db; }
+
+section { padding: 38px 24px 8px; }
+h2 { font-size: 28px; margin: 0 0 6px; color: #14182e; }
+.lead { font-size: 16.5px; color: #3a4257; margin: 0 0 22px; max-width: 860px; }
+
+/* money timeline */
+.road { display: flex; flex-wrap: wrap; margin: 0 -8px; }
+.step { flex: 1 1 200px; margin: 0 8px 16px; background: #fff; border-radius: 14px; padding: 16px 18px; border-top: 4px solid #f08c00; box-shadow: 0 2px 10px rgba(31,42,90,.06); }
+.step .when { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #d9480f; }
+.step h4 { margin: 6px 0 4px; font-size: 16px; }
+.step .money { font-size: 20px; font-weight: 700; color: #2b8a3e; }
+.step p { margin: 4px 0 0; font-size: 14px; color: #3a4257; }
+
+/* tracks */
+.track { margin-bottom: 34px; }
+.track-head { display: flex; align-items: center; margin-bottom: 14px; }
+.track-head .ico { flex: none; width: 46px; height: 46px; border-radius: 12px; color: #fff; font-weight: 800; font-size: 20px; text-align: center; line-height: 46px; margin-right: 14px; }
+.track-head h3 { margin: 0; font-size: 22px; color: #14182e; }
+.track-head p { margin: 2px 0 0; color: #5c6478; font-size: 14.5px; }
+.t1 .ico { background: #3b5bdb; } .t2 .ico { background: #7048e8; } .t3 .ico { background: #0ca678; }
+.t1 .mod { border-top-color: #3b5bdb; } .t2 .mod { border-top-color: #7048e8; } .t3 .mod { border-top-color: #0ca678; }
+
+.mods { display: flex; flex-wrap: wrap; margin: 0 -9px; }
+.mod { flex: 1 1 320px; margin: 0 9px 18px; background: #fff; border-radius: 16px; padding: 20px 22px; box-shadow: 0 3px 14px rgba(31,42,90,.07); border-top: 5px solid #3b5bdb; display: flex; flex-direction: column; }
+.mod .kind { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #8a91a5; }
+.mod h4 { margin: 4px 0 4px; font-size: 18.5px; color: #14182e; line-height: 1.3; }
+.mod .hook { margin: 0 0 12px; color: #3a4257; font-size: 14.5px; }
+.lbl { display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #8a91a5; margin: 8px 0 6px; }
+.mod ol { margin: 0 0 12px; padding-left: 20px; font-size: 14.5px; }
+.mod ol li { margin: 4px 0; }
+.sell { background: #fff8e6; border-radius: 10px; padding: 10px 14px; margin: 4px 0 10px; }
+.sell b { display: block; color: #5c3a00; }
+.sell .price { font-size: 19px; font-weight: 700; color: #d9480f; }
+.task { background: #ebfbee; border-radius: 10px; padding: 10px 14px; font-size: 14px; color: #1e5128; margin-bottom: 10px; }
+.task b { color: #2b8a3e; }
+.case { font-size: 13px; color: #6b7389; margin-top: auto; }
+
+/* idea bank */
+.bank { display: flex; flex-wrap: wrap; margin: 0 -6px; }
+.col { flex: 1 1 290px; margin: 0 6px 12px; background: #f7f8fc; border-radius: 12px; padding: 12px 14px; }
+.col h5 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: #1f2a5a; }
+.idea { background: #fff; border-radius: 9px; padding: 8px 11px; margin-bottom: 7px; font-size: 14px; border: 1px solid #e8ebf3; }
+.idea b { color: #14182e; }
+.idea .p { float: right; color: #d9480f; font-weight: 700; font-size: 13px; margin-left: 8px; }
+.idea small { display: block; color: #5c6478; }
+
+/* audience */
+.aud { display: flex; flex-wrap: wrap; margin: 0 -9px; }
+.who { flex: 1 1 240px; margin: 0 9px 18px; background: #fff; border-radius: 14px; padding: 18px 20px; box-shadow: 0 2px 10px rgba(31,42,90,.06); }
+.who h4 { margin: 0 0 6px; font-size: 16.5px; }
+.who p { margin: 0 0 8px; font-size: 14px; color: #3a4257; }
+.who .msg { background: #f4f6fb; border-left: 3px solid #f08c00; border-radius: 6px; padding: 8px 10px; font-size: 14px; font-style: italic; color: #1f2a5a; }
+.core { display: inline-block; background: #ffe8cc; color: #d9480f; font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-left: 6px; vertical-align: 2px; }
+
+.note { background: #fff8e6; border-left: 4px solid #f59f00; border-radius: 8px; padding: 14px 18px; color: #5c4a14; margin: 6px 0 14px; font-size: 14.5px; }
+.note.red { background: #fff5f5; border-left-color: #e03131; color: #7a1f1f; }
+footer { text-align: center; color: #8a91a5; font-size: 13px; padding: 36px 24px 50px; }
+@media (max-width: 640px) { .hero h1 { font-size: 29px; } section { padding: 30px 16px 4px; } }
+@media print { .nav { display: none; } body { background: #fff; } .mod, .stat, .step, .who { box-shadow: none; } .mod { page-break-inside: avoid; } }
+</style>
+</head>
+<body>
+
+<div class="hero"><div class="wrap">
+  <div class="tag">Программа курса · техспец по чат-ботам и AI</div>
+  <h1>Собери своего бота за час и заработай 10 000 ₽</h1>
+  <p>Профессия, которую не заменит AI, потому что ты тот, кто его внедряет. Код пишет нейросеть — ты объясняешь, что нужно, и продаёшь. Первые деньги — уже на первой неделе, не дожидаясь конца обучения. Помогаем на каждом шаге.</p>
+</div></div>
+
+<div class="stats">
+  <div class="stat"><b>1 неделя</b><span>первый заказ — окупаешь обучение</span></div>
+  <div class="stat"><b>40–60 тыс. ₽</b><span>чек за бота с воронкой и интеграциями</span></div>
+  <div class="stat"><b>9 модулей</b><span>3 профессии: боты, агенты, мини-приложения</span></div>
+  <div class="stat"><b>3 банка идей</b><span>готовые шаблоны: бери и продавай</span></div>
+</div>
+
+<div class="nav"><div class="wrap">
+  <a href="#money">Как окупить обучение</a>
+  <a href="#bots">Модули 1–3: Чат-боты</a>
+  <a href="#agents">Модули 4–6: Агенты</a>
+  <a href="#apps">Модули 7–9: Мини-приложения</a>
+  <a href="#audience">Для кого курс</a>
+  <a href="#team">Для команды</a>
+</div></div>
+
+<!-- ================= MONEY ROAD ================= -->
+<section id="money"><div class="wrap">
+  <h2>Как студент окупает обучение</h2>
+  <p class="lead">Каждый навык сразу привязан к тому, как его продать. Ученик ищет клиентов с первой недели, а чек растёт с каждым модулем.</p>
+  <div class="road">
+    <div class="step"><div class="when">Неделя 1</div><h4>Автоответы и простой бот</h4><div class="money">5–15 тыс. ₽</div><p>Первый заказ на бирже или знакомому эксперту.</p></div>
+    <div class="step"><div class="when">Недели 2–3</div><h4>Бот с воронкой, AI и оплатой</h4><div class="money">40–60 тыс. ₽</div><p>Главный продукт курса: прогрев, запись на вебинар, интеграции.</p></div>
+    <div class="step"><div class="when">После сдачи бота</div><h4>Поддержка бота</h4><div class="money">+ каждый месяц</div><p>Клиенту понравилось — он оставляет тебя на сопровождении. Это и есть пассивный доход.</p></div>
+    <div class="step"><div class="when">Недели 4–9</div><h4>Агенты и мини-приложения</h4><div class="money">чек выше</div><p>Те же клиенты покупают у тебя следующий продукт.</p></div>
+  </div>
+</div></section>
+
+<!-- ================= TRACK 1: BOTS ================= -->
+<section id="bots"><div class="wrap">
+  <div class="track t1">
+    <div class="track-head"><div class="ico">1</div><div><h3>Чат-боты — модули 1–3</h3><p>Самое лёгкое и самое востребованное. С этого начинаем зарабатывать.</p></div></div>
+    <div class="mods">
+
+      <div class="mod">
+        <div class="kind">Модуль 1 · База</div>
+        <h4>Первые боты и автоответы</h4>
+        <p class="hook">За первое занятие — свой бот. К концу недели — первый клиент.</p>
+        <span class="lbl">Уроки</span>
+        <ol>
+          <li>Что такое чат-бот и кто за него платит: эксперты, школы, магазины, салоны</li>
+          <li>Бот за час: свой первый бот с меню и кнопками — код пишет нейросеть</li>
+          <li>Автоответы в Telegram, Instagram, VK и WhatsApp: приветствие, ответы на частые вопросы, реакция на ключевые слова</li>
+          <li>Рассылки на всю базу и по расписанию на разных платформах</li>
+          <li>Лид-магнит: бот выдаёт гайд или чек-лист за подписку на канал</li>
+          <li>Где взять первого клиента: биржи, Telegram-чаты, знакомые эксперты + шаблон отклика</li>
+        </ol>
+        <div class="sell"><b>Продаёшь после модуля</b>Автоответы и простой бот<div class="price">5–15 тыс. ₽</div></div>
+        <div class="task"><b>Задание на деньги:</b> 10 откликов на биржах и 3 личных предложения знакомым экспертам с демо твоего бота.</div>
+        <div class="case">На наших примерах: бот конкурса отзывов, бот-каталог только для подписчиков канала</div>
+      </div>
+
+      <div class="mod">
+        <div class="kind">Модуль 2 · Усложнение</div>
+        <h4>Боты с воронкой, AI, оплатой и аналитикой</h4>
+        <p class="hook">То, за что эксперты и школы платят 40–60 тысяч.</p>
+        <span class="lbl">Уроки</span>
+        <ol>
+          <li>Воронка в боте: прогрев по дням, запись на автовебинар, выдача уроков и записей, дожим до покупки</li>
+          <li>Теги и сегменты: кто что нажал, кто дошёл до оплаты — каждому своя цепочка</li>
+          <li>Аналитика: воронка в админке и отчёт владельцу каждое утро</li>
+          <li>AI в боте: отвечает как эксперт, по материалам курса, понимает фото</li>
+          <li>Приём оплаты: Telegram Stars и карты, пробный период, доступ в закрытый канал</li>
+          <li>Интеграции: Google Таблицы, amoCRM, Bitrix24, GetCourse — заявки и оплаты сами попадают куда нужно</li>
+          <li>Поддержка бота как ежемесячный доход: что входит, сколько брать, как предложить</li>
+        </ol>
+        <div class="sell"><b>Продаёшь после модуля</b>Бот с воронкой, AI и интеграциями + поддержка<div class="price">40–60 тыс. ₽</div></div>
+        <div class="task"><b>Задание на деньги:</b> собрать демо-воронку под реального эксперта и показать ему: «вот как будут приходить ваши заявки».</div>
+        <div class="case">На наших примерах: AI-репетитор (оплата в Telegram, воронка в админке), приложение сообщества (пробный период и подписка) — оба с платящими пользователями</div>
+      </div>
+
+      <div class="mod">
+        <div class="kind">Модуль 3 · Банк идей</div>
+        <h4>Шаблоны ботов: бери, копируй, продавай</h4>
+        <p class="hook">Готовые идеи с ценой и описанием, кому предложить.</p>
+        <div class="bank">
+          <div class="col"><h5>Для клиентов</h5>
+            <div class="idea"><span class="p">40–60к</span><b>AI-ассистент эксперта</b><small>Отвечает ученикам 24/7 по материалам</small></div>
+            <div class="idea"><span class="p">40–60к</span><b>Бот платного клуба</b><small>Оплата, доступ в канал, продления</small></div>
+            <div class="idea"><span class="p">40–60к</span><b>AI-продажник</b><small>Консультирует и записывает на звонок</small></div>
+            <div class="idea"><span class="p">15–30к</span><b>Бот-диагностика</b><small>Тест → AI-разбор → запись на консультацию</small></div>
+            <div class="idea"><span class="p">5–15к</span><b>Бот отзывов и розыгрышей</b><small>Скрины, модерация кнопкой</small></div>
+            <div class="idea"><span class="p">5–15к</span><b>Каталог для подписчиков</b><small>Подборки по коду из видео</small></div>
+            <div class="idea"><span class="p">15–30к</span><b>Утренний отчёт владельцу</b><small>Продажи, заявки, реклама за вчера</small></div>
+          </div>
+          <div class="col"><h5>Для себя и своей жизни</h5>
+            <div class="idea"><b>Бот для английского</b><small>Карточки, повторение, разговорная практика с AI</small></div>
+            <div class="idea"><b>Личный бухгалтер</b><small>Пишешь «кофе 300» — он ведёт бюджет</small></div>
+            <div class="idea"><b>Напоминалка и трекер привычек</b><small>Серии дней, утренние мотивации</small></div>
+            <div class="idea"><b>Конспектор</b><small>Присылаешь голосовое — получаешь текст и выжимку</small></div>
+          </div>
+          <div class="col"><h5>Свой продукт</h5>
+            <div class="idea"><b>Платный бот по подписке</b><small>Своя ниша + AI + оплата Stars — как наш AI-репетитор</small></div>
+            <div class="idea"><b>Бот-клуб по интересам</b><small>Ежедневные материалы и закрытый канал</small></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div></section>
+
+<!-- ================= TRACK 2: AGENTS ================= -->
+<section id="agents"><div class="wrap">
+  <div class="track t2">
+    <div class="track-head"><div class="ico">2</div><div><h3>AI-агенты — модули 4–6</h3><p>Программы, которые сами делают работу за бизнес. Продаём как автоматизацию: экономию времени и денег.</p></div></div>
+    <div class="mods">
+
+      <div class="mod">
+        <div class="kind">Модуль 4 · База</div>
+        <h4>Кто такие агенты и первый свой агент</h4>
+        <p class="hook">Бот отвечает, когда его спросят. Агент работает сам.</p>
+        <span class="lbl">Уроки</span>
+        <ol>
+          <li>Агент простыми словами: чем отличается от бота и что умеет — на примере нашей AI-редакции, которая сама ведёт канал каждый день</li>
+          <li>Инструменты: Claude Code и аналоги, что доступно в России и как настроить рабочее место</li>
+          <li>Как ставить агенту задачи, чтобы он делал именно то, что нужно</li>
+          <li>Первый агент: каждое утро присылает сводку в Telegram</li>
+          <li>Контент-агент: сам пишет посты по рубрикам и присылает на одобрение кнопкой</li>
+          <li>Что такое автоматизация бизнеса и как объяснить клиенту выгоду</li>
+        </ol>
+        <div class="sell"><b>Продаёшь после модуля</b>Контент-агент для эксперта<div class="price">15–30 тыс. ₽</div></div>
+        <div class="task"><b>Задание на деньги:</b> запустить контент-агента для 3 экспертов на неделю бесплатно и предложить продолжить за деньги.</div>
+        <div class="case">На наших примерах: AI-редакция канала, контент-генератор постов и сценариев Reels</div>
+      </div>
+
+      <div class="mod">
+        <div class="kind">Модуль 5 · Усложнение</div>
+        <h4>Агенты, которые заменяют сотрудника</h4>
+        <p class="hook">Считаем выгоду в часах и рублях — так агенты и продаются.</p>
+        <span class="lbl">Уроки</span>
+        <ol>
+          <li>Агент с памятью и знаниями клиента: его документы, регламенты, скрипты</li>
+          <li>Агенты по расписанию: аналитика, слежка за конкурентами, отчёты</li>
+          <li>Команда агентов: сборщик → редактор → проверка человеком → публикация</li>
+          <li>Агенты с медиа: озвучка, короткие видео, картинки</li>
+          <li>Подключение к сервисам клиента: таблицы, CRM, маркетплейсы</li>
+          <li>Считаем выгоду: сколько часов и денег экономит агент и почему он дешевле сотрудника — готовый расчёт для КП</li>
+          <li>Запуск, чтобы агент работал 24/7, и ежемесячная поддержка</li>
+        </ol>
+        <div class="sell"><b>Продаёшь после модуля</b>Агент автоматизации бизнеса + поддержка<div class="price">40–60 тыс. ₽</div></div>
+        <div class="task"><b>Задание на деньги:</b> найти в бизнесе знакомого задачу на 5+ часов в неделю и посчитать, сколько он сэкономит с агентом.</div>
+        <div class="case">На наших примерах: рекламный агент, агент-аналитик продаж, видео-агент</div>
+      </div>
+
+      <div class="mod">
+        <div class="kind">Модуль 6 · Банк идей</div>
+        <h4>Шаблоны агентов: что продавать и за сколько</h4>
+        <p class="hook">Готовые агенты с ценой и описанием выгоды для клиента.</p>
+        <div class="bank">
+          <div class="col"><h5>Для клиентов</h5>
+            <div class="idea"><span class="p">15–30к</span><b>Контент-завод</b><small>Посты и сценарии Reels каждый день</small></div>
+            <div class="idea"><span class="p">40–60к</span><b>AI-редакция канала</b><small>Сама находит темы и пишет посты</small></div>
+            <div class="idea"><span class="p">15–30к</span><b>Ответы в комментариях</b><small>Отвечает подписчикам за минуту</small></div>
+            <div class="idea"><span class="p">40–60к</span><b>Агент-аналитик</b><small>Цифры бизнеса каждое утро</small></div>
+            <div class="idea"><span class="p">15–30к</span><b>Слежка за конкурентами</b><small>Цены и изменения — в Telegram</small></div>
+            <div class="idea"><span class="p">40–60к</span><b>Разбор звонков менеджеров</b><small>Ошибки и возражения без прослушки</small></div>
+            <div class="idea"><span class="p">15–30к</span><b>Заявки сами в CRM</b><small>Ни одна заявка не теряется</small></div>
+          </div>
+          <div class="col"><h5>Для себя и своей жизни</h5>
+            <div class="idea"><b>Агент, который ищет тебе заказы</b><small>Мониторит биржи и чаты, присылает подходящие</small></div>
+            <div class="idea"><b>Личная сводка новостей</b><small>Только то, что интересно тебе</small></div>
+            <div class="idea"><b>Помощник с памятью</b><small>Помнит твои дела, планы и договорённости</small></div>
+          </div>
+          <div class="col"><h5>Свой продукт</h5>
+            <div class="idea"><b>Свой автоканал</b><small>Канал ведёт агент, ты зарабатываешь на рекламе</small></div>
+            <div class="idea"><b>Сервис по подписке</b><small>Например, мониторинг цен для магазинов</small></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div></section>
+
+<!-- ================= TRACK 3: MINI APPS ================= -->
+<section id="apps"><div class="wrap">
+  <div class="track t3">
+    <div class="track-head"><div class="ico">3</div><div><h3>Мини-приложения в Telegram — модули 7–9</h3><p>«Своё приложение» — то, что клиенты хотят и за что платят больше всего.</p></div></div>
+    <div class="mods">
+
+      <div class="mod">
+        <div class="kind">Модуль 7 · База</div>
+        <h4>Первое мини-приложение</h4>
+        <p class="hook">Настоящее приложение внутри Telegram — без скачивания и регистрации.</p>
+        <span class="lbl">Уроки</span>
+        <ol>
+          <li>Что такое мини-приложение и почему клиенты хотят «своё приложение»</li>
+          <li>Первое приложение: экран с кнопками, который открывается из бота</li>
+          <li>Главные экраны: главная, профиль, каталог или уроки</li>
+          <li>Вход без регистрации — человек уже в Telegram</li>
+          <li>Публикация: ссылка из бота и бесплатный хостинг</li>
+        </ol>
+        <div class="sell"><b>Продаёшь после модуля</b>Приложение-витрина или каталог<div class="price">20–40 тыс. ₽</div></div>
+        <div class="task"><b>Задание на деньги:</b> сделать витрину для знакомого магазина или блогера и показать её в действии.</div>
+        <div class="case">На наших примерах: fashion-витрина с готовыми образами</div>
+      </div>
+
+      <div class="mod">
+        <div class="kind">Модуль 8 · Усложнение</div>
+        <h4>Приложения с оплатой, AI и личным кабинетом</h4>
+        <p class="hook">От витрины — к продукту, за который платят по подписке.</p>
+        <span class="lbl">Уроки</span>
+        <ol>
+          <li>Своя база данных: прогресс, дневник, избранное</li>
+          <li>Оплата и подписка внутри приложения</li>
+          <li>AI внутри приложения: консультант, разбор фото</li>
+          <li>Календарь, карта, аудио, библиотека</li>
+          <li>Награды и серии дней, чтобы люди возвращались</li>
+          <li>Связка с ботом: напоминания и рассылки</li>
+        </ol>
+        <div class="sell"><b>Продаёшь после модуля</b>Приложение под ключ: кабинет ученика, клуб<div class="price">от 50 тыс. ₽</div></div>
+        <div class="task"><b>Задание на деньги:</b> предложить онлайн-школе личный кабинет ученика вместо обычного чата.</div>
+        <div class="case">На наших примерах: помощник с AI-консультантом и дневником, приложение сообщества с подпиской</div>
+      </div>
+
+      <div class="mod">
+        <div class="kind">Модуль 9 · Банк идей</div>
+        <h4>Шаблоны приложений: для себя, для клиентов, для своего продукта</h4>
+        <p class="hook">Какие приложения делать, для кого и как они улучшают жизнь.</p>
+        <div class="bank">
+          <div class="col"><h5>Для клиентов</h5>
+            <div class="idea"><span class="p">от 50к</span><b>Кабинет ученика</b><small>Уроки, прогресс, оплата</small></div>
+            <div class="idea"><span class="p">от 50к</span><b>Приложение клуба</b><small>Материалы, эфиры, подписка</small></div>
+            <div class="idea"><span class="p">20–40к</span><b>Запись на услуги</b><small>Выбор времени и оплата</small></div>
+            <div class="idea"><span class="p">20–40к</span><b>Витрина магазина</b><small>Каталог и кнопка «Купить»</small></div>
+            <div class="idea"><span class="p">20–40к</span><b>Квиз-диагностика</b><small>Тест → результат → оплата</small></div>
+          </div>
+          <div class="col"><h5>Для себя и своей жизни</h5>
+            <div class="idea"><b>Английский</b><small>Карточки, повторение, награды</small></div>
+            <div class="idea"><b>Трекер привычек</b><small>Спорт, питание, вода, сон</small></div>
+            <div class="idea"><b>Семейный бюджет</b><small>Расходы и цели на одном экране</small></div>
+          </div>
+          <div class="col"><h5>Свой продукт</h5>
+            <div class="idea"><b>Платное приложение в своей нише</b><small>Подписка в Telegram — как наше приложение сообщества</small></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div class="note">Цены в банках идей — ориентир: «40–60 тыс. за бота с интеграциями» — из брифа, остальные суммы — наша оценка. Перед запуском сверить с биржами.</div>
+</div></section>
+
+<!-- ================= AUDIENCE ================= -->
+<section id="audience"><div class="wrap">
+  <h2>Для кого курс</h2>
+  <p class="lead">Общее у всех: пользуются ChatGPT на базовом уровне, про агентов не слышали, даже бота в конструкторе им сделать сложно. Хотят работать удалённо, когда и сколько хотят.</p>
+  <div class="aud">
+    <div class="who"><h4>Женщины 30–50 <span class="core">лучше всех покупают</span></h4>
+      <p>Есть работа или доход, хотят дополнительный и пассивный. Боятся, что их поколение отстаёт от технологий. AI для них — волшебство.</p>
+      <div class="msg">«Освоить AI проще, чем кажется. Догнать молодых — и зарабатывать на этом из любой точки мира».</div></div>
+    <div class="who"><h4>Работают офлайн</h4>
+      <p>Завод, общепит, доход 20–80 тысяч. Хотят во фриланс, но раньше обжигались или их кидали.</p>
+      <div class="msg">«Первые деньги — уже на первой неделе. Мы рядом на каждом шаге».</div></div>
+    <div class="who"><h4>Студенты 18–25</h4>
+      <p>Мало денег, только начинают карьеру. Верят, готовы пробовать.</p>
+      <div class="msg">«Профессия будущего без опыта. Первые заказы — пока учишься».</div></div>
+    <div class="who"><h4>Дизайнеры, копирайтеры, SMM</h4>
+      <p>Прошли курсы, а теперь их профессию вытесняет AI.</p>
+      <div class="msg">«Твою работу забирает AI? Стань тем, кто его внедряет».</div></div>
+  </div>
+</div></section>
+
+<!-- ================= TEAM ================= -->
+<section id="team"><div class="wrap">
+  <h2>Для команды</h2>
+  <div class="note red"><b>Модуль 4, доступ к Claude из России.</b> Anthropic официально не работает в России, а аккаунты, созданные в обход ограничений, блокируют. Учить обходу и обещать его в рекламе рискованно: у учеников будут слетать аккаунты, а это будет выглядеть как обман. Надёжнее показывать в уроке, какие нейросети и инструменты доступны в России официально, и строить на них практику.</div>
+  <div class="note">Банк идей можно отдавать отдельным бонусом. На диагностике его удобно использовать как меню: «вот что ты сможешь продавать после курса».</div>
+  <div class="note">Полная программа со всеми темами (92 урока по 11 блокам) лежит для своих в файле course_program_full.html.</div>
+</div></section>
+
+<footer>Программа курса по брифу Луизы · 9 модулей · 12 октября 2026</footer>
+</body>
+</html>

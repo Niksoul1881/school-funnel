@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Программа обучения: AI-агенты, боты и Mini Apps на реальных кейсах</title>
+<style>
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: "Segoe UI", Roboto, Arial, sans-serif; font-size: 15px; line-height: 1.55; color: #1d2433; background: #f4f6fb; }
+.hero { background: #1f2a5a; background: linear-gradient(135deg, #14182e 0%, #1f2a5a 45%, #f08c00 140%); color: #fff; padding: 56px 24px 88px; }
+.wrap { max-width: 1180px; margin: 0 auto; }
+.hero .tag { display: inline-block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; background: rgba(255,255,255,.16); padding: 4px 10px; border-radius: 20px; margin-bottom: 16px; }
+.hero h1 { font-size: 38px; line-height: 1.15; margin: 0 0 14px; }
+.hero p { font-size: 17px; max-width: 800px; margin: 0; opacity: .92; }
+.stats { display: flex; flex-wrap: wrap; margin: -56px auto 0; max-width: 1180px; padding: 0 12px; }
+.stat { flex: 1 1 200px; margin: 0 12px 16px; background: #fff; border-radius: 14px; padding: 20px 22px; box-shadow: 0 6px 24px rgba(31,42,90,.10); }
+.stat b { display: block; font-size: 34px; color: #f08c00; line-height: 1.1; }
+.stat span { color: #5c6478; font-size: 14px; }
+.nav { position: sticky; top: 0; z-index: 10; background: rgba(244,246,251,.97); border-bottom: 1px solid #e1e5ee; margin-top: 16px; }
+.nav .wrap { display: flex; flex-wrap: wrap; padding: 10px 24px; }
+.nav a { font-size: 14px; color: #3a4257; padding: 6px 12px; margin: 2px 4px 2px 0; border-radius: 8px; white-space: nowrap; text-decoration: none; }
+.nav a:hover { background: #fff1db; color: #1f2a5a; }
+section { padding: 40px 24px 8px; }
+section h2 { font-size: 26px; margin: 0 0 6px; color: #1f2a5a; }
+.lead { font-size: 16px; color: #3a4257; max-width: 880px; margin: 0 0 22px; }
+.note { background: #fff8e6; border-left: 4px solid #f59f00; border-radius: 8px; padding: 14px 18px; color: #5c4a14; margin: 6px 0 14px; }
+.note.green { background: #ebfbee; border-left-color: #2b8a3e; color: #1e5128; }
+
+.tbl { background: #fff; border-radius: 14px; box-shadow: 0 2px 10px rgba(31,42,90,.06); overflow-x: auto; margin-bottom: 14px; }
+table { width: 100%; border-collapse: collapse; min-width: 820px; }
+th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #6b7389; background: #f7f8fc; padding: 12px 16px; border-bottom: 1px solid #e1e5ee; }
+td { padding: 13px 16px; border-bottom: 1px solid #eef0f5; vertical-align: top; font-size: 14px; }
+tr:last-child td { border-bottom: none; }
+td.name { font-weight: 600; color: #1f2a5a; width: 22%; }
+
+.b { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+.b-full { background: #d3f9d8; color: #2b8a3e; }
+.b-part { background: #fff3bf; color: #946200; }
+.b-gap { background: #ffe3e3; color: #c92a2a; }
+.b-new { background: #dbe4ff; color: #364fc7; }
+
+/* block cards */
+.block { background: #fff; border-radius: 18px; box-shadow: 0 4px 18px rgba(31,42,90,.07); margin-bottom: 26px; overflow: hidden; border: 1px solid #e8ebf3; }
+.block .head { padding: 22px 26px 18px; border-bottom: 1px solid #eef0f5; }
+.pill { display: inline-block; background: #fff1db; color: #d9480f; font-weight: 700; font-size: 13px; padding: 4px 12px; border-radius: 20px; border-left: 4px solid #f08c00; margin-right: 8px; }
+.block h3 { font-size: 22px; margin: 12px 0 6px; color: #14182e; }
+.block .goal { margin: 0; color: #3a4257; }
+.block .src { margin: 10px 0 0; font-size: 13px; color: #6b7389; }
+.block .body { display: flex; flex-wrap: wrap; }
+.block .lessons { flex: 1 1 560px; padding: 18px 26px 10px; }
+.block .side { flex: 1 1 300px; padding: 18px 26px 22px; background: #fafbfe; border-left: 1px solid #eef0f5; }
+.lbl { display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #8a91a5; margin: 6px 0 8px; }
+ol.ls { margin: 0 0 12px; padding-left: 22px; }
+ol.ls li { margin: 0 0 10px; }
+ol.ls li b { color: #1f2a5a; }
+.case { display: inline-block; font-size: 11.5px; font-family: Consolas, monospace; background: #eef2ff; color: #364fc7; padding: 1px 7px; border-radius: 5px; margin: 2px 4px 0 0; }
+.plus { display: inline-block; font-size: 11px; font-weight: 700; color: #2b8a3e; background: #d3f9d8; padding: 1px 6px; border-radius: 5px; margin-right: 4px; vertical-align: 1px; }
+.project { background: #f08c00; color: #fff; border-radius: 12px; padding: 14px 16px; margin: 0 0 14px; font-weight: 600; }
+.project small { display: block; font-weight: 400; opacity: .95; margin-top: 6px; font-size: 13.5px; }
+.side ul { margin: 0 0 12px; padding-left: 18px; font-size: 14px; color: #3a4257; }
+.side ul li { margin: 3px 0; }
+.foot { color: #5c6478; font-size: 14px; margin: 4px 0 0; }
+footer { text-align: center; color: #8a91a5; font-size: 13px; padding: 40px 24px 50px; }
+@media (max-width: 640px) { .hero h1 { font-size: 28px; } section { padding: 32px 16px 4px; } .block .side { border-left: none; border-top: 1px solid #eef0f5; } }
+@media print { .nav { display: none; } body { background: #fff; } .block, .tbl, .stat { box-shadow: none; } .block { page-break-inside: avoid; } }
+</style>
+</head>
+<body>
+
+<div class="hero"><div class="wrap">
+  <div class="tag">Программа курса · черновик для упаковки</div>
+  <h1>AI-агенты, Telegram-боты и Mini Apps: от первой строки до продажи клиенту</h1>
+  <p>Программа сверена с курсом muratov-tech.ru (6 блоков) и пересобрана на наших реальных проектах. Каждая тема показана на живом коде, который уже работает у клиентов или приносит деньги.</p>
+</div></div>
+
+<div class="stats">
+  <div class="stat"><b>11</b><span>блоков вместо 6</span></div>
+  <div class="stat"><b>92</b><span>тем-занятий</span></div>
+  <div class="stat"><b>18</b><span>наших кейсов в разборах</span></div>
+  <div class="stat"><b>11</b><span>практических проектов</span></div>
+</div>
+
+<div class="nav"><div class="wrap">
+  <a href="#compare">Сравнение</a>
+  <a href="#b1">1. Старт</a>
+  <a href="#b2">2. Claude Code</a>
+  <a href="#b3">3. Боты</a>
+  <a href="#b4">4. Оплаты</a>
+  <a href="#b5">5. Mini Apps</a>
+  <a href="#b6">6. Агенты + RAG</a>
+  <a href="#b7">7. Контент</a>
+  <a href="#b8">8. Данные</a>
+  <a href="#b9">9. Личная система</a>
+  <a href="#b10">10. Бизнес</a>
+  <a href="#b11">11. Деплой</a>
+  <a href="#todo">Что подготовить</a>
+</div></div>
+
+<!-- ================= COMPARE ================= -->
+<section id="compare"><div class="wrap">
+  <h2>Сравнение: их программа и наши кейсы</h2>
+  <p class="lead">Все 6 их блоков мы закрываем своими проектами. Сильнее всего наш опыт там, где у них тема дана одной строкой: Telegram-боты, оплаты, Mini Apps, контент-агенты и аналитика. Поэтому эти темы выделены у нас в отдельные блоки.</p>
+  <div class="tbl"><table>
+    <tr><th>Их блок</th><th>Покрытие нашими кейсами</th><th>Чем подкрепляем</th><th>Чего у нас нет (надо подготовить)</th><th>У нас</th></tr>
+    <tr><td class="name">1. Быстрый старт + фундамент</td><td><span class="b b-full">Полностью</span></td><td>Чат-бот против агента на наших примерах (бот отзывов против AI-редакции); системные промпты из 5 рабочих ботов; лимиты расхода токенов из AI-редакции</td><td>Сравнение Codex, Cursor, Antigravity — мы работаем в Claude Code, нужен честный обзор</td><td>Блок 1</td></tr>
+    <tr><td class="name">2. Вайб-кодинг: Claude Code + полный цикл</td><td><span class="b b-full">Полностью</span></td><td>Реальные CLAUDE.md из 4 проектов; параллельные субагенты (так анализировали 37 папок); MCP-коннектор к архиву клиента; аудит бота, тесты, миграции</td><td>Claude Design + Pencil; лендинг как отдельный кейс (у нас Mini App-витрина вместо него)</td><td>Блок 2</td></tr>
+    <tr><td class="name">3. AI-агенты + бизнес-системы</td><td><span class="b b-full">Полностью</span></td><td>База знаний из PDF-книг с OCR и картинками; память собеседника; конвейер из 6 агентов в AI-редакции; интеграции WB, Bitrix24, МойСклад; бот-финансист</td><td>Долгосрочная память в стиле Obsidian/Karpathy; Agent Teams; хакатон как формат</td><td>Блоки 6, 7, 8</td></tr>
+    <tr><td class="name">4. Личная агентная система</td><td><span class="b b-part">Частично</span></td><td>Управление агентом с телефона (кнопки модерации в Telegram); Claude Code как движок агента; веб-чат с памятью</td><td>Codex в связке; совместная работа на облачном VPS — у нас свой сервер, нужен урок по VPS</td><td>Блок 9</td></tr>
+    <tr><td class="name">5. Бизнес-анализ + монетизация</td><td><span class="b b-full">Полностью</span></td><td>Путь «заказной проект → тиражирование на 6 клиентов» как живой пример продуктизации; пакеты и цены из нашего каталога</td><td>Готовые шаблоны КП и брифа — оформить из наших сделок</td><td>Блок 10</td></tr>
+    <tr><td class="name">6. Деплой + финал + защита</td><td><span class="b b-full">Полностью</span></td><td>5 вариантов хостинга, которые реально используем; бэкапы, миграции, автоперезапуск; разбор утечек токенов, найденных в наших папках</td><td>Формат peer-review и защиты — продумать регламент</td><td>Блок 11</td></tr>
+    <tr><td class="name">— (у них нет)</td><td><span class="b b-new">Наше преимущество</span></td><td>Telegram-боты как продукт; приём оплат и подписки; Mini Apps; контент- и видео-агенты; парсинг и аналитика — у каждой темы есть работающий кейс</td><td>—</td><td>Блоки 3, 4, 5, 7, 8</td></tr>
+  </table></div>
+  <div class="note green">Позиционирование: у них курс про инструмент (Claude Code), у нас — про продукты, которые продаются. Каждый блок заканчивается тем, что можно показать клиенту и выставить счёт.</div>
+</div></section>
+
+<!-- ================= PROGRAM ================= -->
+<section id="program"><div class="wrap">
+  <h2>Наша программа: 11 блоков</h2>
+  <p class="lead">В каждом блоке — темы занятий (у каждой отмечено, на каком нашем проекте разбираем), практический проект блока и что ученик забирает с собой. <span class="plus">+</span> — тема, которой нет в их программе.</p>
+
+  <!-- B1 -->
+  <div class="block" id="b1">
+    <div class="head"><span class="pill">Блок 1</span>
+      <h3>Быстрый старт + фундамент</h3>
+      <p class="goal">Понять, чем агент отличается от бота, настроить рабочее место и за первое занятие запустить своего AI-бота в Telegram.</p>
+      <p class="src">Соответствует их блоку 1.</p></div>
+    <div class="body">
+      <div class="lessons"><span class="lbl">Темы занятий</span><ol class="ls">
+        <li><b>Чат-бот, AI-бот и AI-агент — в чём разница.</b> Три живых примера: бот конкурса отзывов (кнопки и сценарии), AI-репетитор (отвечает нейросетью), AI-редакция (сама работает по расписанию). <span class="case">bot</span><span class="case">Math</span><span class="case">news_aggregator</span></li>
+        <li><b>Как устроен агент: модель + инструменты + память + цикл.</b> На схеме AI-редакции: сбор → кластеризация → черновик → модерация → публикация.</li>
+        <li><b>Экосистема Claude.</b> Web, Desktop, Claude Code в терминале и расширение для VS Code — когда что использовать.</li>
+        <li><b>Установка и первый запуск.</b> Claude Code CLI + расширение VS Code + Desktop, логин, проверка.</li>
+        <li><b>Первая сессия.</b> Базовые команды, как читать ответы и правки, как откатывать.</li>
+        <li><b>Инструменты разработки: что выбрать.</b> Claude Code, Codex, Cursor, IDE-расширения — сравнение под задачи.</li>
+        <li><b>Промптинг, который работает.</b> Роль, контекст, задача, ограничения + рассуждение по шагам. Разбор реальных системных промптов: «Профессор Квасич», AI-агроном, AI-консультант сообщества. <span class="case">Math</span><span class="case">dacha</span><span class="case">lampada</span></li>
+        <li><b>Промптинг 2.0.</b> Примеры в промпте (few-shot), мета-промпты, системные промпты; как держать единый «голос бренда» в постах. <span class="case">limon_news_bot</span></li>
+        <li><span class="plus">+</span><b>Выбор модели и цена ответа.</b> Groq, DeepSeek, GPT, Claude, локальные модели: скорость, качество, стоимость; цепочка «если одна упала — отвечает другая». <span class="case">Math</span></li>
+        <li><b>Антипаттерны: как не сжечь токены.</b> Дневной лимит вызовов, кэш ответов, «Франкенштейн» из копипаста. <span class="case">news_aggregator</span><span class="case">rep_ml</span></li>
+      </ol></div>
+      <div class="side">
+        <div class="project">Проект блока: AI-бот эксперта в Telegram за 1 занятие<small>Бот с персоной эксперта, который отвечает нейросетью и помнит последние сообщения.</small></div>
+        <span class="lbl">Ученик забирает</span>
+        <ul><li>Настроенное рабочее место</li><li>Шаблон системного промпта «персона эксперта»</li><li>Первого работающего бота</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- B2 -->
+  <div class="block" id="b2">
+    <div class="head"><span class="pill">Блок 2</span>
+      <h3>Вайб-кодинг: Claude Code и полный цикл разработки</h3>
+      <p class="goal">Научиться вести проект с AI так, чтобы он не разваливался через месяц: структура, ТЗ, субагенты, тесты, ревью.</p>
+      <p class="src">Соответствует их блоку 2.</p></div>
+    <div class="body">
+      <div class="lessons"><span class="lbl">Темы занятий</span><ol class="ls">
+        <li><b>Архитектура AI-проекта.</b> Структура папок, разделение ответственности, где хранить секреты. Разбор: как устроен большой клиентский проект с 6 подсистемами. <span class="case">Hogita</span></li>
+        <li><b>CLAUDE.md и конфигурация.</b> Разбор 4 реальных CLAUDE.md: история аварий, открытые вопросы, правила для AI. <span class="case">Hogita</span><span class="case">leezy</span><span class="case">style</span><span class="case">news_aggregator</span></li>
+        <li><b>Продвинутые техники Claude Code.</b> Субагенты, хуки, фоновые задачи, свои команды.</li>
+        <li><b>Субагенты на практике.</b> Как 5 агентов параллельно разобрали 37 папок проектов и собрали каталог для продаж.</li>
+        <li><b>Skills, Rules, Hooks.</b> Переиспользуемые расширения и автоматизация рабочих процессов.</li>
+        <li><b>Desktop и веб-экосистема Claude.</b> Полный гайд.</li>
+        <li><b>MCP, часть 1: подключение готовых серверов.</b></li>
+        <li><b>MCP, часть 2: свой сервер.</b> Разбор нашего коннектора, который даёт Claude доступ к архиву отчётов клиента. <span class="case">Hogita</span></li>
+        <li><b>Как писать ТЗ.</b> Интервью с заказчиком, документ архитектуры, стратегия. Примеры: архитектура IoT-фермы, стратегия AI-редакции. <span class="case">hazelnut-farm</span><span class="case">news_aggregator</span></li>
+        <li><b>Полный цикл: ТЗ → задачи → разработка субагентами → тесты → ревью.</b> Аудит бота перед запуском, 20+ тестов, миграции базы с откатом. <span class="case">Math</span></li>
+        <li><b>Дизайн интерфейсов с AI.</b> Claude Design и макеты; разбор макета витрины стилей. <span class="case">style</span></li>
+      </ol></div>
+      <div class="side">
+        <div class="project">Проект блока: Mini App-витрина от ТЗ до деплоя<small>Вместо их лендинга — сразу продающий формат: витрина внутри Telegram. Основа — наше fashion-приложение.</small></div>
+        <span class="lbl">Ученик забирает</span>
+        <ul><li>Шаблон CLAUDE.md и структуры проекта</li><li>Шаблон ТЗ</li><li>Задеплоенный проект в портфолио</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- B3 -->
+  <div class="block" id="b3">
+    <div class="head"><span class="pill">Блок 3</span> <span class="b b-new">Нет у них</span>
+      <h3>Telegram-боты как продукт</h3>
+      <p class="goal">Собрать бота, которого не стыдно продать: сценарии, админка, рассылки, удержание, аналитика.</p>
+      <p class="src">Новый блок. У них боты — одна строка в проекте блока 1.</p></div>
+    <div class="body">
+      <div class="lessons"><span class="lbl">Темы занятий</span><ol class="ls">
+        <li><span class="plus">+</span><b>Как устроен бот.</b> Обработчики, состояния диалога, промежуточные слои (логирование, проверки). <span class="case">style</span></li>
+        <li><span class="plus">+</span><b>Меню, кнопки, онбординг.</b> Первое впечатление: выбор региона и типа участка, главный экран «Сегодня». <span class="case">dacha</span><span class="case">Math</span></li>
+        <li><span class="plus">+</span><b>Админка внутри бота.</b> Очередь модерации, одобрить/отклонить, уведомления, выдача доступа вручную. <span class="case">bot</span><span class="case">Math</span></li>
+        <li><span class="plus">+</span><b>Обязательная подписка на канал.</b> Бот как инструмент роста канала. <span class="case">style</span></li>
+        <li><span class="plus">+</span><b>Рассылки по расписанию.</b> Утренний совет, личное расписание каждого пользователя, предупреждения, возврат неактивных. <span class="case">dacha</span><span class="case">lampada</span></li>
+        <li><span class="plus">+</span><b>Геймификация.</b> Очки, уровни, серии дней, задача дня, повторение ошибок через время. <span class="case">Math</span></li>
+        <li><span class="plus">+</span><b>Бот понимает фото.</b> Решение задачи по фото, диагностика проблемы по фото. <span class="case">Math</span><span class="case">dacha</span></li>
+        <li><span class="plus">+</span><b>Аналитика бота.</b> Воронка, статистика пользователей, отчёты в Excel. <span class="case">Math</span><span class="case">style</span></li>
+        <li><span class="plus">+</span><b>Обратная связь и поддержка.</b> Отзывы, которые сразу пересылаются админу. <span class="case">dacha</span><span class="case">lampada</span></li>
+      </ol></div>
+      <div class="side">
+        <div class="project">Проект блока: бот эксперта с меню, админкой и рассылками<small>Онбординг, AI-ответы, ежедневная рассылка, панель администратора со статистикой.</small></div>
+        <span class="lbl">Ученик забирает</span>
+        <ul><li>Каркас бота, который переиспользуется в любой нише</li><li>Чек-лист «бот готов к продаже»</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- B4 -->
+  <div class="block" id="b4">
+    <div class="head"><span class="pill">Блок 4</span> <span class="b b-new">Нет у них</span>
+      <h3>Деньги в Telegram: оплаты и подписки</h3>
+      <p class="goal">Научить бота зарабатывать: приём оплаты, подписка, пробный период, возвраты — на двух проектах с реальными платящими пользователями.</p>
+      <p class="src">Новый блок. Наш главный козырь для экспертов и школ.</p></div>
+    <div class="body">
+      <div class="lessons"><span class="lbl">Темы занятий</span><ol class="ls">
+        <li><span class="plus">+</span><b>Способы приёма оплаты.</b> Telegram Stars против платёжных систем (Robokassa, ЮKassa): комиссии, плюсы, ограничения. Почему один проект ушёл с ЮKassa на Stars. <span class="case">Math</span><span class="case">lampada</span></li>
+        <li><span class="plus">+</span><b>Telegram Stars от начала до конца.</b> Счёт, подтверждение, выдача доступа, возврат. <span class="case">Math</span></li>
+        <li><span class="plus">+</span><b>Подписка и пробный период.</b> «3 дня бесплатно», лимиты бесплатного режима, пейволл. <span class="case">lampada</span><span class="case">Math</span></li>
+        <li><span class="plus">+</span><b>Обязательные команды для оплаты.</b> Условия, поддержка по платежам — что требует Telegram.</li>
+        <li><span class="plus">+</span><b>Ошибки, которые стоят денег.</b> Разбор реальных багов из аудита: оплата и начисления; противоречие «навсегда» и «30 дней» в тексте пейволла. <span class="case">Math</span><span class="case">lampada</span></li>
+        <li><span class="plus">+</span><b>Метрики платного бота.</b> Конверсия в оплату, продления, воронка платных. <span class="case">Math</span></li>
+        <li><span class="plus">+</span><b>Доступ в закрытый канал.</b> Бот впускает после оплаты и убирает при неуплате.</li>
+      </ol></div>
+      <div class="side">
+        <div class="project">Проект блока: платный клуб в Telegram с пробным периодом<small>Оплата, выдача доступа, напоминания о продлении, статистика платящих.</small></div>
+        <span class="lbl">Ученик забирает</span>
+        <ul><li>Модуль оплаты, который вставляется в любой бот</li><li>Чек-лист проверки платёжного сценария</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- B5 -->
+  <div class="block" id="b5">
+    <div class="head"><span class="pill">Блок 5</span> <span class="b b-new">Нет у них</span>
+      <h3>Telegram Mini Apps</h3>
+      <p class="goal">Сделать полноценное приложение внутри Telegram: экраны, вход без регистрации, серверная часть, деплой.</p>
+      <p class="src">Новый блок. У нас 3 работающих Mini App.</p></div>
+    <div class="body">
+      <div class="lessons"><span class="lbl">Темы занятий</span><ol class="ls">
+        <li><span class="plus">+</span><b>Что такое Mini App и когда он лучше бота.</b> Разбор трёх наших приложений. <span class="case">dacha</span><span class="case">lampada</span><span class="case">style</span></li>
+        <li><span class="plus">+</span><b>Фронтенд.</b> React + Vite + Tailwind, SDK Telegram, тема и кнопки Telegram.</li>
+        <li><span class="plus">+</span><b>Вход без регистрации.</b> Как приложение узнаёт пользователя Telegram и проверяет, что это он.</li>
+        <li><span class="plus">+</span><b>Серверная часть.</b> FastAPI + база, API для экранов. <span class="case">style</span></li>
+        <li><span class="plus">+</span><b>Экраны, которые удерживают.</b> «Сегодня», дневник, календарь, достижения, итоги сезона. <span class="case">dacha</span></li>
+        <li><span class="plus">+</span><b>Контент и библиотека.</b> Тексты с закладками и прогрессом чтения, аудио, карта. <span class="case">lampada</span></li>
+        <li><span class="plus">+</span><b>Оплата внутри приложения.</b> <span class="case">lampada</span></li>
+        <li><span class="plus">+</span><b>Аналитика поведения.</b> Какие экраны открывают, где уходят. <span class="case">style</span></li>
+        <li><span class="plus">+</span><b>Деплой.</b> Фронт на Vercel, сервер на Render или своём сервере, подключение к боту.</li>
+      </ol></div>
+      <div class="side">
+        <div class="project">Проект блока: личный кабинет ученика<small>Задание дня, уроки, прогресс, AI-чат по материалам и оплата — внутри Telegram.</small></div>
+        <span class="lbl">Ученик забирает</span>
+        <ul><li>Шаблон Mini App с готовыми экранами</li><li>Связку «бот + приложение»</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- B6 -->
+  <div class="block" id="b6">
+    <div class="head"><span class="pill">Блок 6</span>
+      <h3>AI-агенты, база знаний и готовые бизнес-системы</h3>
+      <p class="goal">Построить агента, который знает материалы клиента, помнит собеседника, работает с внешними сервисами и в команде с другими агентами.</p>
+      <p class="src">Соответствует их блоку 3, расширен.</p></div>
+    <div class="body">
+      <div class="lessons"><span class="lbl">Темы занятий</span><ol class="ls">
+        <li><b>Архитектура агента: инструкции + инструменты.</b> <span class="case">news_aggregator</span></li>
+        <li><b>Продвинутые инструкции.</b> Как агент выбирает действие; редакционный фильтр нежелательных тем. <span class="case">news_aggregator</span></li>
+        <li><b>Память агента.</b> Короткая (последние сообщения) и долгая (о пользователе): память собеседника, поиск по прошлым диалогам. <span class="case">agro</span><span class="case">claude-terminal</span></li>
+        <li><b>Долгосрочная память в заметках</b> (подход Obsidian / Karpathy).</li>
+        <li><b>База знаний из документов (RAG).</b> PDF, сканы с распознаванием текста, картинки со страниц; деление на фрагменты, автокатегории, поиск по смыслу, повторная сортировка, кэш, ссылка на источник. <span class="case">agro</span><span class="case">rep_ml</span></li>
+        <li><b>Мультиагентные системы.</b> Конвейер из 6 шагов в AI-редакции; параллельные агенты; Agent Teams. <span class="case">news_aggregator</span></li>
+        <li><b>Интеграции с внешними сервисами.</b> Webhook и REST: Wildberries, Bitrix24, МойСклад, Google Таблицы, поиск новостей. <span class="case">Hogita</span><span class="case">limon_news_bot</span></li>
+        <li><b>Готовые бизнес-системы, сборка вживую:</b> аналитика (данные WB → база → таблица), бот-ассистент, агент обработки заявок, AI-финансист (бот учёта оплат). <span class="case">good_girl</span><span class="case">leezy</span></li>
+      </ol></div>
+      <div class="side">
+        <div class="project">Проект блока: мультиагентная система из 3–5 агентов<small>Например, AI-редакция: сборщик → аналитик → редактор → модератор (человек) → публикатор.</small></div>
+        <div class="project" style="background:#748ffc">Хакатон<small>Команды за день собирают систему под задачу реального бизнеса.</small></div>
+        <span class="lbl">Ученик забирает</span>
+        <ul><li>Модуль базы знаний для любого бота</li><li>Шаблон мультиагентного конвейера</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- B7 -->
+  <div class="block" id="b7">
+    <div class="head"><span class="pill">Блок 7</span> <span class="b b-new">Нет у них</span>
+      <h3>Контент- и медиа-агенты</h3>
+      <p class="goal">Агенты, которые сами производят контент: посты, видео, озвучку, картинки, ответы в комментариях.</p>
+      <p class="src">Новый блок. Самый понятный экспертам результат.</p></div>
+    <div class="body">
+      <div class="lessons"><span class="lbl">Темы занятий</span><ol class="ls">
+        <li><span class="plus">+</span><b>Контент-завод.</b> Рубрики, ротация, посты для Telegram, VK и Instagram, сценарии Reels. <span class="case">dacha</span><span class="case">lampada</span></li>
+        <li><span class="plus">+</span><b>Очередь публикаций на месяцы вперёд.</b> Автопостинг канала и копирование в VK. <span class="case">Math</span></li>
+        <li><span class="plus">+</span><b>Новостной агент.</b> Поиск, оценка важности по правилам, пост в стиле бренда, защита от дублей. <span class="case">limon_news_bot</span></li>
+        <li><span class="plus">+</span><b>Модерация человеком.</b> Черновик с кнопками «Опубликовать / В слот / Править / Пропустить». <span class="case">news_aggregator</span></li>
+        <li><span class="plus">+</span><b>Видео без монтажёра.</b> Сценарий от AI, озвучка, субтитры-караоке, сборка ролика, обложка. <span class="case">news_aggregator</span></li>
+        <li><span class="plus">+</span><b>Озвучка голосом.</b> Аудиоверсии материалов. <span class="case">lampada</span></li>
+        <li><span class="plus">+</span><b>Автозагрузка на YouTube.</b> Расписание, плейлисты, названия и теги. <span class="case">auto_pab</span></li>
+        <li><span class="plus">+</span><b>Картинки и фото с AI.</b> Фото товара на модели, удаление фона, улучшение качества, контроль качества. <span class="case">wb-photo-generator</span><span class="case">Hogita</span></li>
+        <li><span class="plus">+</span><b>Ответы в комментариях.</b> Строго по теме, с лимитами. <span class="case">news_aggregator</span></li>
+      </ol></div>
+      <div class="side">
+        <div class="project">Проект блока: автоканал с видео<small>Агент находит темы, пишет посты, делает короткие видео и публикует после одобрения.</small></div>
+        <span class="lbl">Ученик забирает</span>
+        <ul><li>Контент-завод под свою нишу</li><li>Видеоконвейер</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- B8 -->
+  <div class="block" id="b8">
+    <div class="head"><span class="pill">Блок 8</span> <span class="b b-new">Нет у них</span>
+      <h3>Данные, парсинг и аналитика</h3>
+      <p class="goal">Собирать данные откуда угодно и превращать их в отчёты, дашборды и подсказки для бизнеса.</p>
+      <p class="src">Новый блок. Наш опыт с 8 клиентами на аналитике.</p></div>
+    <div class="body">
+      <div class="lessons"><span class="lbl">Темы занятий</span><ol class="ls">
+        <li><span class="plus">+</span><b>Парсинг сайтов.</b> Браузер-робот, обход защиты от ботов, регионы, прокси, параллельная работа. <span class="case">price_parser</span><span class="case">west_urban</span></li>
+        <li><span class="plus">+</span><b>Источники без парсинга.</b> Официальные API, RSS, публичные Telegram-каналы, открытые данные (ЦБ, биржа). <span class="case">news_aggregator</span></li>
+        <li><span class="plus">+</span><b>Регулярная выгрузка в базу.</b> Набор синхронизаций и мастер-скрипт, ночной и ежечасный прогон. <span class="case">good_girl</span><span class="case">Hogita</span></li>
+        <li><span class="plus">+</span><b>Отчёты в Google Таблицах.</b> Автоматический дашборд с карточками, графиками и теплокартой. <span class="case">good_girl</span></li>
+        <li><span class="plus">+</span><b>Веб-дашборд с логинами.</b> Роли: менеджер видит только своё. <span class="case">Hogita</span><span class="case">leezy</span></li>
+        <li><span class="plus">+</span><b>Юнит-экономика и план продаж.</b> Сверка с официальным отчётом до копейки. <span class="case">leezy</span></li>
+        <li><span class="plus">+</span><b>Исследование рынка.</b> Тысячи товаров → сегменты, цены, маржа, слабые места конкурентов. <span class="case">amazon-market-research</span></li>
+        <li><span class="plus">+</span><b>Основы ML для бизнеса.</b> Рекомендации по похожести картинок, прогноз спроса. <span class="case">style</span><span class="case">bitok</span></li>
+      </ol></div>
+      <div class="side">
+        <div class="project">Проект блока: мониторинг конкурентов + дашборд<small>Парсер цен → база → отчёт в таблице и алерты в Telegram.</small></div>
+        <span class="lbl">Ученик забирает</span>
+        <ul><li>Шаблон «синк → база → отчёт»</li><li>Парсер под любые сайты</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- B9 -->
+  <div class="block" id="b9">
+    <div class="head"><span class="pill">Блок 9</span>
+      <h3>Личная агентная система: управление агентами с телефона</h3>
+      <p class="goal">Собрать свою систему агентов, которой можно управлять из Telegram и через веб-интерфейс.</p>
+      <p class="src">Соответствует их блоку 4.</p></div>
+    <div class="body">
+      <div class="lessons"><span class="lbl">Темы занятий</span><ol class="ls">
+        <li><b>Агентная система на базе Claude Code (+ Codex).</b> Claude Code как «мозг» агента вместо прямых запросов к нейросети. <span class="case">news_aggregator</span><span class="case">leezy</span></li>
+        <li><b>Своя машина или облачный VPS.</b> Сервер с автоперезапуском и планировщиком против облака для совместной работы. <span class="case">Math</span></li>
+        <li><b>Управление с телефона через Telegram.</b> Команды статуса и очереди, кнопки одобрения, доступ только владельцу. <span class="case">news_aggregator</span></li>
+        <li><b>Веб-интерфейс для агентов.</b> Чат с памятью, история, экспорт, трекер задач. <span class="case">claude-terminal</span></li>
+        <li><span class="plus">+</span><b>Вопросы к своим данным.</b> Кнопка «Спросить Claude» прямо в дашборде клиента. <span class="case">leezy</span></li>
+      </ol></div>
+      <div class="side">
+        <div class="project">Проект блока: персональная агентная система<small>Агенты на своём сервере, управление из Telegram и через веб-интерфейс.</small></div>
+        <span class="lbl">Ученик забирает</span>
+        <ul><li>Свою работающую систему агентов</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- B10 -->
+  <div class="block" id="b10">
+    <div class="head"><span class="pill">Блок 10</span>
+      <h3>Бизнес-анализ, монетизация, продуктизация</h3>
+      <p class="goal">Находить задачи под AI в бизнесе клиента, упаковывать решение и продавать — на примере того, как мы сами превратили заказной проект в тиражируемый продукт.</p>
+      <p class="src">Соответствует их блоку 5.</p></div>
+    <div class="body">
+      <div class="lessons"><span class="lbl">Темы занятий</span><ol class="ls">
+        <li><b>Аудит бизнес-процессов.</b> Карта процессов, что автоматизируется, шаблон аудита. Разбор: процессы продавца на маркетплейсе. <span class="case">Hogita</span></li>
+        <li><b>Автоматизации без визуальных конструкторов.</b> Почему код, а не конструктор: что даёт клиенту.</li>
+        <li><b>Модели монетизации: фриланс, агентство, SaaS.</b> Разовый проект, абонентка, подписка в боте. <span class="case">Math</span><span class="case">lampada</span></li>
+        <li><span class="plus">+</span><b>Тиражирование: из одного клиента — продукт.</b> Один заказной проект → копия под второго клиента → шаблон для 6 клиентов. <span class="case">Hogita</span><span class="case">leezy</span><span class="case">good_girl</span></li>
+        <li><b>Карта продуктизации.</b> От задачи к продукту и пакетам: «Старт», «AI-ассистент», «под ключ», «агент».</li>
+        <li><b>Примеры решений типовых задач.</b> Каталог из 31 продукта как готовое меню для клиента.</li>
+        <li><b>КП и бриф.</b> Готовые шаблоны под AI-проект.</li>
+        <li><span class="plus">+</span><b>Упаковка портфолио.</b> Как показывать клиентские проекты без брендов и что писать в карточке кейса.</li>
+      </ol></div>
+      <div class="side">
+        <div class="project">Проект блока: аудит + КП для реального бизнеса<small>Карта процессов, 3 точки автоматизации, коммерческое предложение с пакетами.</small></div>
+        <span class="lbl">Ученик забирает</span>
+        <ul><li>Шаблоны аудита, брифа и КП</li><li>Свою линейку пакетов</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- B11 -->
+  <div class="block" id="b11">
+    <div class="head"><span class="pill">Блок 11</span>
+      <h3>Деплой, надёжность, безопасность + финальный проект</h3>
+      <p class="goal">Запустить проект так, чтобы он работал без присмотра, не терял данные и не сливал ключи, — и защитить финальный проект.</p>
+      <p class="src">Соответствует их блоку 6, расширен.</p></div>
+    <div class="body">
+      <div class="lessons"><span class="lbl">Темы занятий</span><ol class="ls">
+        <li><b>GitHub для совместной работы.</b> Версии, ветки, автовыкладка каждые 5 минут. <span class="case">leezy</span></li>
+        <li><b>Где хостить.</b> Свой сервер с автоперезапуском, Render, Vercel, Google Cloud Run, Cloudflare Pages, контейнеры — что выбрать под задачу. <span class="case">Math</span><span class="case">dacha</span><span class="case">Hogita</span><span class="case">leezy</span></li>
+        <li><span class="plus">+</span><b>База данных без потерь.</b> Миграции с откатом, ежедневные бэкапы с хранением 14 дней. <span class="case">Math</span><span class="case">news_aggregator</span></li>
+        <li><b>Мониторинг, логи, обновления.</b> Ротация логов, алерты, перезапуск при падении. <span class="case">news_aggregator</span></li>
+        <li><b>Безопасность при вайб-кодинге.</b> Разбор реальных ошибок: токены в коде, ключи в логах, пароль «123», настоящий ключ в шаблоне конфига — найдены при анализе наших 37 папок. Как вынести всё в .env и перевыпустить. </li>
+        <li><b>Сколько стоит AI-проект на токенах.</b> Расчёт, лимиты, дешёвые модели для простых задач. <span class="case">Math</span><span class="case">news_aggregator</span></li>
+        <li><span class="plus">+</span><b>Аудит перед запуском.</b> Чек-лист: оплаты, начисления, крайние случаи. <span class="case">Math</span></li>
+        <li><b>Финальный проект.</b> Выбор, планирование, реализация с ментором.</li>
+      </ol></div>
+      <div class="side">
+        <div class="project">Защита проектов + взаимное ревью<small>Каждый показывает рабочий продукт и проверяет код другого по чек-листу.</small></div>
+        <span class="lbl">Ученик забирает</span>
+        <ul><li>Проект в продакшене</li><li>Чек-лист безопасности и запуска</li><li>Кейс для портфолио</li></ul>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ================= TODO ================= -->
+<section id="todo"><div class="wrap">
+  <h2>Что подготовить, чтобы закрыть программу полностью</h2>
+  <p class="lead">Эти темы есть у них, а готового кейса у нас нет. Их нужно отснять или собрать отдельно.</p>
+  <div class="tbl"><table>
+    <tr><th>Тема</th><th>Блок</th><th>Что сделать</th></tr>
+    <tr><td class="name">Codex, Cursor, Antigravity</td><td>1, 9</td><td>Пройти один и тот же мини-проект в каждом инструменте и снять честное сравнение</td></tr>
+    <tr><td class="name">Claude Design + макеты</td><td>2</td><td>Сделать макет Mini App-витрины и показать путь «макет → код»</td></tr>
+    <tr><td class="name">Долгосрочная память в заметках</td><td>6</td><td>Добавить в веб-чат с памятью режим «заметки в Markdown» и показать на нём</td></tr>
+    <tr><td class="name">Agent Teams</td><td>6</td><td>Разобрать на примере параллельного анализа проектов</td></tr>
+    <tr><td class="name">Облачный VPS для команды</td><td>9, 11</td><td>Поднять одного агента на VPS и показать перенос со своего сервера</td></tr>
+    <tr><td class="name">Шаблоны КП и брифа</td><td>10</td><td>Оформить из реальных сделок: бриф на бота, КП с пакетами</td></tr>
+    <tr><td class="name">Регламент хакатона и защиты</td><td>6, 11</td><td>Критерии оценки, чек-лист ревью, формат демо</td></tr>
+    <tr><td class="name">Интеграции GetCourse, Prodamus, amoCRM</td><td>4, 6</td><td>Сделать хотя бы одну — эксперты и школы спросят первым делом</td></tr>
+  </table></div>
+  <p class="foot">Длительность, формат занятий и цену курса не сверял: на скриншотах их нет, а сайт muratov-tech.ru я не открывал.</p>
+</div></section>
+
+<footer>Программа собрана по скриншотам программы muratov-tech.ru и анализу 37 наших проектов · 12 октября 2026</footer>
+</body>
+</html>

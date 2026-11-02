@@ -1,0 +1,200 @@
+/* Светлая дружелюбная тема: структура VS Code, но не «страшный IDE». */
+body.theme-light{
+  --vsc-bg:#f7f4ef; --vsc-side:#ffffff; --vsc-activity:#fbf8f3; --vsc-title:#ffffff;
+  --vsc-border:#e9e1d6; --vsc-border2:#ded5c8; --vsc-text:#2f2b27; --vsc-muted:#7c746a;
+  --vsc-blue:#ff5c7a; --vsc-blue2:#ff5c7a; --vsc-hover:#f6f0e8; --vsc-active:#fff0f3;
+  --vsc-input:#ffffff; --vsc-badge:#f3ece3; --vsc-green:#2f9e7a; --vsc-yellow:#c98a00; --vsc-red:#d9534f;
+  --ink:#2f2b27; --muted:#7c746a; --dim:#a69b8d; --line:#e9e1d6; --line2:#ded5c8;
+  --acc:#ff5c7a; --acc2:#7c5cff; --gold:#c98a00; --green:#2f9e7a; --red:#d9534f; --blue:#4f7cff;
+  background:#f7f4ef!important;color:#2f2b27!important;
+}
+body.theme-light .vsc{background:#f7f4ef}
+body.theme-light .vsc-titlebar{background:#ffffff;border-bottom:1px solid #e9e1d6;color:#6b6258}
+body.theme-light .vsc-menu{gap:0}
+body.theme-light .vsc-menu span:not(.vsc-logo){display:none}
+body.theme-light .vsc-logo{background:linear-gradient(135deg,#ff5c7a,#7c5cff)}
+body.theme-light .vsc-title{color:#6b6258;padding:0 120px}
+body.theme-light .vsc-win span{color:#8a7f72}
+body.theme-light .vsc-win span:hover{background:#f3ece3;color:#2f2b27}
+body.theme-light .vsc-win span.close:hover{background:#ff5c7a;color:#fff}
+body.theme-light .vsc-activity{background:#fbf8f3;border-right:1px solid #e9e1d6}
+body.theme-light .vsc-act{color:#a69b8d}
+body.theme-light .vsc-act:hover{color:#ff5c7a;background:#fff5f7}
+body.theme-light .vsc-act.active{color:#ff5c7a;border-left-color:#ff5c7a;background:#fff0f3}
+body.theme-light .vsc-sidebar{background:#ffffff;border-right:1px solid #e9e1d6}
+body.theme-light .vsc-side-head{color:#8a7f72}
+body.theme-light .vsc-side-head .actions{color:#a69b8d}
+body.theme-light .vsc-side-title{color:#a69b8d}
+body.theme-light .tree-row{color:#4a433b}
+body.theme-light .tree-row:hover{background:#f6f0e8}
+body.theme-light .tree-row.active{background:#fff0f3;color:#d94b63;box-shadow:inset 2px 0 0 #ff5c7a}
+body.theme-light .tree-row .dim,body.theme-light .tree-row .badge-n{color:#a69b8d}
+body.theme-light .tree-row .badge-n{background:#f3ece3}
+body.theme-light .vsc-side-empty{color:#a69b8d}
+body.theme-light .vsc-editor-area{background:#f7f4ef}
+body.theme-light .vsc-tabs{background:#f1ece4;border-bottom:1px solid #e9e1d6}
+body.theme-light .vsc-tab{background:#f6f1ea;color:#8a7f72;border-right:1px solid #e9e1d6}
+body.theme-light .vsc-tab:hover{background:#efe8de}
+body.theme-light .vsc-tab.active{background:#ffffff;color:#2f2b27;border-top-color:#ff5c7a}
+body.theme-light .vsc-breadcrumbs{background:#f7f4ef;color:#a69b8d;border-bottom:1px solid #eee7dc}
+body.theme-light .vsc-breadcrumbs b{color:#4a433b}
+body.theme-light .vsc-content{background:#f7f4ef}
+body.theme-light .vsc-panel{background:#ffffff;border-top:1px solid #e9e1d6}
+body.theme-light .vsc-panel-head{color:#a69b8d}
+body.theme-light .vsc-panel-head .on{color:#2f2b27;border-bottom-color:#ff5c7a}
+body.theme-light .vsc-panel-body{background:#ffffff;color:#4a433b}
+body.theme-light .term-time{color:#2f9e7a}.theme-light .term-prompt{color:#ff5c7a}
+body.theme-light .term-dim{color:#a69b8d}.theme-light .term-ok{color:#2f9e7a}.theme-light .term-warn{color:#c98a00}.theme-light .term-err{color:#d9534f}
+body.theme-light .vsc-statusbar{background:#ffffff;border-top:1px solid #e9e1d6;color:#8a7f72}
+body.theme-light .vsc-statusbar .status-dot{background:#2f9e7a}
+body.theme-light .vsc-statusbar svg{stroke:#8a7f72}
+body.theme-light .vsc-content .page-head h1,body.theme-light .vsc-content h1,body.theme-light .vsc-content h2,body.theme-light .vsc-content h3{color:#2f2b27}
+body.theme-light .page-head .sub,body.theme-light .sub{color:#7c746a}
+body.theme-light .eyebrow{color:#b06a7a}
+body.theme-light .card{background:#ffffff!important;border:1px solid #eee7dc!important;box-shadow:0 8px 24px rgba(90,70,50,.06)!important;border-radius:12px!important}
+body.theme-light .card.hl{border-color:#ffc2ce!important;box-shadow:0 10px 28px rgba(255,92,122,.10)!important}
+body.theme-light .card p{color:#7c746a}
+body.theme-light .card .tiny{color:#a69b8d}
+body.theme-light .hr{background:#eee7dc}
+body.theme-light .btn{background:#ff5c7a!important;border-color:#ff5c7a!important;border-radius:9px!important;box-shadow:0 6px 16px rgba(255,92,122,.22)!important}
+body.theme-light .btn:hover{background:#ff4668!important;border-color:#ff4668!important}
+body.theme-light .btn.ghost{background:#ffffff!important;border-color:#e4dbcf!important;color:#5b534b!important;box-shadow:none!important}
+body.theme-light .btn.ghost:hover{background:#fbf7f1!important;border-color:#d9cfc1!important}
+body.theme-light .btn.danger{background:#fff3f3!important;border-color:#f3c9c9!important;color:#c94a4a!important}
+body.theme-light .badge{background:#f6f0e7!important;border-color:#e7ddd1!important;color:#6b6258!important;border-radius:6px!important}
+body.theme-light .badge.pink{background:#fff0f3!important;border-color:#ffd0da!important;color:#d94b63!important}
+body.theme-light .badge.violet{background:#f3f0ff!important;border-color:#ddd5ff!important;color:#6a55d9!important}
+body.theme-light .badge.blue{background:#eef4ff!important;border-color:#d6e2ff!important;color:#4f7cff!important}
+body.theme-light .badge.green{background:#eaf8f2!important;border-color:#c9eddd!important;color:#2f8f6d!important}
+body.theme-light .badge.gold{background:#fff8e6!important;border-color:#f3dfae!important;color:#b07800!important}
+body.theme-light .badge.red{background:#fff0f0!important;border-color:#f5cccc!important;color:#c94a4a!important}
+body.theme-light .ico{background:#fff5f7!important;border-color:#f6dbe2!important}
+body.theme-light .ico svg{stroke:#ff5c7a}
+body.theme-light .progress{background:#eee7dc!important}
+body.theme-light .progress i{background:linear-gradient(90deg,#ff5c7a,#7c5cff)!important}
+body.theme-light .stat .v,body.theme-light .stat .l,body.theme-light .stat .s{color:inherit}
+body.theme-light .stat .l{color:#a69b8d!important}
+body.theme-light .stat .s{color:#8a7f72!important}
+body.theme-light .field label{color:#5b534b!important}
+body.theme-light .field input,body.theme-light .field textarea,body.theme-light .field select{background:#ffffff!important;border-color:#e4dbcf!important;color:#2f2b27!important;border-radius:8px!important}
+body.theme-light .field input:focus,body.theme-light .field textarea:focus,body.theme-light .field select:focus{border-color:#ff5c7a!important;box-shadow:0 0 0 3px rgba(255,92,122,.12)!important}
+body.theme-light .field .hint{color:#a69b8d!important}
+body.theme-light .tabs{background:#f6f0e7!important;border-color:#e7ddd1!important;border-radius:9px!important}
+body.theme-light .tabs button{color:#8a7f72!important}
+body.theme-light .tabs button.on{background:#ffffff!important;color:#2f2b27!important;border-bottom-color:#ff5c7a!important}
+body.theme-light .form-error{background:#fff0f0!important;border-color:#f5cccc!important;color:#c94a4a!important}
+body.theme-light .demo-note{background:#eaf8f2!important;border-color:#c9eddd!important;color:#2f6f58!important}
+body.theme-light .empty{border-color:#e4dbcf!important;color:#8a7f72!important;background:#fffdfa}
+body.theme-light .empty b{color:#2f2b27!important}
+body.theme-light .auth{background:#f7f4ef!important}
+body.theme-light .auth-hero{background:#ffffff!important;border-right:1px solid #e9e1d6!important}
+body.theme-light .auth-hero h1{color:#2f2b27!important}
+body.theme-light .auth-hero .lead{color:#7c746a!important}
+body.theme-light .auth-point .ic{background:#fff5f7!important;border-color:#f6dbe2!important}
+body.theme-light .auth-point b{color:#2f2b27!important}
+body.theme-light .auth-point span{color:#8a7f72!important}
+body.theme-light .auth-stats b{color:#2f2b27!important}
+body.theme-light .auth-stats span{color:#a69b8d!important}
+body.theme-light .auth-card{background:#ffffff!important;border-color:#e9e1d6!important;box-shadow:0 20px 50px rgba(90,70,50,.10)!important}
+body.theme-light .auth-card h2{color:#2f2b27!important}
+body.theme-light .auth-card .sub{color:#8a7f72!important}
+body.theme-light .msg .b{background:#ffffff!important;border-color:#eee7dc!important;color:#3a352f!important}
+body.theme-light .msg.user .b{background:#ff5c7a!important;border-color:#ff5c7a!important;color:#fff!important}
+body.theme-light .msg .meta{color:#a69b8d!important}
+body.theme-light .msg .acts span{background:#eaf8f2!important;border-color:#c9eddd!important;color:#2f8f6d!important}
+body.theme-light .chat-form{background:#ffffff!important;border-top-color:#e9e1d6!important}
+body.theme-light .chat-form textarea{background:#ffffff!important;border-color:#e4dbcf!important;color:#2f2b27!important}
+body.theme-light .chat-form textarea:focus{border-color:#ff5c7a!important}
+body.theme-light .chat-hints button{background:#ffffff!important;border-color:#e4dbcf!important;color:#6b6258!important}
+body.theme-light .chat-hints button:hover{background:#fff0f3!important;border-color:#ffc2ce!important}
+body.theme-light .file-editor{background:#ffffff!important}
+body.theme-light .file-editor .bar{background:#f7f1ea!important;border-bottom-color:#e9e1d6!important;color:#8a7f72!important}
+body.theme-light .code-wrap{background:#ffffff!important}
+body.theme-light .gutter{background:#f7f1ea!important;color:#b0a597!important;border-right-color:#eee7dc!important}
+body.theme-light .code-wrap textarea{background:#ffffff!important;color:#2f2b27!important}
+body.theme-light .ide-editor{border-right-color:#e9e1d6!important}
+body.theme-light .ide-aux{background:#ffffff!important;border-left-color:#e9e1d6!important}
+body.theme-light .aux-tabs{background:#f7f1ea!important;border-bottom-color:#e9e1d6!important}
+body.theme-light .aux-tabs button{background:#f6f1ea!important;color:#8a7f72!important;border-right-color:#e9e1d6!important}
+body.theme-light .aux-tabs button.on{background:#ffffff!important;color:#2f2b27!important;border-top-color:#ff5c7a!important}
+body.theme-light .aux-body .chat-log{background:#f7f4ef}
+body.theme-light .aux-body .phone{border-color:#1f2933!important}
+body.theme-light .table th{color:#a69b8d!important;border-bottom-color:#e9e1d6!important}
+body.theme-light .table td{color:#4a433b!important;border-bottom-color:#eee7dc!important}
+body.theme-light .table tr:hover td{background:#fbf7f1}
+body.theme-light .lesson-card .num{background:#f6f0e7!important;color:#6b6258!important}
+body.theme-light .lesson-card.done .num{background:#eaf8f2!important;color:#2f8f6d!important}
+body.theme-light .lesson-card .sub{color:#8a7f72!important}
+body.theme-light .task-box{background:#fff8e6!important;border-color:#f3dfae!important}
+body.theme-light .task-box b{color:#b07800!important}
+body.theme-light .modal-bg{background:rgba(50,40,30,.35)!important}
+body.theme-light .modal{background:#ffffff!important;border-color:#e9e1d6!important}
+body.theme-light .modal h3{color:#2f2b27!important}
+body.theme-light .modal .sub{color:#8a7f72!important}
+body.theme-light .log-row{background:#fbf7f1!important;border-color:#eee7dc!important;color:#4a433b}
+body.theme-light .toast .t{background:#ffffff!important;border-color:#e9e1d6!important;color:#2f2b27}
+body.theme-light .filters button{background:#ffffff!important;border-color:#e4dbcf!important;color:#6b6258!important}
+body.theme-light .filters button.on{background:#fff0f3!important;border-color:#ffc2ce!important;color:#d94b63!important}
+body.theme-light .stack-badges span{background:#fbf7f1!important;border-color:#eee7dc!important;color:#8a7f72!important}
+body.theme-light .checklist div{color:#7c746a!important}
+body.theme-light .checklist svg{stroke:#2f9e7a!important}
+body.theme-light .welcome-hero{background:linear-gradient(120deg,#fff1f4 0%,#f6f0ff 55%,#eef8ff 100%)!important;border-color:#f3dfe5!important}
+body.theme-light .welcome-hero h1{color:#2f2b27!important}
+body.theme-light .welcome-hero .sub{color:#7c746a!important}
+body.theme-light .welcome-hero .eyebrow{color:#b06a7a!important}
+body.theme-light .wa-card{background:#ffffff!important;border-color:#f0e3e8!important;box-shadow:0 10px 24px rgba(120,90,100,.12)!important}
+body.theme-light .wa-card b{color:#2f2b27!important}
+body.theme-light .wa-card span{color:#a69b8d!important}
+body.theme-light .vsc-content .loading,body.theme-light .loading{color:#8a7f72!important}
+body.theme-light .spinner{border-color:#eee7dc!important;border-top-color:#ff5c7a!important}
+
+body.theme-light .vsc-act{color:#8f8375}
+body.theme-light .vsc-act.active{color:#ff5c7a}
+
+
+body.theme-light .vsc-act{color:#6f665c}
+
+
+body.theme-light .vsc-act{color:#5b534b}
+body.theme-light .vsc-act svg{stroke-width:1.9}
+
+
+/* overlay highlight must stay transparent in light theme */
+body.theme-light .code-wrap textarea{background:transparent!important;color:transparent!important;-webkit-text-fill-color:transparent;caret-color:#2f2b27!important}
+body.theme-light .code-area{background:#fff!important}
+
+/* VS Code Dark+ editor inside the light app shell */
+body.theme-light .file-editor .bar{background:#252526!important;border-bottom:1px solid #333!important;color:#c8c8c8!important}
+body.theme-light .file-editor .bar .dim{color:#8b8b8b!important}
+body.theme-light .file-editor .bar .mono{color:#d7ba7d!important}
+body.theme-light .code-wrap{background:#1e1e1e!important}
+body.theme-light .code-area{background:#1e1e1e!important}
+body.theme-light .code-layer{color:#d4d4d4!important}
+body.theme-light .code-wrap textarea{background:transparent!important;color:transparent!important;-webkit-text-fill-color:transparent;caret-color:#d4d4d4!important}
+body.theme-light .code-wrap textarea::selection{background:rgba(38,79,120,.7)!important}
+body.theme-light .gutter{background:#1e1e1e!important;color:#858585!important;border-right-color:#2d2d2d!important}
+body.theme-light .minimap{background:#1e1e1e!important;border-left-color:#2d2d2d!important}
+body.theme-light .minimap-view{background:rgba(255,255,255,.07)!important;border-color:rgba(255,255,255,.1)!important}
+body.theme-light .tok-str{color:#ce9178!important}
+body.theme-light .tok-key{color:#9cdcfe!important}
+body.theme-light .tok-num{color:#b5cea8!important}
+body.theme-light .tok-bool{color:#569cd6!important}
+body.theme-light .tok-kw{color:#c586c0!important}
+body.theme-light .tok-com{color:#6a9955!important}
+body.theme-light .tok-fn{color:#dcdcaa!important}
+body.theme-light .tok-punc{color:#d4d4d4!important}
+
+body.theme-light .ide-editor{background:#1e1e1e!important}
+
+
+/* dark terminal inside light shell */
+body.theme-light .vsc-panel{background:#1e1e1e!important;border-top-color:#333!important}
+body.theme-light .vsc-panel-head{background:#1e1e1e!important;color:#8b8b8b!important;border-bottom:1px solid #2d2d2d!important}
+body.theme-light .vsc-panel-head .on{color:#fff!important;border-bottom-color:#ff5c7a!important}
+body.theme-light .vsc-panel-body{background:#1e1e1e!important;color:#d4d4d4!important}
+body.theme-light .term-time{color:#4ec9b0!important}
+body.theme-light .term-prompt{color:#ff5c7a!important}
+body.theme-light .term-dim{color:#858585!important}
+body.theme-light .term-ok{color:#4ec9b0!important}
+body.theme-light .term-warn{color:#dcdcaa!important}
+body.theme-light .term-err{color:#f48771!important}

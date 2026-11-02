@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Воронки конкурентов</title>
+<style>
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: "Segoe UI", Roboto, Arial, sans-serif; font-size: 15.5px; line-height: 1.55; color: #1d2433; background: #f4f6fb; }
+.wrap { max-width: 1100px; margin: 0 auto; }
+a { color: #3b5bdb; }
+
+.hero { background: #14182e; background: linear-gradient(135deg, #14182e 0%, #2b2f6b 55%, #f08c00 150%); color: #fff; padding: 56px 24px 90px; }
+.hero .tag { display: inline-block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; background: rgba(255,255,255,.16); padding: 4px 10px; border-radius: 20px; margin-bottom: 16px; }
+.hero h1 { font-size: 40px; line-height: 1.12; margin: 0 0 14px; }
+.hero p { font-size: 18px; margin: 0; opacity: .93; max-width: 780px; }
+.stats { display: flex; flex-wrap: wrap; margin: -58px auto 0; max-width: 1100px; padding: 0 12px; }
+.stat { flex: 1 1 200px; margin: 0 12px 16px; background: #fff; border-radius: 14px; padding: 18px 22px; box-shadow: 0 6px 24px rgba(31,42,90,.10); }
+.stat b { display: block; font-size: 28px; color: #f08c00; line-height: 1.15; }
+.stat span { color: #5c6478; font-size: 14px; }
+
+.nav { position: sticky; top: 0; z-index: 10; background: rgba(244,246,251,.97); border-bottom: 1px solid #e1e5ee; margin-top: 14px; }
+.nav .wrap { display: flex; flex-wrap: wrap; padding: 10px 24px; }
+.nav a { font-size: 14px; color: #3a4257; text-decoration: none; padding: 6px 12px; margin: 2px 4px 2px 0; border-radius: 8px; white-space: nowrap; }
+.nav a:hover { background: #fff1db; }
+
+section { padding: 38px 24px 8px; }
+h2 { font-size: 28px; margin: 0 0 6px; color: #14182e; }
+h3 { font-size: 20px; margin: 26px 0 10px; color: #14182e; }
+.lead { font-size: 16.5px; color: #3a4257; margin: 0 0 22px; max-width: 880px; }
+
+.cards { display: flex; flex-wrap: wrap; margin: 0 -8px; }
+.card { flex: 1 1 300px; margin: 0 8px 16px; background: #fff; border-radius: 14px; padding: 18px 20px; box-shadow: 0 2px 12px rgba(31,42,90,.07); border-top: 4px solid #3b5bdb; }
+.card h4 { margin: 0 0 6px; font-size: 17px; color: #14182e; }
+.card p { margin: 4px 0; font-size: 14.5px; }
+.card ul { margin: 6px 0 0; padding-left: 18px; font-size: 14.5px; }
+.card li { margin: 3px 0; }
+.card .meta { font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #8a91a5; margin-bottom: 4px; }
+.card.or { border-top-color: #f08c00; } .card.gr { border-top-color: #2b8a3e; } .card.rd { border-top-color: #e03131; } .card.vi { border-top-color: #7048e8; }
+
+.big { counter-reset: n; list-style: none; padding: 0; margin: 0; }
+.big li { counter-increment: n; background: #fff; border-radius: 12px; padding: 14px 18px 14px 58px; margin-bottom: 10px; position: relative; box-shadow: 0 2px 10px rgba(31,42,90,.06); }
+.big li:before { content: counter(n); position: absolute; left: 16px; top: 13px; width: 30px; height: 30px; border-radius: 9px; background: #f08c00; color: #fff; font-weight: 800; text-align: center; line-height: 30px; }
+
+.tbl { overflow-x: auto; margin: 0 0 16px; background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(31,42,90,.06); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { padding: 9px 12px; border-bottom: 1px solid #edf0f6; text-align: left; vertical-align: top; }
+th { background: #f7f8fc; font-size: 13px; color: #3a4257; }
+td.n { font-weight: 700; color: #14182e; white-space: nowrap; }
+
+.week { display: flex; flex-wrap: wrap; margin: 0 -6px; }
+.day { flex: 1 1 140px; margin: 0 6px 12px; background: #fff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 2px 10px rgba(31,42,90,.06); border-top: 4px solid #3b5bdb; }
+.day b { display: block; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: #d9480f; }
+.day h5 { margin: 4px 0; font-size: 15px; color: #14182e; }
+.day p { margin: 0; font-size: 13.5px; color: #3a4257; }
+.day.live { border-top-color: #f08c00; background: #fffaf0; }
+
+.series { background: #fff; border-radius: 14px; padding: 18px 22px; margin-bottom: 14px; box-shadow: 0 2px 12px rgba(31,42,90,.07); border-left: 5px solid #7048e8; }
+.series h4 { margin: 0 0 4px; font-size: 18px; color: #14182e; }
+.series .why { font-size: 14px; color: #5c6478; margin: 0 0 10px; }
+.eps { display: flex; flex-wrap: wrap; margin: 0 -4px; }
+.ep { flex: 1 1 150px; margin: 0 4px 8px; background: #f4f1ff; border-radius: 9px; padding: 8px 10px; font-size: 13.5px; }
+.ep b { display: block; color: #5f3dc4; font-size: 12px; }
+
+.hooks { columns: 2 420px; column-gap: 16px; }
+.hook { break-inside: avoid; background: #fff; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(31,42,90,.06); font-size: 14.5px; }
+.hook b { display: block; color: #14182e; font-size: 15.5px; margin-bottom: 2px; }
+.hook small { color: #6b7389; }
+
+.note { background: #fff8e6; border-left: 4px solid #f59f00; border-radius: 8px; padding: 12px 16px; color: #5c4a14; margin: 6px 0 14px; font-size: 14.5px; }
+.note.red { background: #fff5f5; border-left-color: #e03131; color: #7a1f1f; }
+.note.blue { background: #e7f0ff; border-left-color: #3b5bdb; color: #1f3a7a; }
+.pending { background: #fff; border: 2px dashed #c5cbe0; border-radius: 14px; padding: 20px; color: #5c6478; }
+
+details.rep { background: #fff; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 10px rgba(31,42,90,.06); }
+details.rep summary { cursor: pointer; padding: 14px 18px; font-weight: 700; font-size: 16px; color: #14182e; }
+.repbody { padding: 0 20px 18px; font-size: 14.5px; border-top: 1px solid #edf0f6; }
+.repbody h3 { font-size: 21px; } .repbody h4 { font-size: 17.5px; margin: 20px 0 8px; } .repbody h5 { font-size: 15.5px; margin: 16px 0 6px; }
+.repbody .tbl { box-shadow: none; border: 1px solid #edf0f6; }
+.repbody pre { background: #f4f6fb; padding: 10px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+code { background: #f1f3f5; padding: 1px 4px; border-radius: 4px; font-size: 13px; }
+footer { text-align: center; color: #8a91a5; font-size: 13px; padding: 36px 24px 50px; }
+@media (max-width: 640px) { .hero h1 { font-size: 28px; } section { padding: 30px 16px 4px; } }
+@media print { .nav { display: none; } details.rep { display: none; } }
+</style>
+</head>
+<body><div class="hero"><div class="wrap"><div class="tag">Исследование · что известно до прохождения ботов</div><h1>Воронки конкурентов: от «Старт» до оплаты</h1><p>Пурвиньш, Муратов, Паутов, Кораблёв по шагам, плюс коротко ещё шесть школ. Собрано из статей, уроков, анкет, расшифровок видео, таблицы команды и разборов каналов. Точные тексты сообщений ботов и интервалы дожимов добавим после прохождения ботов.</p></div></div>
+<section><div class="wrap">%%REPORTS%%</div></section></body></html>

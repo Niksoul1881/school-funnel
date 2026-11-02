@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Тест-драйв: структура и текст уроков</title>
+<style>
+:root { --bg:#fbfaf7; --fg:#1d1d1b; --muted:#6b6a65; --line:#e4e1d9; --paper:#fff; --accent:#c4561a; --chip:#f1eee6;
+        --edit:#fff4c2; --edit-line:#e0b400; --note:#eaf3ff; --note-line:#4a8fe0; --add:#e6f5e6; --add-line:#3f9b4f;
+        --ref:#f4f1ea; --ref-line:#d9d3c5; --q:#fdf0e8; --q-line:#e3a37b; --ans:#e9f6ea; --ans-line:#4f9e5c; --ph:#fff1a8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#161614; --fg:#ecebe6; --muted:#9b9a93; --line:#2e2d29;
+  --paper:#1f1e1b; --accent:#ff9a57; --chip:#262521; --edit:#3a3214; --edit-line:#c9a227; --note:#14263b; --note-line:#5b9ee8;
+  --add:#16301b; --add-line:#5cbf6c; --ref:#22211d; --ref-line:#3a382f; --q:#2e2015; --q-line:#a8653a; --ans:#17301b; --ans-line:#5cbf6c; --ph:#4a4012; } }
+:root[data-theme="dark"] { --bg:#161614; --fg:#ecebe6; --muted:#9b9a93; --line:#2e2d29;
+  --paper:#1f1e1b; --accent:#ff9a57; --chip:#262521; --edit:#3a3214; --edit-line:#c9a227; --note:#14263b; --note-line:#5b9ee8;
+  --add:#16301b; --add-line:#5cbf6c; --ref:#22211d; --ref-line:#3a382f; --q:#2e2015; --q-line:#a8653a; --ans:#17301b; --ans-line:#5cbf6c; --ph:#4a4012; }
+* { box-sizing:border-box; }
+html { scroll-padding-top:120px; }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+button, input, select { font:inherit; color:inherit; }
+.bar { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line); display:none; }
+html.js .bar { display:block; }
+.bar .in { max-width:1180px; margin:0 auto; padding:10px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.bar b { margin-right:auto; font-size:15px; }
+.bar select, .bar input[type=text] { background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:5px 8px; font-size:14px; max-width:100%; }
+.bar input[type=text] { width:150px; }
+.btn { background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:5px 11px; font-size:14px; cursor:pointer; }
+.btn.main { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+.cnt { font-size:13.5px; color:var(--muted); }
+.only { font-size:14px; display:flex; gap:5px; align-items:center; cursor:pointer; }
+.wrap { max-width:1180px; margin:0 auto; padding:24px 16px 120px; }
+h1 { font-size:27px; line-height:1.25; margin:0 0 6px; }
+.meta { color:var(--muted); font-size:14.5px; margin:0 0 14px; max-width:760px; }
+.how { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:12px 16px; font-size:14.5px; margin:0 0 16px; max-width:760px; }
+.how p { margin:0 0 6px; } .how p:last-child { margin:0; }
+.how .js-only { display:none; } html.js .how .js-only { display:block; }
+.legend { display:flex; flex-wrap:wrap; gap:6px 14px; font-size:13.5px; color:var(--muted); margin:8px 0 0; }
+.legend span { display:inline-flex; gap:6px; align-items:center; }
+.sw { display:inline-block; width:14px; height:14px; border-radius:4px; border:1px solid var(--line); }
+.sw.ref { background:var(--ref); border-color:var(--ref-line); } .sw.q { background:var(--q); border-color:var(--q-line); }
+.sw.ph { background:var(--ph); } .sw.edit { background:var(--edit); border-color:var(--edit-line); }
+.toc { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin:0 0 24px; }
+.toc b { display:block; margin:10px 0 6px; } .toc b:first-child { margin-top:0; }
+.toc b a { background:none; padding:0; margin:0; font-size:inherit; text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:3px; }
+.toc b .qn { font-weight:400; color:var(--muted); font-size:13.5px; }
+.toc a { display:inline-block; text-decoration:none; color:var(--fg); background:var(--chip); border-radius:999px; padding:3px 10px; margin:0 4px 6px 0; font-size:13.5px; }
+.toc a.has { background:var(--edit); }
+h2.part { font-size:23px; line-height:1.3; margin:48px 0 4px; padding-top:18px; border-top:2px solid var(--line); }
+.part-sub { color:var(--muted); font-size:14.5px; margin:0 0 4px; max-width:820px; }
+.item { margin:28px 0 0; }
+.item h3 { font-size:19px; margin:0 0 8px; display:flex; flex-wrap:wrap; gap:4px 10px; align-items:baseline; }
+.item h3 .time { font-size:13px; font-weight:600; color:var(--accent); background:var(--chip); border-radius:999px; padding:1px 9px; }
+.row { display:grid; grid-template-columns:52px minmax(0,1fr) 300px; gap:2px 14px; padding:4px 0; }
+.tc { font-variant-numeric:tabular-nums; font-size:12.5px; font-weight:700; padding-top:5px; line-height:1.35; color:var(--muted); }
+.txt { outline:none; border-radius:6px; padding:1px 6px; margin:0 -6px; border-left:3px solid transparent; white-space:pre-wrap; }
+.txt:focus { background:var(--chip); }
+mark.acc { background:none; color:var(--accent); font-weight:650; }
+.ph { background:var(--ph); border-radius:4px; padding:0 3px; }
+.row.li .txt { padding-left:22px; position:relative; }
+.row.li .txt::before { content:"•"; position:absolute; left:8px; color:var(--accent); }
+.row.h .txt { font-weight:700; font-size:16.5px; padding-top:8px; }
+.row.ref .txt { background:var(--ref); border:1px solid var(--ref-line); border-radius:8px; padding:6px 10px; margin:0; font-size:14px; line-height:1.5; color:var(--muted); }
+.row.ref .lab { display:block; font-size:12px; font-weight:700; letter-spacing:.02em; color:var(--fg); margin-bottom:1px; }
+.row.scr .txt, .row.dir .txt { font-size:14.5px; color:var(--muted); font-style:italic; }
+.row.scr .tc, .row.dir .tc { font-size:15px; font-weight:400; padding-top:1px; }
+.row.q .tc { color:var(--accent); }
+.row.q .txt { background:var(--q); border:1px solid var(--q-line); border-radius:8px; padding:6px 10px; margin:0; font-size:15px; }
+.row.q .txt::before { content:"❓ "; }
+.row.edited .txt { background:var(--edit); border-left:3px solid var(--edit-line); }
+.row.added .txt { background:var(--add); border-left-color:var(--add-line); }
+.row.gone .txt { text-decoration:line-through; color:var(--muted); }
+.was { grid-column:2; font-size:13px; color:var(--muted); text-decoration:line-through; display:none; white-space:pre-wrap; }
+.row.edited .was { display:block; }
+.side { grid-column:3; grid-row:1 / span 2; display:none; flex-direction:column; gap:4px; align-items:flex-start; }
+html.js .side { display:flex; }
+.note { width:100%; min-height:30px; outline:none; font-size:14px; line-height:1.45; padding:5px 8px; border-radius:8px;
+        border:1px dashed var(--line); background:transparent; white-space:pre-wrap; }
+.note:empty::before { content:attr(data-ph); color:var(--muted); opacity:.75; }
+.note:focus { border-style:solid; border-color:var(--note-line); background:var(--note); }
+.row.noted .note { border-style:solid; border-color:var(--note-line); background:var(--note); }
+.row.q .note { min-height:52px; border-color:var(--q-line); }
+.row.q.noted .note { border-color:var(--ans-line); background:var(--ans); }
+.pen, .fab, .addrow { display:none; }
+html.js .addrow { display:inline-block; margin:6px 0 0 66px; font-size:13.5px; background:none; border:1px dashed var(--line); border-radius:8px; padding:3px 10px; color:var(--muted); cursor:pointer; }
+.undo { display:none; background:none; border:0; padding:0; font-size:12.5px; color:var(--muted); cursor:pointer; text-decoration:underline; }
+.row.edited .undo, .row.added .undo { display:inline; }
+.top { font-size:13px; color:var(--muted); text-decoration:none; display:inline-block; margin-top:8px; }
+html.js .addrow + .top { margin-left:14px; }
+body.only-edits .row:not(.edited):not(.noted):not(.added), body.only-edits .item:not(.has), body.only-edits h2.part:not(.has),
+body.only-edits .part-sub:not(.has), body.only-edits .addrow { display:none; }
+body.only-q .row:not(.q), body.only-q .item:not(.hasq), body.only-q .addrow { display:none; }
+.panel { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:10; display:none; align-items:center; justify-content:center; padding:16px; }
+.panel.on { display:flex; }
+.panel .box { background:var(--paper); color:var(--fg); border-radius:14px; width:min(820px,100%); max-height:90vh; display:flex; flex-direction:column; gap:10px; padding:16px; }
+.panel textarea { width:100%; flex:1; min-height:50vh; font:13.5px/1.5 ui-monospace, Menlo, Consolas, monospace; background:var(--bg); color:var(--fg);
+                  border:1px solid var(--line); border-radius:8px; padding:10px; resize:none; }
+.panel .acts { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+@media (max-width: 860px) {
+  .row { grid-template-columns:minmax(0,1fr); gap:2px; }
+  .tc, .was, .side { grid-column:1; grid-row:auto; }
+  .row:not(.q):not(.scr):not(.dir) .tc:empty { display:none; }
+  html.js .side { flex-direction:row; flex-wrap:wrap; align-items:center; }
+  .pen { display:inline; background:none; border:0; padding:0; font-size:13px; color:var(--muted); cursor:pointer; text-decoration:underline; }
+  .row .note { display:none; }
+  .row.open .note, .row.noted .note, .row.q .note { display:block; }
+  .row.open .pen, .row.noted .pen, .row.q .pen { display:none; }
+  html.js .addrow { margin-left:0; }
+  .bar { position:static; }
+  .bar b { width:100%; }
+  html.js .fab { display:block; position:fixed; right:16px; bottom:16px; z-index:6; box-shadow:0 4px 14px rgba(0,0,0,.25); }
+  .bar input[type=text] { width:120px; }
+}
+</style>
+</head>
+<body>
+<div class="bar"><div class="in">
+  <b>Тест-драйв: структура и текст уроков</b>
+  <select id="jump" aria-label="Перейти к блоку"><option value="">Перейти к блоку…</option><optgroup label="Во всех уроках"><option value="p0-0">Правила серии</option></optgroup><optgroup label="Вводный модуль"><option value="p1-0">1. Привет и что это за место</option><option value="p1-1">2. Что тебя ждёт на тест-драйве</option><option value="p1-2">3. Почему фриланс и автоматизаторы — это тема</option><option value="p1-3">4. Как устроен тест-драйв и главное задание</option><option value="p1-4">5. Правило: 48 часов</option><option value="p1-5">6. Как смотреть, чтобы был толк</option><option value="p1-6">7. Техническая информация</option></optgroup><optgroup label="Урок 1 — Технический специалист нового времени"><option value="p2-0">1. Приветствие</option><option value="p2-1">2. Собери слово</option><option value="p2-2">3. Кто я и как сюда пришёл</option><option value="p2-3">4. Погружаемся: кто такой технический специалист</option><option value="p2-4">5. Мир меняется: нейронки забирают рутину</option><option value="p2-5">6. Кто клиенты и кто платит</option><option value="p2-6">7. Два страха: «нестабильно» и «мне уже не 20»</option><option value="p2-7">8. Итог и закрывашка на урок 2</option></optgroup><optgroup label="Урок 2 — Чат-боты: что делают, кто платит, и твой первый бот"><option value="p3-0">1. Вход</option><option value="p3-1">2. Что такое чат-бот и что он делает</option><option value="p3-2">3. Почему это просто и почему ты можешь уже сейчас</option><option value="p3-3">4. Кто платит и сколько</option><option value="p3-4">5. Практика: твой бот по шаблону</option><option value="p3-5">6. Почему так быстро и чем это не конструктор</option><option value="p3-6">7. Задание: бот и комментарий</option><option value="p3-7">8. Закрывашка на урок 3</option></optgroup><optgroup label="Урок 3 — AI-агенты простыми словами"><option value="p4-0">1. Вход</option><option value="p4-1">2. Что такое агент</option><option value="p4-2">3. Чем агент лучше обычной нейронки</option><option value="p4-3">4. Шесть агентов: бизнес, быт, карьера</option><option value="p4-4">5. Команда агентов: свой проект</option><option value="p4-5">6. Почему это круто для предпринимателя и как это продать</option><option value="p4-6">7. Практика по агенту</option><option value="p4-7">8. Закрывашка на урок 4</option></optgroup><optgroup label="Урок 4 — Мини-приложения"><option value="p5-0">1. Вход</option><option value="p5-1">2. Что такое мини-приложение</option><option value="p5-2">3. Примеры: что можно сделать</option><option value="p5-3">4. Кому продать и сколько стоит</option><option value="p5-4">5. Как это делается</option><option value="p5-5">6. Закрывашка на урок 5</option></optgroup><optgroup label="Урок 5 — Поиск клиентов"><option value="p6-0">1. Вход</option><option value="p6-1">2. «Я не технарь» и «продавать — не моё»</option><option value="p6-2">3. Зачем рынку новичок</option><option value="p6-3">4. Кто твои первые клиенты</option><option value="p6-4">5. Где искать: семь способов</option><option value="p6-5">6. Как продать без кейсов</option><option value="p6-6">7. Деньги и безопасность</option><option value="p6-7">8. Задание и закрывашка на урок 6</option></optgroup><optgroup label="Урок 6 — Созвон с ученицей"><option value="p7-0">1. Вход: кто она и зачем этот разговор</option><option value="p7-1">2. Вопросы созвона</option><option value="p7-2">3. Итог тест-драйва</option><option value="p7-3">4. Анкета и персональный разбор</option></optgroup><optgroup label="Открытые вопросы со встречи 23.10"><option value="p8-0">Вне уроков</option></optgroup></select>
+  <span class="cnt" id="cnt"></span>
+  <label class="only"><input type="checkbox" id="onlyq"> только вопросы</label>
+  <label class="only"><input type="checkbox" id="only"> только с правками</label>
+  <input type="text" id="who" placeholder="Кто правит" aria-label="Кто правит">
+  <button class="btn" id="list">Список правок</button>
+  <button class="btn main" id="save">Сохранить файл с правками</button>
+</div></div>
+<div class="wrap" id="top">
+  <h1>Тест-драйв: структура и текст уроков</h1>
+  <p class="meta">Черновик 24.10.2026 по структуре Егора (вводный + 6 уроков) и встрече 23.10. Вода и подводки взяты по каркасу Пурвиньша и переписаны под наш тон: на «ты», «нейронка», без пристыжения. Где нужен факт, цифра или решение, текста от себя нет: в этом месте стоит вопрос.</p>
+  <div class="how">
+    <p><b>Как читать.</b> Уроки разбиты на блоки. В серой карточке сверху — что в этом месте делает Пурвиньш, что сказали на встрече 23.10 и что в структуре Егора: это основа. Ниже обычным текстом — что Егор говорит в кадре. 🎬 — что на экране, ▶ — пометка для записи. Жёлтым в тексте — то, что нужно подставить. Оранжевая карточка ❓ — вопрос: здесь нужен факт или решение, и текст от себя не придуман.</p>
+    <p class="js-only"><b>Как править.</b> Нажми на любой абзац и исправляй прямо в нём: изменённое подсветится, ниже будет видно, как было. Стёр абзац целиком — он зачеркнётся (значит «убрать»). Ответ на вопрос пиши в поле справа от него (на телефоне — под ним). «+ добавить пункт» — новый абзац в блок. Всё сохраняется в этом браузере само. Чтобы передать — «Сохранить файл с правками» и пришли этот файл, или «Список правок» — текстом для ТГ.</p>
+    <div class="legend"><span><i class="sw ref"></i>основа: Пурвиньш / встреча</span><span><i class="sw q"></i>вопрос — ответ в поле рядом</span><span><i class="sw ph"></i>подставить факт</span><span><i class="sw edit"></i>твоя правка</span></div>
+  </div>
+  <nav class="toc" id="toc"><b><a href="#p0">Во всех уроках</a> <span class="qn">· ❓ 1</span></b><a href="#p0-0">Правила серии</a><b><a href="#p1">Вводный модуль</a> <span class="qn">· ❓ 14</span></b><a href="#p1-0">1. Привет и что это за место</a><a href="#p1-1">2. Что тебя ждёт на тест-драйве</a><a href="#p1-2">3. Почему фриланс и автоматизаторы — это тема</a><a href="#p1-3">4. Как устроен тест-драйв и главное задание</a><a href="#p1-4">5. Правило: 48 часов</a><a href="#p1-5">6. Как смотреть, чтобы был толк</a><a href="#p1-6">7. Техническая информация</a><b><a href="#p2">Урок 1 — Технический специалист нового времени</a> <span class="qn">· ❓ 15</span></b><a href="#p2-0">1. Приветствие</a><a href="#p2-1">2. Собери слово</a><a href="#p2-2">3. Кто я и как сюда пришёл</a><a href="#p2-3">4. Погружаемся: кто такой технический специалист</a><a href="#p2-4">5. Мир меняется: нейронки забирают рутину</a><a href="#p2-5">6. Кто клиенты и кто платит</a><a href="#p2-6">7. Два страха: «нестабильно» и «мне уже не 20»</a><a href="#p2-7">8. Итог и закрывашка на урок 2</a><b><a href="#p3">Урок 2 — Чат-боты: что делают, кто платит, и твой первый бот</a> <span class="qn">· ❓ 13</span></b><a href="#p3-0">1. Вход</a><a href="#p3-1">2. Что такое чат-бот и что он делает</a><a href="#p3-2">3. Почему это просто и почему ты можешь уже сейчас</a><a href="#p3-3">4. Кто платит и сколько</a><a href="#p3-4">5. Практика: твой бот по шаблону</a><a href="#p3-5">6. Почему так быстро и чем это не конструктор</a><a href="#p3-6">7. Задание: бот и комментарий</a><a href="#p3-7">8. Закрывашка на урок 3</a><b><a href="#p4">Урок 3 — AI-агенты простыми словами</a> <span class="qn">· ❓ 10</span></b><a href="#p4-0">1. Вход</a><a href="#p4-1">2. Что такое агент</a><a href="#p4-2">3. Чем агент лучше обычной нейронки</a><a href="#p4-3">4. Шесть агентов: бизнес, быт, карьера</a><a href="#p4-4">5. Команда агентов: свой проект</a><a href="#p4-5">6. Почему это круто для предпринимателя и как это продать</a><a href="#p4-6">7. Практика по агенту</a><a href="#p4-7">8. Закрывашка на урок 4</a><b><a href="#p5">Урок 4 — Мини-приложения</a> <span class="qn">· ❓ 6</span></b><a href="#p5-0">1. Вход</a><a href="#p5-1">2. Что такое мини-приложение</a><a href="#p5-2">3. Примеры: что можно сделать</a><a href="#p5-3">4. Кому продать и сколько стоит</a><a href="#p5-4">5. Как это делается</a><a href="#p5-5">6. Закрывашка на урок 5</a><b><a href="#p6">Урок 5 — Поиск клиентов</a> <span class="qn">· ❓ 5</span></b><a href="#p6-0">1. Вход</a><a href="#p6-1">2. «Я не технарь» и «продавать — не моё»</a><a href="#p6-2">3. Зачем рынку новичок</a><a href="#p6-3">4. Кто твои первые клиенты</a><a href="#p6-4">5. Где искать: семь способов</a><a href="#p6-5">6. Как продать без кейсов</a><a href="#p6-6">7. Деньги и безопасность</a><a href="#p6-7">8. Задание и закрывашка на урок 6</a><b><a href="#p7">Урок 6 — Созвон с ученицей</a> <span class="qn">· ❓ 5</span></b><a href="#p7-0">1. Вход: кто она и зачем этот разговор</a><a href="#p7-1">2. Вопросы созвона</a><a href="#p7-2">3. Итог тест-драйва</a><a href="#p7-3">4. Анкета и персональный разбор</a><b><a href="#p8">Открытые вопросы со встречи 23.10</a> <span class="qn">· ❓ 3</span></b><a href="#p8-0">Вне уроков</a></nav>
+  <div id="doc"><h2 class="part" id="p0">Во всех уроках</h2>
+<p class="part-sub">правила серии: проговорили на встрече 23.10 и в правилах Егора 21.10</p>
+<section class="item" id="p0-0" data-title="Правила серии" data-part="Во всех уроках" data-partid="p0" data-add="1">
+<h3>Правила серии</h3>
+<div class="row li" data-id="p0-0/0"><span class="tc"></span><div class="txt">Урок идёт 20–30 минут. В 10 не уложимся, и это нормально: у конкурентов уроки по 29–30.</div></div>
+<div class="row li" data-id="p0-0/1"><span class="tc"></span><div class="txt">Вода есть, но живая: Егор шутит и улыбается, в кадре человек, а не диктор. Без «15 минут ни о чём», как во вводном у конкурентов.</div></div>
+<div class="row li" data-id="p0-0/2"><span class="tc"></span><div class="txt">Технику не грузим, показываем суть и как это работает: новичок с нуля технику на тест-драйве не вынесет.</div></div>
+<div class="row li" data-id="p0-0/3"><span class="tc"></span><div class="txt">В каждом блоке звучит «это только верхушка того, что можно делать».</div></div>
+<div class="row li" data-id="p0-0/4"><span class="tc"></span><div class="txt">В конце каждого урока: закрывашка на следующий урок.</div></div>
+<div class="row li" data-id="p0-0/5"><span class="tc"></span><div class="txt">На «ты», слово «нейронка», без «представь / вообрази», без пристыжения.</div></div>
+<div class="row li" data-id="p0-0/6"><span class="tc"></span><div class="txt">Буква кода — в каждом уроке, в случайный момент (механика в уроке 1).</div></div>
+<div class="row li" data-id="p0-0/7"><span class="tc"></span><div class="txt">Деньги одной вилкой на всю серию: простой бот 5–15 тыс. ₽, бот с оплатой или AI-агент 40–60 тыс., поддержка 5–15 тыс. в месяц (манифест 21.10).</div></div>
+<div class="row q" data-id="p0-0/8" data-q="В1"><span class="tc">В1</span><div class="txt">Вилки цен из манифеста оставляем едиными для всех уроков? На встрече звучало «бот записи 3–5 тыс.» и «5–10 за бота».</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<h2 class="part" id="p1">Вводный модуль</h2>
+<p class="part-sub">цель: рассказать, что будет и что человек узнает; почему фриланс и автоматизаторы — это тема; техинформация; мотивировать и увести в практикум и анкету · ≈ 8–10 мин · основа — вводный урок Пурвиньша (10:51)</p>
+<section class="item" id="p1-0" data-title="1. Привет и что это за место" data-part="Вводный модуль" data-partid="p1" data-add="1">
+<h3>1. Привет и что это за место<span class="time">0:00–1:00</span></h3>
+<div class="row ref" data-id="p1-0/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [00:00]</span>«Добро пожаловать на тест-драйв. Я рад, что ты здесь, и прежде чем мы начнём, я хочу обсудить с тобой важное правило».</div></div>
+<div class="row ref" data-id="p1-0/1"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10</span>прогрев через Егора — можно шутить и улыбаться, живой человек, а не диктор.</div></div>
+<div class="row p" data-id="p1-0/2"><span class="tc"></span><div class="txt">Привет! Добро пожаловать на тест-драйв. Меня зовут Егор Чумаков, и ближайшие пару дней мы проведём вместе. Сразу скажу: я не диктор и читать с бумажки не буду. Будет по делу, но по-человечески.</div></div>
+<div class="row p" data-id="p1-0/3"><span class="tc"></span><div class="txt">Пару слов о том, что здесь будет. Это тест-драйв профессии, которой несколько лет назад просто не было. Технический специалист нового времени — это человек, который с помощью нейронок делает для бизнеса ботов, AI-агентов и мини-приложения. Без кода, без технического образования, с нуля.</div></div>
+<div class="row p" data-id="p1-0/4"><span class="tc"></span><div class="txt"><mark class="acc">Эти пару дней ты не просто будешь слушать про профессию, а попробуешь её руками.</mark> Соберёшь своего бота, посмотришь, как работают агенты, и поймёшь, где брать первых клиентов.</div></div>
+<div class="row q" data-id="p1-0/5" data-q="В2"><span class="tc">В2</span><div class="txt">Как Егор представляется во вводном: просто «Егор Чумаков» или сразу одной фразой «кто я», а подробная история — в уроке 1? И фамилия — Чумаков? Алина на встрече сказала, что в тексте Луизы «другая фамилия».</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p1-1" data-title="2. Что тебя ждёт на тест-драйве" data-part="Вводный модуль" data-partid="p1" data-add="1">
+<h3>2. Что тебя ждёт на тест-драйве<span class="time">1:00–3:00</span></h3>
+<div class="row ref" data-id="p1-1/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у1 00:13–00:42]</span>план тест-драйва списком: кто такой техспец, модели работы, практика своими руками, «топ-7 способов поиска клиентов, даже если нет кейсов и отзывов».</div></div>
+<div class="row ref" data-id="p1-1/1"><span class="tc"></span><div class="txt"><span class="lab">Структура Егора</span>рассказываем, что будет на тест-драйве и что они узнают; «поймёте, где брать клиентов, как зарабатывать, и вообще логику всех действий — поэтапно, от создания бота до визуализации всего».</div></div>
+<div class="row scr" data-id="p1-1/2"><span class="tc">🎬</span><div class="txt">Карта уроков: шесть карточек появляются по одной.</div></div>
+<div class="row p" data-id="p1-1/3"><span class="tc"></span><div class="txt">Что будет дальше. Шесть уроков, каждый минут на двадцать-тридцать.</div></div>
+<div class="row li" data-id="p1-1/4"><span class="tc"></span><div class="txt">Урок 1. Кто такой технический специалист нового времени, откуда взялась эта профессия и кто за неё платит. Ну и немного про меня, чтобы было понятно, кто с тобой говорит.</div></div>
+<div class="row li" data-id="p1-1/5"><span class="tc"></span><div class="txt">Урок 2. Чат-боты: что они делают, кто за них платит и почему это проще, чем кажется. В конце ты соберёшь своего бота по нашему шаблону.</div></div>
+<div class="row li" data-id="p1-1/6"><span class="tc"></span><div class="txt">Урок 3. AI-агенты простыми словами: чем агент отличается от обычной нейронки и почему бизнес платит за него больше. В конце — практика.</div></div>
+<div class="row li" data-id="p1-1/7"><span class="tc"></span><div class="txt">Урок 4. Мини-приложения: маленькие приложения прямо внутри Телеграма.</div></div>
+<div class="row li" data-id="p1-1/8"><span class="tc"></span><div class="txt">Урок 5. Где брать клиентов: кому предложить первым и что написать.</div></div>
+<div class="row li" data-id="p1-1/9"><span class="tc"></span><div class="txt">Урок 6. Созвон с ученицей: как это выглядит у живого человека, без глянца.</div></div>
+<div class="row p" data-id="p1-1/10"><span class="tc"></span><div class="txt"><mark class="acc">К концу у тебя сложится вся логика: от первого бота до того, как его продать.</mark> Не «посмотреть и забыть», а понятная картинка, что делать дальше, если захочешь.</div></div>
+<div class="row q" data-id="p1-1/11" data-q="В3"><span class="tc">В3</span><div class="txt">Названия уроков для карты — рабочие, мои. Дашь свои?</div></div>
+<div class="row q" data-id="p1-1/12" data-q="В4"><span class="tc">В4</span><div class="txt">Урок 6 — созвон с ученицей. А где разговор про обучение: программа, цена, формат? У Пурвиньша это отдельный урок 6 «дорожная карта», а созвон с учеником идёт уроком 5. У нас — в конце урока 6, отдельным уроком 7 или только на персональном разборе?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p1-2" data-title="3. Почему фриланс и автоматизаторы — это тема" data-part="Вводный модуль" data-partid="p1" data-add="1">
+<h3>3. Почему фриланс и автоматизаторы — это тема<span class="time">3:00–6:00</span></h3>
+<div class="row ref" data-id="p1-2/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [01:44–05:53]</span>«Почему именно техничка?» — пять причин: масштаб рынка (GetCourse 158 млрд), дефицит кадров (73 000 школ, «заполнен на 15 %»), простота (хакер в подвале → «конструктор Лего для взрослых»), деньги и свобода (бот от 5 000 за вечер, «100 000 за 2–3 месяца»), мягкий вход (совмещать с наймом); кейс ученицы Кристины.</div></div>
+<div class="row ref" data-id="p1-2/1"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10</span>тезисно — почему фриланс это круто, почему другие ниши умирают, а AI-автоматизатор нет.</div></div>
+<div class="row p" data-id="p1-2/2"><span class="tc"></span><div class="txt">Теперь главный вопрос: почему именно это и почему сейчас. Коротко, пять причин.</div></div>
+<div class="row h" data-id="p1-2/3"><span class="tc"></span><div class="txt">Первая: бизнес уже автоматизирует, и это не остановится</div></div>
+<div class="row p" data-id="p1-2/4"><span class="tc"></span><div class="txt">Компании прямо сейчас ставят нейронки на рутину: ответы клиентам, отчёты, карточки товаров, запись. И сокращают тех, кто эту рутину делал руками. Звучит невесело, но у этой истории есть вторая сторона: <mark class="acc">кто-то должен эту нейронку настроить, подключить и проверить, что она не несёт чушь.</mark> Вот этот человек и нужен.</div></div>
+<div class="row h" data-id="p1-2/5"><span class="tc"></span><div class="txt">Вторая: другие онлайн-профессии сжимаются, эта растёт</div></div>
+<div class="row p" data-id="p1-2/6"><span class="tc"></span><div class="txt">Дизайнерам, копирайтерам, SMM-щикам сейчас тяжело: заказчик открывает нейронку и делает сам. Техспец нового времени стоит с другой стороны: <mark class="acc">он не соревнуется с нейронкой, он ею работает.</mark></div></div>
+<div class="row h" data-id="p1-2/7"><span class="tc"></span><div class="txt">Третья: это проще, чем кажется</div></div>
+<div class="row p" data-id="p1-2/8"><span class="tc"></span><div class="txt">Многие слышат «боты, агенты» и сразу видят хакера в капюшоне, который ночами пишет код на чёрном экране. Эта картинка устарела. Сейчас код пишет нейронка, а ты объясняешь ей задачу обычными словами и проверяешь, что получилось. Если ты умеешь писать сообщения в Телеграме, базовый навык у тебя уже есть.</div></div>
+<div class="row h" data-id="p1-2/9"><span class="tc"></span><div class="txt">Четвёртая: за это платят уже сейчас</div></div>
+<div class="row p" data-id="p1-2/10"><span class="tc"></span><div class="txt">Простой бот на рынке стоит от пяти до пятнадцати тысяч рублей. Бот с оплатой или AI-агент — от сорока до шестидесяти. Плюс поддержка: от пяти до пятнадцати тысяч в месяц с одного клиента, и так каждый месяц. Это не сказочные суммы, это нормальный рынок, и в уроках я покажу, откуда он берётся.</div></div>
+<div class="row h" data-id="p1-2/11"><span class="tc"></span><div class="txt">Пятая: мягкий вход</div></div>
+<div class="row p" data-id="p1-2/12"><span class="tc"></span><div class="txt">Не нужно увольняться и прыгать в неизвестность. Это спокойно совмещается с работой, учёбой, декретом: вечером час-два, и всё. <mark class="acc">Пока доход от этого не перерос зарплату, увольняться не надо. Я прямо прошу тебя этого не делать.</mark></div></div>
+<div class="row q" data-id="p1-2/13" data-q="В5"><span class="tc">В5</span><div class="txt">Цифры рынка: у Пурвиньша здесь 158 млрд GetCourse, 73 000 школ, 6 млн бизнесов — без источников. Даём свои цифры с источником на экране (какие?) или обходимся без цифр рынка?</div></div>
+<div class="row q" data-id="p1-2/14" data-q="В6"><span class="tc">В6</span><div class="txt">Кейс ученика во вводном (у Пурвиньша — Кристина «с полугодовалым ребёнком»): ставим кого-то или ученица появится только в уроке 6?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p1-3" data-title="4. Как устроен тест-драйв и главное задание" data-part="Вводный модуль" data-partid="p1" data-add="1">
+<h3>4. Как устроен тест-драйв и главное задание<span class="time">6:00–8:00</span></h3>
+<div class="row ref" data-id="p1-3/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [00:11–00:48]</span>«ценность тест-драйва не в самих уроках. Самое главное — личный разбор твоей ситуации в конце… уроки нужны, чтобы подготовиться к разбору»; «разбор бесплатный, если увидим, что ты сделаешь результат, — расскажем про обучение».</div></div>
+<div class="row ref" data-id="p1-3/1"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10 (Луиза)</span>основная задача — анкета в конце для разбора, «закидываем удочку, что в конце вас ждёт персональный разбор». Структура Егора: «переход в анкету: кто вы, что вы… делаете наш практикум, пишете эмоции в конце — персональный разбор».</div></div>
+<div class="row p" data-id="p1-3/2"><span class="tc"></span><div class="txt">Теперь про главное. <mark class="acc">Самое ценное на тест-драйве — не уроки, а персональный разбор в конце.</mark> Уроки нужны, чтобы на разборе тебе было легко: слова понятны, как всё устроено — видно, и руками уже попробовано.</div></div>
+<div class="row p" data-id="p1-3/3"><span class="tc"></span><div class="txt">Как это работает. Ты смотришь уроки и делаешь практикум: бота, агента. В конце заполняешь анкету: кто ты, чем сейчас занимаешься, что получилось на практике и какие были эмоции. Это не формальность. <mark class="acc">Пиши как есть. Даже «ничего не понятно» — это тоже ответ, и с ним мы тоже работаем.</mark></div></div>
+<div class="row p" data-id="p1-3/4"><span class="tc"></span><div class="txt">По анкете мы готовим персональный разбор: смотрим на твою ситуацию и говорим, с чего начать именно тебе. Разбор бесплатный. И честно, чтобы потом не было сюрпризов: <mark class="acc">на разборе мы расскажем и про обучение.</mark> Но разбор полезен и без покупки: ты уйдёшь с понятным планом.</div></div>
+<div class="row q" data-id="p1-3/5" data-q="В7"><span class="tc">В7</span><div class="txt">Анкета одна (в конце, с эмоциями) или две: короткая «кто ты» сразу после вводного + итоговая в конце? В структуре Егора «переход в анкету: кто вы, что вы» стоит во вводном.</div></div>
+<div class="row q" data-id="p1-3/6" data-q="В8"><span class="tc">В8</span><div class="txt">Кто проводит разбор (Егор, Луиза, наставник по продажам?), в каком формате (созвон, голосовое, текст) и через сколько после анкеты?</div></div>
+<div class="row q" data-id="p1-3/7" data-q="В9"><span class="tc">В9</span><div class="txt">Бонусы за прохождение, кроме разбора, даём? Алина спрашивала на встрече: «больше никаких бонусов не даём?»</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p1-4" data-title="5. Правило: 48 часов" data-part="Вводный модуль" data-partid="p1" data-add="1">
+<h3>5. Правило: 48 часов<span class="time">8:00–8:40</span></h3>
+<div class="row ref" data-id="p1-4/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [00:48–01:44]</span>«на тест-драйв выделяется всего 2 дня. Мне не нужны халявщики, скептики и бездельники… бот-вышибала удалит через 2 дня молчания»; «если весомая причина — напиши в чат, продлю индивидуально».</div></div>
+<div class="row ref" data-id="p1-4/1"><span class="tc"></span><div class="txt"><span class="lab">Структура Егора</span>вводный урок — 48 часов на закрытие; можно отдельно продлить, если форс-мажор.</div></div>
+<div class="row p" data-id="p1-4/2"><span class="tc"></span><div class="txt">Одно правило. <mark class="acc">На тест-драйв у тебя 48 часов.</mark> Это не чтобы напугать. Просто я знаю, как бывает: открываешь первый урок, откладываешь «на выходные», а через неделю уже не помнишь, о чём он был. За два дня картинка складывается целиком, и практику делаешь на свежую голову.</div></div>
+<div class="row p" data-id="p1-4/3"><span class="tc"></span><div class="txt">Если что-то случилось — заболел ребёнок, завал на работе, любой форс-мажор — напиши в чат, продлим. Без вопросов и объяснительных.</div></div>
+<div class="row q" data-id="p1-4/4" data-q="В10"><span class="tc">В10</span><div class="txt">48 часов — подтверди. В манифесте 21.10 стоит «без 48 часов и дедлайнов-угроз», в твоей структуре — «48 часов закрытие». Если оставляем, правлю манифест. От чего считаем 48 часов — от открытия вводного?</div></div>
+<div class="row q" data-id="p1-4/5" data-q="В11"><span class="tc">В11</span><div class="txt">Что происходит через 48 часов: уроки закрываются совсем или остаётся только анкета?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p1-5" data-title="6. Как смотреть, чтобы был толк" data-part="Вводный модуль" data-partid="p1" data-add="1">
+<h3>6. Как смотреть, чтобы был толк<span class="time">8:40–9:30</span></h3>
+<div class="row ref" data-id="p1-5/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [06:16–08:40]</span>«сними маску красавчика», Галицкий «если ты такой умный, почему такой бедный», «цени валюту времени», «задавай самые тупые вопросы, проявляй гиперактивность в чате», «как сериал на Нетфликсе — не изменится ничего». Здесь из этого взята только суть: смотреть по порядку, делать практику, спрашивать.</div></div>
+<div class="row p" data-id="p1-5/1"><span class="tc"></span><div class="txt">Как смотреть, чтобы был толк. Три вещи.</div></div>
+<div class="row p" data-id="p1-5/2"><span class="tc"></span><div class="txt">Первое: по порядку. Каждый урок опирается на предыдущий, иначе картинка не сложится.</div></div>
+<div class="row p" data-id="p1-5/3"><span class="tc"></span><div class="txt">Второе: <mark class="acc">делай практику, даже если кажется, что «и так понятно».</mark> Посмотреть, как кто-то собирает бота, и собрать своими руками — это две разные вещи. Второе занимает пять минут и остаётся с тобой.</div></div>
+<div class="row p" data-id="p1-5/4"><span class="tc"></span><div class="txt">Третье: спрашивай. Любой вопрос, даже если он кажется глупым. Глупых вопросов тут нет: всё, что сейчас кажется сложным, кажется сложным любому, кто видит это впервые. Я тоже когда-то не знал, что такое токен.</div></div>
+<div class="row p" data-id="p1-5/5"><span class="tc"></span><div class="txt">И ещё: <mark class="acc">выключи на время внутреннего скептика.</mark> Не потому, что надо верить мне на слово. А потому что всё это ты проверишь руками уже во втором уроке.</div></div>
+<div class="row q" data-id="p1-5/6" data-q="В12"><span class="tc">В12</span><div class="txt">Куда писать вопросы: общий чат тест-драйва, личка куратора, комментарии под уроком? Кто отвечает и в какие часы?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p1-6" data-title="7. Техническая информация" data-part="Вводный модуль" data-partid="p1" data-add="1">
+<h3>7. Техническая информация<span class="time">9:30–10:00</span></h3>
+<div class="row ref" data-id="p1-6/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [10:01–10:51]</span>«возвращайся в чат и отправляй плюс, чтобы получить все уроки»; «если уроки не открываются — проверь, что выключен VPN, открой в браузере, а не в Телеграме, проверь, не попал ли чат в спам: крестик на плашке «Возможно, это спам»».</div></div>
+<div class="row ref" data-id="p1-6/1"><span class="tc"></span><div class="txt"><span class="lab">Структура Егора</span>«тегируется, кто посмотрел — нужно пробить».</div></div>
+<div class="row p" data-id="p1-6/2"><span class="tc"></span><div class="txt">Пара технических моментов, чтобы ничего не мешало.</div></div>
+<div class="row li" data-id="p1-6/3"><span class="tc"></span><div class="txt">Если урок не открывается — выключи VPN и открой ссылку в браузере, а не внутри Телеграма.</div></div>
+<div class="row li" data-id="p1-6/4"><span class="tc"></span><div class="txt">Если Телеграм показывает плашку «Возможно, это спам», нажми крестик. Это стандартная плашка для новых ботов, после этого все ссылки станут кликабельными.</div></div>
+<div class="row li" data-id="p1-6/5"><span class="tc"></span><div class="txt"><span class="ph">[ЧТО НАЖАТЬ ПОСЛЕ ВВОДНОГО]</span> — и бот пришлёт первый урок.</div></div>
+<div class="row p" data-id="p1-6/6"><span class="tc"></span><div class="txt">Всё, время пошло. Жду тебя в первом уроке. Погнали!</div></div>
+<div class="row q" data-id="p1-6/7" data-q="В13"><span class="tc">В13</span><div class="txt">Что человек нажимает после вводного, чтобы открылся урок 1: «+» в чат, кнопка «Посмотрел» в боте, что-то ещё?</div></div>
+<div class="row q" data-id="p1-6/8" data-q="В14"><span class="tc">В14</span><div class="txt">«Кто посмотрел — пробить»: как бот ставит тег (по кнопке, по переходу по ссылке, по проценту просмотра в плеере?), кто делает (Никита?) и что бот шлёт тем, кто не посмотрел, — через сколько часов напоминание?</div></div>
+<div class="row q" data-id="p1-6/9" data-q="В15"><span class="tc">В15</span><div class="txt">Где лежат видео: своя страница урока, YouTube, Kinescope, прямо в боте? Нужен ли запасной плеер, как у Пурвиньша (кнопка «Не работает?» → RuTube)?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<h2 class="part" id="p2">Урок 1 — Технический специалист нового времени</h2>
+<p class="part-sub">цель: познакомиться с Егором; объяснить новую профессию, кто платит и почему сейчас; запустить «собери слово» · ≈ 20–25 мин · основа — урок 1 (фриланс) и урок 2 (профессия) Пурвиньша</p>
+<section class="item" id="p2-0" data-title="1. Приветствие" data-part="Урок 1 — Технический специалист нового времени" data-partid="p2" data-add="1">
+<h3>1. Приветствие<span class="time">0:00–1:00</span></h3>
+<div class="row ref" data-id="p2-0/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у1 00:00]</span>«Это было на 100 % мудрое решение… Тут я не буду тебе ничего впаривать, так как хочу работать с осознанными, адекватными и трудолюбивыми людьми».</div></div>
+<div class="row ref" data-id="p2-0/1"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10 (Луиза)</span>«в начале ты приветствуешь то, что они всё супер классно начали».</div></div>
+<div class="row p" data-id="p2-0/2"><span class="tc"></span><div class="txt">Привет ещё раз! Раз ты здесь, значит, вводный уже позади. Это больше, чем кажется: <mark class="acc">многие так и оставляют ссылку «на потом».</mark> Так что ты молодец, серьёзно.</div></div>
+<div class="row p" data-id="p2-0/3"><span class="tc"></span><div class="txt">Сегодня большой урок. Я расскажу, кто я и как сюда пришёл. Потом разберём, что это за профессия — технический специалист нового времени, — откуда она взялась, кто за неё платит и почему именно сейчас. А ещё запустим одну игру, про неё прямо сейчас. Поехали.</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p2-1" data-title="2. Собери слово" data-part="Урок 1 — Технический специалист нового времени" data-partid="p2" data-add="1">
+<h3>2. Собери слово<span class="time">1:00–2:00</span></h3>
+<div class="row ref" data-id="p2-1/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у1 00:42–01:13]</span>«бонус для самых внимательных… гайд… просто так я этот файл не раздаю, нужно собрать секретный код из 4 цифр. В случайных моментах уроков я буду внезапно останавливать видео и показывать слайд с одной цифрой… собрали — отправляете в чат». Цифры у него только в уроках 1, 2, 4, 6.</div></div>
+<div class="row ref" data-id="p2-1/1"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10 (Луиза)</span>«собирать код… в первом видео цифра два, во втором — четыре, в рандомный момент; это вовлекает смотреть все видео»; бонус — например, приложение для подсчёта калорий (работает у Никиты). Структура Егора: «собрать код — или буквы какие-то», «собери слово».</div></div>
+<div class="row p" data-id="p2-1/2"><span class="tc"></span><div class="txt">И сразу про игру. <mark class="acc">В каждом уроке в какой-то момент на экране появится буква.</mark> Без предупреждения, в случайном месте. Собери буквы по порядку — получится слово. Отправь его в чат и получи <span class="ph">[БОНУС]</span>.</div></div>
+<div class="row p" data-id="p2-1/3"><span class="tc"></span><div class="txt">Зачем это. Смотреть стоит все уроки, а не только первый и последний. Не ради статистики просмотров, а потому что <mark class="acc">вся логика складывается только целиком.</mark> А бонус — приятный повод досмотреть.</div></div>
+<div class="row scr" data-id="p2-1/4"><span class="tc">🎬</span><div class="txt">Пауза. Крупно на весь экран: первая буква <span class="ph">[_]</span>.</div></div>
+<div class="row p" data-id="p2-1/5"><span class="tc"></span><div class="txt">Кстати, вот и первая.</div></div>
+<div class="row dir" data-id="p2-1/6"><span class="tc">▶</span><div class="txt">Сказать с улыбкой, как будто сам не ожидал.</div></div>
+<div class="row q" data-id="p2-1/7" data-q="В16"><span class="tc">В16</span><div class="txt">Буквы или цифры? Если слово — какое? Варианты под шесть уроков: «АГЕНТЫ» или «ЗАПУСК» (по букве на урок 1–6), «НЕЙРО» (уроки 1–5) или своё.</div></div>
+<div class="row q" data-id="p2-1/8" data-q="В17"><span class="tc">В17</span><div class="txt">В каких уроках ставим буквы? У Пурвиньша код только в продающих уроках (1, 2, 4, 6), в практике и интервью цифр нет.</div></div>
+<div class="row q" data-id="p2-1/9" data-q="В18"><span class="tc">В18</span><div class="txt">Бонус за слово: приложение для подсчёта калорий (идея Луизы)? Гайд? Что-то третье? Что именно человек получает и как — ссылкой от бота?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p2-2" data-title="3. Кто я и как сюда пришёл" data-part="Урок 1 — Технический специалист нового времени" data-partid="p2" data-add="1">
+<h3>3. Кто я и как сюда пришёл<span class="time">2:00–7:00</span></h3>
+<div class="row ref" data-id="p2-2/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у1 02:13–07:46]</span>история на 5,5 минут: Брянск, «мама в офисе, папа на заводе» → служба, «спал по 4–5 часов», меню за 12 000 → помогал офицеру с онлайн-школой бесплатно → уволился, «денег ровно на 2 месяца» → первый месяц 60 000 → своё агентство, блогеры → «квартира на 31 этаже, iPhone, MacBook, телек 65 дюймов». Зачем этот блок, по его словам: «чтобы не было вопросов, кто я такой и почему имею право это рассказывать».</div></div>
+<div class="row ref" data-id="p2-2/1"><span class="tc"></span><div class="txt"><span class="lab">Структура Егора</span>«рассказываю историю о себе, что я фрилансер; прочитать, что Луиза писала». Встреча 23.10 (Алина): «у Луизы в статье, в правках, полностью твоя история расписана».</div></div>
+<div class="row ref" data-id="p2-2/2"><span class="tc"></span><div class="txt"><span class="lab">Статья 2 (текст Луизы), «Давай знакомиться»</span>официант, подъём в 6 утра, панические атаки, девушка ушла → курсы без результата → случайная задача на работе, автоматизация → первый бот за 30 минут, первый заказ: запись знакомому психологу за 5 000 → «сейчас боты и агенты для школ, экспертов и малого бизнеса, 4 часа в день, доход 350–450 тыс.».</div></div>
+<div class="row ref" data-id="p2-2/3"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10 (Егор), пример про Wildberries</span>«меня взяли, и люди начали сокращать штат — из семи человек остался один менеджер и один автоматизатор, который отвечает за технические процессы, и получает 200–300 тысяч»; «не говорить, что ушёл: мне платят зарплату троих менеджеров за час работы в день».</div></div>
+<div class="row dir" data-id="p2-2/4"><span class="tc">▶</span><div class="txt">Ниже — текст Луизы, переложенный для речи, со вставкой про Wildberries из встречи. Факты не сверены — см. вопросы в конце блока.</div></div>
+<div class="row p" data-id="p2-2/5"><span class="tc"></span><div class="txt">Перед тем как идти дальше, давай познакомимся по-настоящему. Меня зовут Егор. И пять лет назад я был примерно там же, где сейчас, возможно, находишься ты.</div></div>
+<div class="row p" data-id="p2-2/6"><span class="tc"></span><div class="txt">Я работал официантом. Вставал в шесть утра, возвращался никакой и ложился спать, потому что завтра снова смена. Денег хватало ровно на квартиру и еду. И каждый месяц одно и то же: открываешь банковское приложение и думаешь — а дальше что? Вот так будет всегда?</div></div>
+<div class="row p" data-id="p2-2/7"><span class="tc"></span><div class="txt">В какой-то момент я загнал себя настолько, что начались панические атаки и пропал нормальный сон. Девушка ушла: она перестала верить, что у меня что-то получится. И, честно, я сам тогда в это не очень верил.</div></div>
+<div class="row p" data-id="p2-2/8"><span class="tc"></span><div class="txt">Я пытался выбраться. Покупал курсы, брал подработки. Чем закончилось? Деньги потратил, клиентов не нашёл, бросил. И в голове крутилось: может, фриланс — это просто не моё?</div></div>
+<div class="row p" data-id="p2-2/9"><span class="tc"></span><div class="txt">А потом случилась одна задача на работе, из-за которой пришлось разобраться в автоматизации. <span class="ph">[ВСТАВКА WILDBERRIES: я работал в компании на Wildberries, и там начали сокращать штат. Из семи человек остались двое: один менеджер и один автоматизатор, который отвечает за все технические процессы. Автоматизатором стал я.]</span></div></div>
+<div class="row p" data-id="p2-2/10"><span class="tc"></span><div class="txt">Своего первого бота я собрал за тридцать минут. Через неделю у меня был первый заказ: предложил знакомому психологу автоматизировать запись. И я помню это чувство: <mark class="acc">пять тысяч рублей, ради которых раньше надо было отпахать три смены по двенадцать часов,</mark> пришли за один вечер.</div></div>
+<div class="row p" data-id="p2-2/11"><span class="tc"></span><div class="txt">Сегодня я делаю чат-ботов и AI-агентов для бизнеса. <span class="ph">[ВСТАВКА СО ВСТРЕЧИ: и с Wildberries я не ушёл — мне платят как трём менеджерам за час работы в день, потому что то, что они делали руками, у меня делают агенты.]</span> Работаю <span class="ph">[N]</span> часа в день, остальное время — моё.</div></div>
+<div class="row p" data-id="p2-2/12"><span class="tc"></span><div class="txt">Я рассказываю это не чтобы похвастаться. А чтобы было понятно: я не родился с ноутбуком в руках и я не программист по образованию. <mark class="acc">Всё, что я покажу на тест-драйве, я сначала прошёл сам.</mark></div></div>
+<div class="row scr" data-id="p2-2/13"><span class="tc">🎬</span><div class="txt"><span class="ph">[ФОТО И СКРИНЫ ПО ИСТОРИИ: работа, первый бот, первый заказ — что есть]</span></div></div>
+<div class="row q" data-id="p2-2/14" data-q="В19"><span class="tc">В19</span><div class="txt">Какая версия истории идёт в урок? Текст Луизы (официант, панические атаки, девушка ушла, психолог за 5 000) — это твоя реальная история или собирательная? В заметках от 19.10 у меня другая хронология: 2015 переезд в Москву, склад и овощи; 2016 промоагентство; 2018 мебель; 2020 Wildberries и пищевое производство; 2021 аудиторы → найм; 2022–23 таблицы и автоматизации (300 → 500 тыс.); потом нейронки (10 часов работы → 3–4 в день). Какую берём?</div></div>
+<div class="row q" data-id="p2-2/15" data-q="В20"><span class="tc">В20</span><div class="txt">Фриланс или найм? В структуре — «рассказываю, что я фрилансер», а на встрече — «не ушёл с Wildberries, платят зарплату троих менеджеров». Как говорим: «я на фрилансе», «работаю в компании и беру проекты» или и то и другое?</div></div>
+<div class="row q" data-id="p2-2/16" data-q="В21"><span class="tc">В21</span><div class="txt">Доход называем? У Луизы — 350–450 тыс. в месяц, на встрече — «200–300 у автоматизатора», в манифесте — доход автора не называть. Что говорим вслух и что показываем на экране?</div></div>
+<div class="row q" data-id="p2-2/17" data-q="В22"><span class="tc">В22</span><div class="txt">Что показываем на экране по истории: какие фото и скрины есть (первый бот, первая оплата, рабочие системы)?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p2-3" data-title="4. Погружаемся: кто такой технический специалист" data-part="Урок 1 — Технический специалист нового времени" data-partid="p2" data-add="1">
+<h3>4. Погружаемся: кто такой технический специалист<span class="time">7:00–10:00</span></h3>
+<div class="row ref" data-id="p2-3/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у2 00:25–02:30]</span>«технический специалист — это не тот техник в засаленной футболке»; «SMS-напоминания от магазинов, рассылки на почту — это всё технические специалисты»; пример услуги по шагам (рассылка за 6 шагов → «2–5 000 в кармане»); «всё делает по инструкции, без придумывания»; «через бота вы и попали на мой тест-драйв».</div></div>
+<div class="row ref" data-id="p2-3/1"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10</span>«техспец занимается давно протоптанной дорогой — чат-боты и автоматизации, которые все видят у блогеров и экспертов; понятная специальность, где можно работать, но мы про другое». Название: «технический специалист нового времени», рядом — «специалист по AI-автоматизации» (Алина); слово «техспец» не бросаем — оно всем знакомо.</div></div>
+<div class="row p" data-id="p2-3/2"><span class="tc"></span><div class="txt">Теперь к делу. Кто такой технический специалист.</div></div>
+<div class="row p" data-id="p2-3/3"><span class="tc"></span><div class="txt">Скорее всего, ты сталкиваешься с его работой каждый день и не замечаешь. Пишешь кодовое слово под видео блогера и тут же получаешь гайд — это бот, и его кто-то настроил. Приходит ссылка за пять минут до эфира — это бот. Записываешься на маникюр в одиннадцать вечера через Телеграм — и это бот. <mark class="acc">Кстати, этот тест-драйв тоже пришёл к тебе через бота.</mark></div></div>
+<div class="row p" data-id="p2-3/4"><span class="tc"></span><div class="txt">Человек, который всё это собирает и подключает, и есть технический специалист, или просто техспец. Профессия не новая: такие люди уже несколько лет настраивают ботов, рассылки, сайты, онлайн-школы. Это протоптанная дорога: понятная работа, понятные заказы, можно зайти и работать.</div></div>
+<div class="row p" data-id="p2-3/5"><span class="tc"></span><div class="txt">Но мы про другое. <mark class="acc">Мы про технического специалиста нового времени.</mark> Его ещё называют специалистом по AI-автоматизации.</div></div>
+<div class="row p" data-id="p2-3/6"><span class="tc"></span><div class="txt">Разница вот в чём. Обычный техспец собирает бота в конструкторе руками: блок, стрелочка, блок, стрелочка. И если заказчик хочет то, чего в конструкторе нет, разводит руками. Техспец нового времени работает с нейронкой. Он объясняет ей задачу обычными словами, нейронка пишет код, а он проверяет и доводит до ума. <mark class="acc">Поэтому он может сделать то, ради чего раньше звали программиста.</mark></div></div>
+<div class="row p" data-id="p2-3/7"><span class="tc"></span><div class="txt">И у него три инструмента, а не один: боты, AI-агенты и мини-приложения. Про каждый будет отдельный урок.</div></div>
+<div class="row scr" data-id="p2-3/8"><span class="tc">🎬</span><div class="txt">Две колонки: «Техспец» (конструктор: боты, рассылки, сайты) → «Техспец нового времени» (нейронка: боты, агенты, мини-приложения).</div></div>
+<div class="row q" data-id="p2-3/9" data-q="В23"><span class="tc">В23</span><div class="txt">Название в кадре и на слайде: «технический специалист нового времени» основное, «специалист по AI-автоматизации» рядом — так? Или наоборот?</div></div>
+<div class="row q" data-id="p2-3/10" data-q="В24"><span class="tc">В24</span><div class="txt">Пример услуги по шагам (у Пурвиньша — рассылка за 6 шагов) даём в уроке 1 или он уходит в урок 2 про ботов? Если здесь — какой пример?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p2-4" data-title="5. Мир меняется: нейронки забирают рутину" data-part="Урок 1 — Технический специалист нового времени" data-partid="p2" data-add="1">
+<h3>5. Мир меняется: нейронки забирают рутину<span class="time">10:00–13:00</span></h3>
+<div class="row ref" data-id="p2-4/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у1 10:53–12:02]</span>рынок фриланса растёт с пандемии 2020; «компании не содержат сотрудников, а нанимают фрилансеров»; «почти 30 % взносов сверху на каждого штатного».</div></div>
+<div class="row ref" data-id="p2-4/1"><span class="tc"></span><div class="txt"><span class="lab">Структура Егора</span>«ИИ процессы автоматизирует, рынок сокращается, мир меняется. Кто-то уходит, кто-то остаётся». Встреча 23.10 (Егор): «компании автоматизируют рутину нейронками и сокращают штат, нужен человек, который настраивает нейронку, добавляет фичи и проверяет, что она выдаёт. Это и есть техспец нового времени»; «даже бизнесы с хорошим оборотом их не настроили».</div></div>
+<div class="row p" data-id="p2-4/2"><span class="tc"></span><div class="txt">А теперь — почему эта профессия появилась именно сейчас.</div></div>
+<div class="row p" data-id="p2-4/3"><span class="tc"></span><div class="txt">Мир меняется очень быстро, и это видно невооружённым глазом. Компании ставят нейронки туда, где раньше сидели люди: отвечать клиентам, собирать отчёты, писать описания товаров, разбирать заявки. И сокращают штат. Это не прогноз, это уже происходит.</div></div>
+<div class="row p" data-id="p2-4/4"><span class="tc"></span><div class="txt">Я видел это изнутри. <span class="ph">[ПРИМЕР WILDBERRIES: в компании, где я работаю, на одном участке было семь человек. Осталось двое: менеджер и автоматизатор. Остальное делают агенты.]</span></div></div>
+<div class="row p" data-id="p2-4/5"><span class="tc"></span><div class="txt">И вот тут развилка. <mark class="acc">Кто-то уходит, потому что его работу забрала нейронка. А кто-то остаётся, потому что он эту нейронку настраивает.</mark> Человек, который ставит нейронку на задачу, добавляет ей новые функции и проверяет, что она не выдаёт ерунду, сейчас нужен почти каждому бизнесу.</div></div>
+<div class="row p" data-id="p2-4/6"><span class="tc"></span><div class="txt">При этом большинство бизнесов до сих пор ничего не настроили. Даже компании с хорошим оборотом: бота записи нет, менеджер руками отвечает на одни и те же вопросы, отчёты собираются вручную по вечерам. <mark class="acc">Не потому что не хотят, а потому что некому.</mark></div></div>
+<div class="row q" data-id="p2-4/7" data-q="В25"><span class="tc">В25</span><div class="txt">Даём ли цифры «рынок меняется» с источником (у нас был срез hh.ru: ИИ упоминают в 15–18 % вакансий, +84 % за год)? Или только живой пример с Wildberries?</div></div>
+<div class="row q" data-id="p2-4/8" data-q="В26"><span class="tc">В26</span><div class="txt">Пример «из семи остались двое» можно говорить публично? Компания и собственница не против?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p2-5" data-title="6. Кто клиенты и кто платит" data-part="Урок 1 — Технический специалист нового времени" data-partid="p2" data-add="1">
+<h3>6. Кто клиенты и кто платит<span class="time">13:00–17:00</span></h3>
+<div class="row ref" data-id="p2-5/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у1 13:55–15:45]</span>пять шагов: навык → упаковать в услуги («более пяти») → кому (офлайн: салоны, клиники, залы, барбершопы — «заменяет администратора»; онлайн-магазины; инфобиз) → клиенты → продать («освободите 15 часов в неделю»). [у2 03:02–04:21]: «почему платят: думают, что жесть как сложно; страшно, что сломается — как с розетками; чем менее понятен процесс, тем больше платят».</div></div>
+<div class="row ref" data-id="p2-5/1"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10</span>«кому это надо — предприниматели, собственники бизнеса; сколько стоит на рынке; в каких областях; как называется специальность; кого берут на работу».</div></div>
+<div class="row p" data-id="p2-5/2"><span class="tc"></span><div class="txt">Кто за это платит. Если коротко — любой, у кого есть своё дело и кто устал делать одно и то же руками.</div></div>
+<div class="row li" data-id="p2-5/3"><span class="tc"></span><div class="txt">Мастера и салоны: маникюр, брови, массаж, барбершопы. Им нужны запись, напоминания, ответы на вопросы.</div></div>
+<div class="row li" data-id="p2-5/4"><span class="tc"></span><div class="txt">Репетиторы, тренеры, психологи: запись, оплата, выдача материалов.</div></div>
+<div class="row li" data-id="p2-5/5"><span class="tc"></span><div class="txt">Кофейни, цветочные, пекарни: меню, предзаказ, бонусы.</div></div>
+<div class="row li" data-id="p2-5/6"><span class="tc"></span><div class="txt">Эксперты и онлайн-школы: выдача уроков, рассылки, оплата, поддержка учеников.</div></div>
+<div class="row li" data-id="p2-5/7"><span class="tc"></span><div class="txt">Селлеры на маркетплейсах и компании побольше: отчёты, карточки, ответы на отзывы, аналитика — тут уже нужны агенты.</div></div>
+<div class="row scr" data-id="p2-5/8"><span class="tc">🎬</span><div class="txt">Пять карточек сегментов.</div></div>
+<div class="row p" data-id="p2-5/9"><span class="tc"></span><div class="txt">Посмотри на этот список ещё раз. <mark class="acc">У половины из них ты и есть клиент.</mark> Как устроен салон, ты знаешь изнутри: ты туда ходишь. Это пригодится, когда будешь с ними разговаривать.</div></div>
+<div class="row p" data-id="p2-5/10"><span class="tc"></span><div class="txt">Почему они платят, если «всё можно сделать нейронкой»? По той же причине, по которой ты не меняешь проводку в квартире своими силами, хотя в интернете полно инструкций. Страшно, что сломается. Некогда разбираться. Непонятно, с какой стороны подойти. <mark class="acc">Бизнес платит не за код, а за то, чтобы проблема исчезла и о ней можно было больше не думать.</mark></div></div>
+<div class="row p" data-id="p2-5/11"><span class="tc"></span><div class="txt">Сколько платят. Простой бот — от пяти до пятнадцати тысяч рублей. Бот с оплатой или AI-агент — от сорока до шестидесяти. А дальше поддержка: что-то поменять, добавить акцию к празднику, обновить прайс. Это от пяти до пятнадцати тысяч в месяц с одного клиента. <mark class="acc">Разовые заказы дают деньги сейчас, поддержка — спокойствие каждый месяц.</mark></div></div>
+<div class="row p" data-id="p2-5/12"><span class="tc"></span><div class="txt">И это не только фриланс. Таких людей ищут и в штат: <span class="ph">[ВАКАНСИИ — скрины: «специалист по автоматизации», «AI-специалист», зарплаты]</span>.</div></div>
+<div class="row q" data-id="p2-5/13" data-q="В27"><span class="tc">В27</span><div class="txt">Пять сегментов клиентов — эти? Добавить или убрать (селлеров Wildberries отдельно)?</div></div>
+<div class="row q" data-id="p2-5/14" data-q="В28"><span class="tc">В28</span><div class="txt">«Кого берут на работу» (со встречи): показываем вакансии в штат? Если да — какие скрины (hh.ru, чаты) и кто их собирает?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p2-6" data-title="7. Два страха: «нестабильно» и «мне уже не 20»" data-part="Урок 1 — Технический специалист нового времени" data-partid="p2" data-add="1">
+<h3>7. Два страха: «нестабильно» и «мне уже не 20»<span class="time">17:00–20:00</span></h3>
+<div class="row ref" data-id="p2-6/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у1 10:10–13:36]</span>миф 1 «фриланс — это нестабильно» → «в найме один источник, уволили — ноль; на фрилансе несколько клиентов — антихрупкость»; миф 2 «возраст» → 20–30 лет — «динамичные трендовые проекты», 35–55 — «финансы, здоровье, воспитание детей, бухгалтерия»; «у тебя уже есть 80 % того, что нужно: договариваться, быть пунктуальным, общаться».</div></div>
+<div class="row p" data-id="p2-6/1"><span class="tc"></span><div class="txt">Обычно на этом месте всплывают два страха. Давай разберём их сразу.</div></div>
+<div class="row h" data-id="p2-6/2"><span class="tc"></span><div class="txt">Страх первый: это нестабильно</div></div>
+<div class="row p" data-id="p2-6/3"><span class="tc"></span><div class="txt">Давай честно посмотрим, что тут нестабильно. В найме у тебя один источник денег. Один. Сократили, закрыли точку, сменился начальник — и всё, ноль. Здесь со временем у тебя несколько клиентов. Ушёл один — остались другие. А поддержка — это вообще ровные деньги, которые приходят каждый месяц. <mark class="acc">Нестабильно, когда источник один.</mark></div></div>
+<div class="row p" data-id="p2-6/4"><span class="tc"></span><div class="txt">Но и сказок не будет: <mark class="acc">первые месяцы денег будет немного.</mark> Первые заказы дешёвые и долгие, стабильность приходит через месяцы, а не через неделю. Поэтому — ещё раз — работу не бросаем.</div></div>
+<div class="row h" data-id="p2-6/5"><span class="tc"></span><div class="txt">Страх второй: мне уже не двадцать</div></div>
+<div class="row p" data-id="p2-6/6"><span class="tc"></span><div class="txt">Посмотри, кто заказчики. Мастера, репетиторы, частные школы, эксперты по здоровью, финансам, воспитанию детей. Им тридцать пять, сорок пять, пятьдесят. <mark class="acc">И договориться с ними часто проще тебе, а не двадцатилетнему, потому что вы говорите на одном языке.</mark> Если ты умеешь договариваться, держать слово и нормально общаться с людьми, у тебя уже есть большая часть того, что нужно. Остальное — техника, и ей мы научим.</div></div>
+<div class="row p" data-id="p2-6/7"><span class="tc"></span><div class="txt">А если тебе двадцать — тоже отлично: новое схватываешь быстро, а гибкий график легко подстроить под учёбу.</div></div>
+<div class="row q" data-id="p2-6/8" data-q="В29"><span class="tc">В29</span><div class="txt">Этот блок оставляем в уроке 1 или переносим в урок 5 (клиенты)? С ним урок 1 выходит минут на 25.</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p2-7" data-title="8. Итог и закрывашка на урок 2" data-part="Урок 1 — Технический специалист нового времени" data-partid="p2" data-add="1">
+<h3>8. Итог и закрывашка на урок 2<span class="time">20:00–22:00</span></h3>
+<div class="row ref" data-id="p2-7/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у1 17:45–18:39]</span>повтор пяти шагов, «вам остаётся только повторить»; крючок «в следующем уроке — кто такой техспец, почему готовы платить бешеные деньги».</div></div>
+<div class="row ref" data-id="p2-7/1"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10</span>в конце каждого урока — закрывашка на следующий; «это лишь вершина того, что можно делать».</div></div>
+<div class="row p" data-id="p2-7/2"><span class="tc"></span><div class="txt">Давай соберём, что мы сегодня поняли.</div></div>
+<div class="row li" data-id="p2-7/3"><span class="tc"></span><div class="txt">Технический специалист нового времени делает для бизнеса ботов, агентов и мини-приложения с помощью нейронки. Код пишет нейронка, ты ставишь задачу и проверяешь.</div></div>
+<div class="row li" data-id="p2-7/4"><span class="tc"></span><div class="txt">Профессия появилась, потому что бизнес массово ставит нейронки на рутину, а настраивать их некому.</div></div>
+<div class="row li" data-id="p2-7/5"><span class="tc"></span><div class="txt">Платят мастера, салоны, эксперты, школы, магазины — все, кто устал делать одно и то же руками.</div></div>
+<div class="row li" data-id="p2-7/6"><span class="tc"></span><div class="txt">Вход лёгкий, путь честный: начать можно по вечерам, не бросая работу.</div></div>
+<div class="row p" data-id="p2-7/7"><span class="tc"></span><div class="txt">И это только верхушка. <mark class="acc">В следующем уроке ты не будешь слушать про ботов — ты соберёшь своего.</mark> По нашему шаблону, за несколько минут. А потом разберём, кто за такого бота платит и сколько.</div></div>
+<div class="row p" data-id="p2-7/8"><span class="tc"></span><div class="txt">Не забывай про буквы: одна у тебя уже есть. До встречи во втором уроке!</div></div>
+<div class="row q" data-id="p2-7/9" data-q="В30"><span class="tc">В30</span><div class="txt">Задание в конце урока 1 нужно? У Пурвиньша после урока 1 идёт отдельный ролик «создай бота в BotFather и пришли ник», и на встрече Егор тоже хотел, чтобы бот появлялся уже в конце урока 1. В твоей структуре бот — в уроке 2. Оставляем как в структуре?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<h2 class="part" id="p3">Урок 2 — Чат-боты: что делают, кто платит, и твой первый бот</h2>
+<p class="part-sub">цель: показать, что бот — это просто и за него платят; человек собирает своего бота по шаблону и пишет комментарий · ≈ 20–25 мин · основа — урок 3 (что такое бот) и урок 2 (почему платят, модели дохода) Пурвиньша</p>
+<section class="item" id="p3-0" data-title="1. Вход" data-part="Урок 2 — Чат-боты: что делают, кто платит, и твой первый бот" data-partid="p3" data-add="1">
+<h3>1. Вход<span class="time">0:00–1:00</span></h3>
+<div class="row ref" data-id="p3-0/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у3 00:00]</span>«в первой части разберёмся, что такое чат-бот и почему он так востребован, а во второй — настроим своего первого чат-бота… первые 3–5 000, просто повторяя за мной».</div></div>
+<div class="row p" data-id="p3-0/1"><span class="tc"></span><div class="txt">Привет! Сегодня один из самых приятных уроков. Сначала коротко разберёмся, что такое чат-бот и почему за него платят. А потом <mark class="acc">ты соберёшь своего бота.</mark> Не посмотришь, как собирает кто-то другой, а соберёшь своими руками, и он останется у тебя.</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p3-1" data-title="2. Что такое чат-бот и что он делает" data-part="Урок 2 — Чат-боты: что делают, кто платит, и твой первый бот" data-partid="p3" data-add="1">
+<h3>2. Что такое чат-бот и что он делает<span class="time">1:00–4:00</span></h3>
+<div class="row ref" data-id="p3-1/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у3 00:19–01:10]</span>«чат-бот — программа, которая автоматически общается с клиентами… как сотрудник, который работает 24/7 без выходных, обедов, отпусков»; задачи: ответы на одни и те же вопросы, приём заказов, запись, вебинары, сбор данных, продажи, оповещения, промокоды.</div></div>
+<div class="row p" data-id="p3-1/1"><span class="tc"></span><div class="txt">Чат-бот — это помощник в Телеграме, который отвечает людям вместо тебя. По сути, сотрудник, который работает круглосуточно, без выходных, без обеда и без отпуска. И не обижается, когда его в сотый раз спрашивают «а сколько стоит».</div></div>
+<div class="row p" data-id="p3-1/2"><span class="tc"></span><div class="txt">Что он умеет:</div></div>
+<div class="row li" data-id="p3-1/3"><span class="tc"></span><div class="txt">Записывать: показывает свободные окошки, записывает, напоминает за день.</div></div>
+<div class="row li" data-id="p3-1/4"><span class="tc"></span><div class="txt">Отвечать на одни и те же вопросы: цены, адрес, как добраться, что взять с собой.</div></div>
+<div class="row li" data-id="p3-1/5"><span class="tc"></span><div class="txt">Принимать заказы и оплату.</div></div>
+<div class="row li" data-id="p3-1/6"><span class="tc"></span><div class="txt">Выдавать материалы: гайды, уроки, подарки за подписку.</div></div>
+<div class="row li" data-id="p3-1/7"><span class="tc"></span><div class="txt">Делать рассылки: «у нас акция», «эфир через пять минут».</div></div>
+<div class="row scr" data-id="p3-1/8"><span class="tc">🎬</span><div class="txt">Пять иконок задач; на каждую — живой бот: <span class="ph">[КАКИЕ БОТЫ]</span>.</div></div>
+<div class="row p" data-id="p3-1/9"><span class="tc"></span><div class="txt">Возьмём мастера маникюра. Хороший мастер, запись на неделю вперёд. После последней клиентки она ещё час-два отвечает в переписке: «а есть окошко в четверг?», «а можно перенести?», «а сколько стоит снятие?». <mark class="acc">Восемь часов работает руками и ещё два — секретарём у самой себя.</mark> Бот забирает эти два часа. Вот за это и платят.</div></div>
+<div class="row q" data-id="p3-1/10" data-q="В31"><span class="tc">В31</span><div class="txt">Каких живых ботов показываем (наши шаблоны, боты команды, боты клиентов)? Есть что показать на каждую из пяти задач?</div></div>
+<div class="row q" data-id="p3-1/11" data-q="В32"><span class="tc">В32</span><div class="txt">Героиня примера — мастер маникюра (из плана 18.10) — оставляем? В практике на встрече тоже «запись к мастеру».</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p3-2" data-title="3. Почему это просто и почему ты можешь уже сейчас" data-part="Урок 2 — Чат-боты: что делают, кто платит, и твой первый бот" data-partid="p3" data-add="1">
+<h3>3. Почему это просто и почему ты можешь уже сейчас<span class="time">4:00–6:00</span></h3>
+<div class="row ref" data-id="p3-2/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у2 02:30–03:02]</span>«мы не в 2000 году… конструкторы сами выполняют задачи программирования… достаточно уметь открывать браузер»; [у3 01:10]: «это не программирование, не сотни строк страшного кода… самый простой бот собирается буквально за 2 минуты».</div></div>
+<div class="row ref" data-id="p3-2/1"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10</span>блок про ботов без техники — что на что отвечает, связки, структура, конструктор.</div></div>
+<div class="row p" data-id="p3-2/2"><span class="tc"></span><div class="txt">Логичный вопрос: а это не программирование? Раньше — да. Ботов неделями писали программисты. Потом появились конструкторы: блок, стрелочка, блок, стрелочка. Стало проще, но всё равно надо сидеть и разбираться в чужом интерфейсе.</div></div>
+<div class="row p" data-id="p3-2/3"><span class="tc"></span><div class="txt">А сейчас третий этап. <mark class="acc">Код пишет нейронка.</mark> Ты объясняешь словами: «сделай бота, который записывает на маникюр, показывает прайс и напоминает за день». Она пишет. Ты проверяешь, что всё работает, и правишь тоже словами: «добавь кнопку «Как добраться»».</div></div>
+<div class="row p" data-id="p3-2/4"><span class="tc"></span><div class="txt">Как бот устроен внутри, если совсем просто. Человек нажимает кнопку или пишет сообщение. Бот смотрит, что это за кнопка, и отвечает тем, что для неё заложено. Кнопка «Прайс» — список цен. Кнопка «Записаться» — окошки. Всё. Это цепочка «нажали это — ответь тем». <mark class="acc">Никакой магии, просто цепочка простых шагов.</mark></div></div>
+<div class="row p" data-id="p3-2/5"><span class="tc"></span><div class="txt">Что тебе нужно, чтобы начать: телефон или компьютер, Телеграм и полчаса. Английский не нужен, математика не нужна, мощный компьютер не нужен.</div></div>
+<div class="row q" data-id="p3-2/6" data-q="В33"><span class="tc">В33</span><div class="txt">Показываем здесь конструктор (Salebot) — «как это выглядит» — или только нейронку? Это был открытый вопрос встречи.</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p3-3" data-title="4. Кто платит и сколько" data-part="Урок 2 — Чат-боты: что делают, кто платит, и твой первый бот" data-partid="p3" data-add="1">
+<h3>4. Кто платит и сколько<span class="time">6:00–9:00</span></h3>
+<div class="row ref" data-id="p3-3/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у2 03:02–05:34]</span>«почему платят: думают, что жесть как сложно; страшно, что сломается — как с розетками»; «чем менее понятно, как работает процесс, тем больше за него готовы платить»; «хорошие деньги ≠ потраченное время, а важность задачи для заказчика»; модели: разовые задачи (бот от 10 000) и сопровождение (от 30–40 000 в месяц), «на 7–8 разовых — один постоянный»; формула «150 000 = 6 ботов × 25…».</div></div>
+<div class="row ref" data-id="p3-3/1"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10 (Егор, вторая запись)</span>«вы сделали его за минуту, а за такое реально есть люди, которые платят деньги — 5 тысяч, 10 за бота, в зависимости от структуры. Вы сделали за минуту, потому что у нас есть наработки».</div></div>
+<div class="row p" data-id="p3-3/2"><span class="tc"></span><div class="txt">Кто за ботов платит, мы уже разобрали в первом уроке: мастера, салоны, эксперты, школы, кофейни, магазины.</div></div>
+<div class="row p" data-id="p3-3/3"><span class="tc"></span><div class="txt">Сколько. Простой бот вроде того, что ты соберёшь через несколько минут, на рынке стоит <mark class="acc">от пяти до пятнадцати тысяч рублей,</mark> смотря что в нём. Бот с оплатой, таблицей клиентов, напоминаниями — дороже. А дальше поддержка: обновить прайс, добавить акцию, поменять расписание — от пяти до пятнадцати тысяч в месяц.</div></div>
+<div class="row p" data-id="p3-3/4"><span class="tc"></span><div class="txt">Важная мысль. <mark class="acc">Заказчику неважно, сколько времени на это ушло. Ему важно, что проблема ушла.</mark> Если бот снимает с мастера десять часов переписки в неделю, ему всё равно, собирал ты его пять минут или пять вечеров.</div></div>
+<div class="row scr" data-id="p3-3/5"><span class="tc">🎬</span><div class="txt">Арифметика без красивых нулей: 3 простых бота в месяц = 15–45 тыс.; 2 клиента на поддержке + 1 заказ = 15–45 тыс.</div></div>
+<div class="row q" data-id="p3-3/6" data-q="В34"><span class="tc">В34</span><div class="txt">Арифметику дохода (сколько ботов — сколько денег) показываем в уроке 2? Эти раскладки или другие?</div></div>
+<div class="row q" data-id="p3-3/7" data-q="В35"><span class="tc">В35</span><div class="txt">Говорим ли здесь прямо, что первые месяцы — это 0–15 тыс. (лестница из манифеста), или это для разбора и последнего урока?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p3-4" data-title="5. Практика: твой бот по шаблону" data-part="Урок 2 — Чат-боты: что делают, кто платит, и твой первый бот" data-partid="p3" data-add="1">
+<h3>5. Практика: твой бот по шаблону<span class="time">9:00–17:00</span></h3>
+<div class="row ref" data-id="p3-4/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у3 02:19–12:47]</span>скринкаст на 10 минут в Salebot: регистрация с промокодом → BotFather по ТЗ → токен → блоки и стрелки → регулярка для телефона → тест с нарочно неверным вводом → исправление ошибки в кадре. «Повторять за мной не обязательно, главное — убедиться, что это просто». Перед этим, после урока 1, — отдельный ролик «создай бота в BotFather, пришли ник».</div></div>
+<div class="row ref" data-id="p3-4/1"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10</span>кнопка «Сделать бота» → выбор из 3–5 простых шаблонов (запись к мастеру и т. п.) → по ссылке в BotFather: create bot, имя → токен в наш чат → бот задаёт вопросы по шаблону (как зовут мастера, где находится, какие услуги) → через время приходит ссылка на готового бота: /start, «Записаться на приём». Бот — их собственный (их токен), живёт на нашем сервере. Луиза: сборку чуть усложнить, иначе «зачем обучение». Егор: одной кнопкой бот собирается только на нашей наработке.</div></div>
+<div class="row ref" data-id="p3-4/2"><span class="tc"></span><div class="txt"><span class="lab">Структура Егора</span>«призыв к действию — перейти в бота и сделать своего бота по шаблонам».</div></div>
+<div class="row p" data-id="p3-4/3"><span class="tc"></span><div class="txt">А теперь самое интересное. Делаем бота.</div></div>
+<div class="row dir" data-id="p3-4/4"><span class="tc">▶</span><div class="txt">Дальше скринкаст. Говорить в темпе действий. Ошибки в кадре не вырезать: показать и исправить.</div></div>
+<div class="row p" data-id="p3-4/5"><span class="tc"></span><div class="txt">Шаг первый. Переходи в нашего бота по кнопке под уроком и нажимай «Сделать бота». Он предложит несколько шаблонов. Я возьму «Запись к мастеру».</div></div>
+<div class="row scr" data-id="p3-4/6"><span class="tc">🎬</span><div class="txt">Наш бот → кнопка «Сделать бота» → список шаблонов: <span class="ph">[НАЗВАНИЯ ШАБЛОНОВ]</span>.</div></div>
+<div class="row p" data-id="p3-4/7"><span class="tc"></span><div class="txt">Шаг второй. Бот попросит создать бота в Телеграме. Для этого есть официальный бот самого Телеграма — BotFather, «отец ботов». Открываем его по ссылке, жмём «Старт», пишем /newbot. Он спросит имя — это то, что видят люди, например «Запись к Марине». Потом ник: латиницей и обязательно с «bot» на конце, например marina_zapis_bot. Если такой занят — добавь цифру.</div></div>
+<div class="row scr" data-id="p3-4/8"><span class="tc">🎬</span><div class="txt">Экран BotFather по шагам.</div></div>
+<div class="row p" data-id="p3-4/9"><span class="tc"></span><div class="txt">BotFather пришлёт длинную строку из цифр и букв. <mark class="acc">Это токен — ключ от твоего бота.</mark> Копируем и отправляем нашему боту.</div></div>
+<div class="row p" data-id="p3-4/10"><span class="tc"></span><div class="txt"><span class="ph">[БЛОК ПРО БЕЗОПАСНОСТЬ ТОКЕНА: что мы делаем с ключом и как его сменить — см. вопрос ниже]</span></div></div>
+<div class="row p" data-id="p3-4/11"><span class="tc"></span><div class="txt">Шаг третий. Наш бот задаёт вопросы по шаблону: как зовут мастера, где находишься, какие услуги и цены, в какие дни работаешь. Отвечаем.</div></div>
+<div class="row scr" data-id="p3-4/12"><span class="tc">🎬</span><div class="txt">Вопросы шаблона и ответы.</div></div>
+<div class="row p" data-id="p3-4/13"><span class="tc"></span><div class="txt">Шаг четвёртый. Немного ждём — и приходит ссылка на твоего бота. Открываем, жмём /start.</div></div>
+<div class="row dir" data-id="p3-4/14"><span class="tc">▶</span><div class="txt">Пауза две секунды после того, как бот ответил. Это момент, ради которого урок. Не комментировать сверху.</div></div>
+<div class="row p" data-id="p3-4/15"><span class="tc"></span><div class="txt"><mark class="acc">Он ответил.</mark> Это твой бот, он живой. Нажимаю «Записаться на приём» — вот окошки, вот услуги. Записываюсь — бот подтверждает.</div></div>
+<div class="row p" data-id="p3-4/16"><span class="tc"></span><div class="txt">А теперь ломаю нарочно: клиенты не всегда жмут кнопки, они пишут текстом. Пишу «а завтра можно?» и смотрю, что ответит бот.</div></div>
+<div class="row p" data-id="p3-4/17"><span class="tc"></span><div class="txt">Повторять за мной прямо сейчас не обязательно. Но лучше повтори: <mark class="acc">это пять минут, и бот останется у тебя.</mark></div></div>
+<div class="row q" data-id="p3-4/18" data-q="В36"><span class="tc">В36</span><div class="txt">Какие шаблоны будут в боте (3–5)? Нужны названия и что умеет каждый — для экрана и текста.</div></div>
+<div class="row q" data-id="p3-4/19" data-q="В37"><span class="tc">В37</span><div class="txt">Насколько усложняем сборку (Луиза: «иначе подумают — зачем обучение»)? Что ученик делает руками кроме BotFather и ответов на вопросы: сам пишет приветствие, выбирает кнопки, формулирует одну правку словами?</div></div>
+<div class="row q" data-id="p3-4/20" data-q="В38"><span class="tc">В38</span><div class="txt">Токен: что говорим ученикам — где он хранится, что мы с ним делаем, как его сменить? Алине и Никите на встрече было «страшно». И будем ли мы что-то писать через их бота (прогрев)? Если да — говорим об этом прямо в уроке?</div></div>
+<div class="row q" data-id="p3-4/21" data-q="В39"><span class="tc">В39</span><div class="txt">Сколько живёт бот ученика на нашем сервере: всегда, до конца тест-драйва, месяц?</div></div>
+<div class="row q" data-id="p3-4/22" data-q="В40"><span class="tc">В40</span><div class="txt">«Тест на ошибку» (написать текстом вместо кнопки) — наш шаблон это переживает? Можно показывать?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p3-5" data-title="6. Почему так быстро и чем это не конструктор" data-part="Урок 2 — Чат-боты: что делают, кто платит, и твой первый бот" data-partid="p3" data-add="1">
+<h3>6. Почему так быстро и чем это не конструктор<span class="time">17:00–19:00</span></h3>
+<div class="row ref" data-id="p3-5/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у3 03:14]</span>встроенную ИИ-генерацию бота в Salebot он выключает: «это пока очень плохо работает, мы просто нажимаем на крестик».</div></div>
+<div class="row ref" data-id="p3-5/1"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10 (Егор)</span>«одной кнопкой бот собирается только на НАШЕЙ наработке, сами они так не сделают — в этом и ценность обучения».</div></div>
+<div class="row p" data-id="p3-5/2"><span class="tc"></span><div class="txt">Бот у тебя появился за несколько минут. И тут важно понять, почему так быстро.</div></div>
+<div class="row p" data-id="p3-5/3"><span class="tc"></span><div class="txt"><mark class="acc">Не потому, что бот — это ерунда. А потому что под капотом наша наработка:</mark> шаблон, сервер и код, который уже написан и проверен. За минуту получилось то, на что у человека без этой базы уйдёт вечер, а то и неделя.</div></div>
+<div class="row p" data-id="p3-5/4"><span class="tc"></span><div class="txt">А на обучении ты научишься делать такую базу своими силами. Не по шаблону, а под любого заказчика: объяснять задачу нейронке, проверять, что получилось, и править. <mark class="acc">Шаблон — это демо. Профессия — это когда ты можешь сделать бота, которого ещё нет в шаблонах.</mark></div></div>
+<div class="row q" data-id="p3-5/5" data-q="В41"><span class="tc">В41</span><div class="txt">Показываем здесь «правку одной фразой» нейронкой (как в скрипте 21.10: «добавь кнопку «Как добраться»» → бот обновился)? Если да — в чём (Claude Code?) и кто снимает?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p3-6" data-title="7. Задание: бот и комментарий" data-part="Урок 2 — Чат-боты: что делают, кто платит, и твой первый бот" data-partid="p3" data-add="1">
+<h3>7. Задание: бот и комментарий<span class="time">19:00–20:00</span></h3>
+<div class="row ref" data-id="p3-6/0"><span class="tc"></span><div class="txt"><span class="lab">Структура Егора</span>«призыв к действию — перейти в бота и сделать бота своего по шаблонам. Написать коммент какой-то и всё».</div></div>
+<div class="row ref" data-id="p3-6/1"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у1 «Практика» 02:23]</span>«сделать такого бота и ник бота отправить в чат… после проверки отправлю тебе прайс новичка»; бонус за каждое выполненное задание.</div></div>
+<div class="row p" data-id="p3-6/2"><span class="tc"></span><div class="txt">Задание на сегодня простое. Сделай своего бота по шаблону — кнопка под уроком. А потом <span class="ph">[КОММЕНТАРИЙ: что именно написать и куда]</span>.</div></div>
+<div class="row q" data-id="p3-6/3" data-q="В42"><span class="tc">В42</span><div class="txt">Какой комментарий и куда: ник бота, «что было, когда бот ответил», скрин записи? Под уроком, в чат тест-драйва или боту?</div></div>
+<div class="row q" data-id="p3-6/4" data-q="В43"><span class="tc">В43</span><div class="txt">Бонус за выполненное задание даём (у Пурвиньша — прайс новичка)? Какой?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p3-7" data-title="8. Закрывашка на урок 3" data-part="Урок 2 — Чат-боты: что делают, кто платит, и твой первый бот" data-partid="p3" data-add="1">
+<h3>8. Закрывашка на урок 3<span class="time">20:00–21:00</span></h3>
+<div class="row ref" data-id="p3-7/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у3 12:47–13:44]</span>«полностью собрали бота буквально за 10 минут… услуга, за которую вам могут заплатить прямо завтра… уметь делать — половина дела» → урок про клиентов.</div></div>
+<div class="row p" data-id="p3-7/1"><span class="tc"></span><div class="txt">Бот — это только начало и, честно, самое простое из того, что можно делать. <mark class="acc">Следующий шаг — агенты.</mark> Это уже не «нажал кнопку — получил ответ», а помощник, который работает с твоими данными и сам делает задачи. В третьем уроке покажу, как это выглядит, и ты попробуешь своими руками.</div></div>
+<div class="row p" data-id="p3-7/2"><span class="tc"></span><div class="txt">Буква в этом уроке тоже была — если она проскочила мимо, промотай назад. До встречи!</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<h2 class="part" id="p4">Урок 3 — AI-агенты простыми словами</h2>
+<p class="part-sub">цель: понятно объяснить, что такое агент, показать разнообразие и чем он лучше обычной нейронки; как это продать предпринимателю; практика по агенту · ≈ 25–30 мин · у Пурвиньша такого урока нет — основа: встреча 23.10</p>
+<section class="item" id="p4-0" data-title="1. Вход" data-part="Урок 3 — AI-агенты простыми словами" data-partid="p4" data-add="1">
+<h3>1. Вход<span class="time">0:00–1:00</span></h3>
+<div class="row ref" data-id="p4-0/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш</span>ИИ у него только бонусным модулем и как повод для высокого чека («бот с ИИ для блогера — 150 000»). Урока про агентов нет ни у одного из трёх конкурентов.</div></div>
+<div class="row p" data-id="p4-0/1"><span class="tc"></span><div class="txt">Привет! Сегодня урок, ради которого, по-хорошему, и стоило прийти на тест-драйв. В прошлом уроке у тебя появился бот. Бот — это «нажал кнопку — получил ответ». Сегодня — агенты. <mark class="acc">Агент не просто отвечает. Он работает.</mark></div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p4-1" data-title="2. Что такое агент" data-part="Урок 3 — AI-агенты простыми словами" data-partid="p4" data-add="1">
+<h3>2. Что такое агент<span class="time">1:00–5:00</span></h3>
+<div class="row ref" data-id="p4-1/0"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10</span>«агент — робот, который отвечает по ТВОЕЙ информации. Пример: салон красоты загрузил базу клиентов и спрашивает «сколько клиентов не пришло в этом месяце». Ничего сверхъестественного»; «агента можно «посадить» в папку с файлами и дать роль: «ты аналитик рекламы, разбери эти отчёты»».</div></div>
+<div class="row p" data-id="p4-1/1"><span class="tc"></span><div class="txt">Что такое агент, если совсем просто. <mark class="acc">Это нейронка, которой дали твою информацию и задачу.</mark> И доступ к тому, с чем надо работать: таблицам, файлам, переписке, отчётам.</div></div>
+<div class="row p" data-id="p4-1/2"><span class="tc"></span><div class="txt">Пример. Салон красоты загрузил агенту базу клиентов, и владелица спрашивает: «Сколько клиентов не пришло в этом месяце?» Агент смотрит в базу и отвечает: «Двенадцать. Вот список, а вот кто из них ходил каждый месяц, а теперь пропал». Ничего сверхъестественного. Просто раньше на это нужен был администратор и вечер с таблицей.</div></div>
+<div class="row p" data-id="p4-1/3"><span class="tc"></span><div class="txt">Второе важное. Агенту можно дать роль. Кладёшь ему в папку отчёты и говоришь: «Ты аналитик рекламы. Разбери эти отчёты и скажи, где мы теряем деньги». И он работает как аналитик: читает, считает, пишет выводы.</div></div>
+<div class="row scr" data-id="p4-1/4"><span class="tc">🎬</span><div class="txt">Схема: «твои данные» + «роль» + «задача» → агент → результат.</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p4-2" data-title="3. Чем агент лучше обычной нейронки" data-part="Урок 3 — AI-агенты простыми словами" data-partid="p4" data-add="1">
+<h3>3. Чем агент лучше обычной нейронки<span class="time">5:00–8:00</span></h3>
+<div class="row ref" data-id="p4-2/0"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10</span>«у ChatGPT или Claude нет твоих данных, она отвечает общими словами. «Почему я поправляюсь?» — нейронка про калории, агент по твоему трекеру: «пельмени с майонезом шесть раз в неделю»».</div></div>
+<div class="row p" data-id="p4-2/1"><span class="tc"></span><div class="txt">Скорее всего, нейронка тебе уже знакома: спросить что-то у ChatGPT, сделать картинку. Чем агент отличается?</div></div>
+<div class="row p" data-id="p4-2/2"><span class="tc"></span><div class="txt">Обычная нейронка ничего про тебя не знает. Она отвечает общими словами, как умный, но посторонний человек.</div></div>
+<div class="row p" data-id="p4-2/3"><span class="tc"></span><div class="txt">Спроси нейронку: «Почему я поправляюсь?» Она расскажет про калории, сон и стресс. Всё правильно — и всё мимо.</div></div>
+<div class="row p" data-id="p4-2/4"><span class="tc"></span><div class="txt">Спроси агента, у которого есть твой дневник питания за месяц. Он ответит: <mark class="acc">«Пельмени с майонезом шесть раз в неделю. Начни с этого».</mark></div></div>
+<div class="row scr" data-id="p4-2/5"><span class="tc">🎬</span><div class="txt">Две колонки: «обычная нейронка» — общий ответ / «агент» — ответ по твоим данным.</div></div>
+<div class="row p" data-id="p4-2/6"><span class="tc"></span><div class="txt">Вот и вся разница. <mark class="acc">Агент работает на ТВОЕЙ информации, поэтому отвечает точно, а не вообще.</mark> И второе: агент не только отвечает, но и делает — заполняет таблицу, отправляет сообщение, готовит отчёт.</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p4-3" data-title="4. Шесть агентов: бизнес, быт, карьера" data-part="Урок 3 — AI-агенты простыми словами" data-partid="p4" data-add="1">
+<h3>4. Шесть агентов: бизнес, быт, карьера<span class="time">8:00–16:00</span></h3>
+<div class="row ref" data-id="p4-3/0"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10</span>показать 2 агента для бизнеса, 2 для себя (быт), 2 для карьеры. Быт — под нашу ЦА (женщины 30+, офлайн-профессии, устали): похудеть, психолог, калькулятор зарплаты, бюджет и экономия, «что приготовить из пяти овощей в холодильнике». Карьера: агент для бухгалтера, для менеджера Wildberries, по финансовой грамотности. Бизнес — через Wildberries, но без жаргона: менеджер руками делает ~50 действий в день, с агентом — 3 клика; отчёт: скачать 5 выгрузок, свести, проверить — а агенту одна фраза; 50 карточек вручную против одной кнопки. Показывать работающими: на экране, в презентации или видео; если не выйдет — текстом «какую задачу решает».</div></div>
+<div class="row p" data-id="p4-3/1"><span class="tc"></span><div class="txt">Давай покажу, как это выглядит вживую. Шесть агентов: два для бизнеса, два для себя и два для работы.</div></div>
+<div class="row h" data-id="p4-3/2"><span class="tc"></span><div class="txt">Для бизнеса</div></div>
+<div class="row p" data-id="p4-3/3"><span class="tc"></span><div class="txt"><span class="ph">[АГЕНТ 1 — отчёты на Wildberries]</span>. Менеджер на маркетплейсе каждый день делает руками около пятидесяти одинаковых действий. Чтобы собрать один отчёт, надо скачать пять выгрузок, свести их в таблицу и всё перепроверить. С агентом это одна фраза: «собери отчёт за неделю». <mark class="acc">Пятьдесят действий превращаются в три клика.</mark></div></div>
+<div class="row p" data-id="p4-3/4"><span class="tc"></span><div class="txt"><span class="ph">[АГЕНТ 2 — карточки товаров]</span>. Пятьдесят карточек товаров руками — это день работы. С агентом — одна кнопка.</div></div>
+<div class="row h" data-id="p4-3/5"><span class="tc"></span><div class="txt">Для себя</div></div>
+<div class="row p" data-id="p4-3/6"><span class="tc"></span><div class="txt"><span class="ph">[АГЕНТ 3 — питание]</span>. Тот самый «почему я поправляюсь»: ведёт дневник, считает, подсказывает.</div></div>
+<div class="row p" data-id="p4-3/7"><span class="tc"></span><div class="txt"><span class="ph">[АГЕНТ 4 — бюджет или холодильник]</span>. Например: «в холодильнике кабачок, морковь, лук, перец и картошка — что приготовить на ужин?» Или агент, который смотрит твои траты и говорит, куда уходят деньги.</div></div>
+<div class="row h" data-id="p4-3/8"><span class="tc"></span><div class="txt">Для работы</div></div>
+<div class="row p" data-id="p4-3/9"><span class="tc"></span><div class="txt"><span class="ph">[АГЕНТ 5 — помощник бухгалтера]</span>.</div></div>
+<div class="row p" data-id="p4-3/10"><span class="tc"></span><div class="txt"><span class="ph">[АГЕНТ 6 — менеджер Wildberries или финансовая грамотность]</span>.</div></div>
+<div class="row scr" data-id="p4-3/11"><span class="tc">🎬</span><div class="txt">На каждого агента — живой экран или запись на 20–40 секунд: «задача → что сделал агент».</div></div>
+<div class="row p" data-id="p4-3/12"><span class="tc"></span><div class="txt"><mark class="acc">И это только верхушка того, что можно делать.</mark> Каждый из этих агентов — отдельная услуга, которую можно предложить.</div></div>
+<div class="row q" data-id="p4-3/13" data-q="В44"><span class="tc">В44</span><div class="txt">Какие конкретно шесть агентов показываем? Что уже есть в работе (у Егора — агенты по Wildberries, у Никиты — свои: почта, питание, спорт)? Если для бизнеса берём реальные агенты компании — это согласовано с собственницей?</div></div>
+<div class="row q" data-id="p4-3/14" data-q="В45"><span class="tc">В45</span><div class="txt">Wildberries в примерах: Егор — «все знают», Никита — «узко». Оставляем два бизнес-агента на Wildberries или один Wildberries + один салон или школа?</div></div>
+<div class="row q" data-id="p4-3/15" data-q="В46"><span class="tc">В46</span><div class="txt">Как показываем: живой экран, запись экрана, слайды? Кто готовит записи?</div></div>
+<div class="row q" data-id="p4-3/16" data-q="В47"><span class="tc">В47</span><div class="txt">Быт: какие два из списка (похудеть, психолог, калькулятор зарплаты, бюджет, «что приготовить из пяти овощей»)?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p4-4" data-title="5. Команда агентов: свой проект" data-part="Урок 3 — AI-агенты простыми словами" data-partid="p4" data-add="1">
+<h3>5. Команда агентов: свой проект<span class="time">16:00–19:00</span></h3>
+<div class="row ref" data-id="p4-4/0"><span class="tc"></span><div class="txt"><span class="lab">Структура Егора</span>«представьте, что вы хотите создать свой проект: вам понадобится аналитик и маркетолог, контролёр и всё прочее».</div></div>
+<div class="row p" data-id="p4-4/1"><span class="tc"></span><div class="txt">Допустим, ты запускаешь свой проект. Небольшой магазин, услугу, канал — неважно. Тебе понадобится аналитик, который считает цифры. Маркетолог, который пишет тексты и придумывает, как привлечь людей. Контролёр, который следит, чтобы ничего не упало и всё было сделано. И ещё куча людей.</div></div>
+<div class="row p" data-id="p4-4/2"><span class="tc"></span><div class="txt">Раньше это значило нанять трёх-четырёх человек или делать всё в одиночку по ночам. <mark class="acc">Сейчас это может быть команда агентов.</mark> Один считает, второй пишет, третий проверяет за первыми двумя. А ты ставишь задачи и принимаешь решения.</div></div>
+<div class="row scr" data-id="p4-4/3"><span class="tc">🎬</span><div class="txt">Схема: «ты» в центре, вокруг агенты — аналитик, маркетолог, контролёр, <span class="ph">[ЕЩЁ РОЛИ]</span>.</div></div>
+<div class="row p" data-id="p4-4/4"><span class="tc"></span><div class="txt">Именно так сейчас работают те, кто это понял раньше других. <span class="ph">[ПРИМЕР: команда агентов, которая реально работает у Егора или Никиты]</span>.</div></div>
+<div class="row q" data-id="p4-4/5" data-q="В48"><span class="tc">В48</span><div class="txt">Есть реальный пример «команды агентов» у Егора или Никиты, который можно показать на экране? Какие роли?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p4-5" data-title="6. Почему это круто для предпринимателя и как это продать" data-part="Урок 3 — AI-агенты простыми словами" data-partid="p4" data-add="1">
+<h3>6. Почему это круто для предпринимателя и как это продать<span class="time">19:00–23:00</span></h3>
+<div class="row ref" data-id="p4-5/0"><span class="tc"></span><div class="txt"><span class="lab">Структура Егора</span>«как продать, кому надо, почему это круто для предпринимателей». Встреча 23.10: «продаём не «какие крутые агенты», а «как круто быть тем, кто их делает»»; шаблоны агентов — под отрасли и боли нашей ЦА (бухгалтеры, юристы…).</div></div>
+<div class="row p" data-id="p4-5/1"><span class="tc"></span><div class="txt">Теперь посмотри на это глазами предпринимателя.</div></div>
+<div class="row p" data-id="p4-5/2"><span class="tc"></span><div class="txt">У него нет времени. Он сам себе и менеджер, и бухгалтер, и маркетолог. Нанимать людей дорого, а рутины всё больше. И вот приходит человек и говорит: <mark class="acc">«Я сделаю вам помощника, который каждое утро присылает отчёт, отвечает на типовые вопросы и следит за остатками. Сотрудника нанимать не надо».</mark></div></div>
+<div class="row p" data-id="p4-5/3"><span class="tc"></span><div class="txt">Кому это нужно: <span class="ph">[СЕГМЕНТЫ: селлеры, бухгалтеры, юристы, школы, салоны…]</span>. Сколько стоит: агент на рынке — от сорока до шестидесяти тысяч рублей, плюс поддержка каждый месяц.</div></div>
+<div class="row p" data-id="p4-5/4"><span class="tc"></span><div class="txt">И главное — как продать. Не рассказывать про «нейронки и агентов»: предпринимателю это неинтересно. А говорить про его время и деньги: <mark class="acc">«у вас уходит десять часов в неделю на отчёты — агент заберёт восемь».</mark> Это не уговоры, это арифметика, которую владелец бизнеса понимает лучше нас с тобой.</div></div>
+<div class="row p" data-id="p4-5/5"><span class="tc"></span><div class="txt">И самое приятное. <mark class="acc">Быть тем, кто это делает, — очень круто.</mark> Ты приходишь к бизнесу не с просьбой «дайте работу», а с решением того, что у него болит.</div></div>
+<div class="row q" data-id="p4-5/6" data-q="В49"><span class="tc">В49</span><div class="txt">Кому продаём агентов в первую очередь (сегменты для экрана)? Какие шаблоны агентов под отрасли (бухгалтеры, юристы) будут готовы к записи?</div></div>
+<div class="row q" data-id="p4-5/7" data-q="В50"><span class="tc">В50</span><div class="txt">Цена агента 40–60 тыс. (манифест) — оставляем?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p4-6" data-title="7. Практика по агенту" data-part="Урок 3 — AI-агенты простыми словами" data-partid="p4" data-add="1">
+<h3>7. Практика по агенту<span class="time">23:00–28:00</span></h3>
+<div class="row ref" data-id="p4-6/0"><span class="tc"></span><div class="txt"><span class="lab">Структура Егора</span>«в конце практика по агенту».</div></div>
+<div class="row ref" data-id="p4-6/1"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10</span>«на тест-драйве руками делаем только бота: подписки на нейронки там не дать»; на обучении — доступ к нейронке со старта, без своей подписки, через API в рамках лимита.</div></div>
+<div class="row p" data-id="p4-6/2"><span class="tc"></span><div class="txt">Теперь твоя очередь. <span class="ph">[ЧТО ДЕЛАЕТ УЧЕНИК — см. вопрос]</span></div></div>
+<div class="row q" data-id="p4-6/3" data-q="В51"><span class="tc">В51</span><div class="txt">Что за практика по агенту, если на встрече решили «руками на тест-драйве только бот, подписку на нейронку там не дать»? Варианты: (а) в нашем боте готовый агент на нашем API с лимитом — ученик загружает свою информацию (меню, прайс, дневник питания) и задаёт вопросы; (б) ученик подключает агента к своему боту из урока 2 — «бот отвечает на вопросы по твоему прайсу»; (в) ученик смотрит, как агент делает задачу, и пишет, какого агента хотел бы себе. Какой?</div></div>
+<div class="row q" data-id="p4-6/4" data-q="В52"><span class="tc">В52</span><div class="txt">Если агент на нашем API — какой лимит на ученика и какая нейронка?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p4-7" data-title="8. Закрывашка на урок 4" data-part="Урок 3 — AI-агенты простыми словами" data-partid="p4" data-add="1">
+<h3>8. Закрывашка на урок 4<span class="time">28:00–29:00</span></h3>
+<div class="row p" data-id="p4-7/0"><span class="tc"></span><div class="txt">Агенты — это то, за что бизнес сейчас платит больше всего, и то, что умеют делать очень немногие. И это опять только верхушка.</div></div>
+<div class="row p" data-id="p4-7/1"><span class="tc"></span><div class="txt">В следующем уроке — третий инструмент. <mark class="acc">Мини-приложения: маленькие приложения прямо внутри Телеграма,</mark> с каталогом, записью, оплатой. Покажу, как это выглядит и почему клиенты от них в восторге.</div></div>
+<div class="row p" data-id="p4-7/2"><span class="tc"></span><div class="txt">Буква в этом уроке тоже была. До встречи!</div></div>
+<div class="row q" data-id="p4-7/3" data-q="В53"><span class="tc">В53</span><div class="txt">Задание после урока 3 — только практика по агенту или ещё комментарий, как в уроке 2?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<h2 class="part" id="p5">Урок 4 — Мини-приложения</h2>
+<p class="part-sub">цель: показать третий инструмент — приложение внутри Телеграма; что это, кому и сколько стоит · ≈ 20 мин · у Пурвиньша нет (одно упоминание «разработка мини-приложений для бизнеса» как престиж); в структуре пока только название — здесь каркас и вопросы</p>
+<section class="item" id="p5-0" data-title="1. Вход" data-part="Урок 4 — Мини-приложения" data-partid="p5" data-add="1">
+<h3>1. Вход<span class="time">0:00–1:00</span></h3>
+<div class="row p" data-id="p5-0/0"><span class="tc"></span><div class="txt">Привет! Бот у тебя уже есть, агентов мы посмотрели. Сегодня третий инструмент — <mark class="acc">мини-приложения.</mark> Тут результат сразу видно глазами.</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p5-1" data-title="2. Что такое мини-приложение" data-part="Урок 4 — Мини-приложения" data-partid="p5" data-add="1">
+<h3>2. Что такое мини-приложение<span class="time">1:00–5:00</span></h3>
+<div class="row ref" data-id="p5-1/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у4 08:25]</span>«ты работаешь на заводе или занимаешься разработкой мобильных мини-приложений для бизнеса» — единственное упоминание за весь тест-драйв.</div></div>
+<div class="row p" data-id="p5-1/1"><span class="tc"></span><div class="txt">Мини-приложение — это маленькое приложение, которое открывается прямо внутри Телеграма. Ничего не надо скачивать из магазина приложений: нажал кнопку в боте — и открылось окно, как сайт, только внутри чата.</div></div>
+<div class="row p" data-id="p5-1/2"><span class="tc"></span><div class="txt">Чем оно отличается от бота. Бот — это переписка: кнопка, ответ, кнопка, ответ. Мини-приложение — это экран: каталог с картинками, календарь с окошками, корзина, личный кабинет, оплата в два касания.</div></div>
+<div class="row scr" data-id="p5-1/3"><span class="tc">🎬</span><div class="txt">Один и тот же сценарий «записаться на маникюр»: в боте (переписка) и в мини-приложении (экран с календарём).</div></div>
+<div class="row q" data-id="p5-1/4" data-q="В54"><span class="tc">В54</span><div class="txt">Что показываем как пример: какие демо уже есть (каталог, запись, калькулятор, квиз, «Примерочная», приложение для подсчёта калорий у Никиты)?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p5-2" data-title="3. Примеры: что можно сделать" data-part="Урок 4 — Мини-приложения" data-partid="p5" data-add="1">
+<h3>3. Примеры: что можно сделать<span class="time">5:00–10:00</span></h3>
+<div class="row p" data-id="p5-2/0"><span class="tc"></span><div class="txt"><span class="ph">[ПРИМЕРЫ МИНИ-ПРИЛОЖЕНИЙ: каталог магазина, запись с календарём, личный кабинет ученика, калькулятор стоимости, приложение для подсчёта калорий…]</span></div></div>
+<div class="row p" data-id="p5-2/1"><span class="tc"></span><div class="txt"><mark class="acc">И это опять только верхушка.</mark></div></div>
+<div class="row q" data-id="p5-2/2" data-q="В55"><span class="tc">В55</span><div class="txt">Какие 3–5 мини-приложений показываем и что из них уже есть живьём?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p5-3" data-title="4. Кому продать и сколько стоит" data-part="Урок 4 — Мини-приложения" data-partid="p5" data-add="1">
+<h3>4. Кому продать и сколько стоит<span class="time">10:00–14:00</span></h3>
+<div class="row p" data-id="p5-3/0"><span class="tc"></span><div class="txt"><span class="ph">[КОМУ: магазины, салоны, школы, кафе…; СКОЛЬКО: ?]</span></div></div>
+<div class="row q" data-id="p5-3/1" data-q="В56"><span class="tc">В56</span><div class="txt">Цена мини-приложения на рынке — какую вилку называем? В манифесте её нет (там бот 5–15, бот с оплатой или агент 40–60).</div></div>
+<div class="row q" data-id="p5-3/2" data-q="В57"><span class="tc">В57</span><div class="txt">Кому продаём мини-приложения в первую очередь?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p5-4" data-title="5. Как это делается" data-part="Урок 4 — Мини-приложения" data-partid="p5" data-add="1">
+<h3>5. Как это делается<span class="time">14:00–17:00</span></h3>
+<div class="row ref" data-id="p5-4/0"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10</span>технику не грузим, показываем суть и как это работает.</div></div>
+<div class="row p" data-id="p5-4/1"><span class="tc"></span><div class="txt"><span class="ph">[КАК ДЕЛАЕТСЯ: нейронка пишет код по описанию, ты проверяешь; короткая сборка или правка одной фразой?]</span></div></div>
+<div class="row q" data-id="p5-4/2" data-q="В58"><span class="tc">В58</span><div class="txt">Показываем сборку мини-приложения нейронкой (скринкаст) или только готовые?</div></div>
+<div class="row q" data-id="p5-4/3" data-q="В59"><span class="tc">В59</span><div class="txt">Практика в уроке 4 есть (например, ученик получает мини-приложение к своему боту из урока 2)?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p5-5" data-title="6. Закрывашка на урок 5" data-part="Урок 4 — Мини-приложения" data-partid="p5" data-add="1">
+<h3>6. Закрывашка на урок 5<span class="time">17:00–18:00</span></h3>
+<div class="row p" data-id="p5-5/0"><span class="tc"></span><div class="txt">Итак, у тебя в руках три инструмента: боты, агенты и мини-приложения. Как это выглядит, ты уже знаешь, а бот у тебя свой. Остался главный вопрос: <mark class="acc">кому всё это продать.</mark> Об этом следующий урок — где брать первых клиентов и что им написать.</div></div>
+<div class="row p" data-id="p5-5/1"><span class="tc"></span><div class="txt">Буква — была. До встречи!</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<h2 class="part" id="p6">Урок 5 — Поиск клиентов</h2>
+<p class="part-sub">цель: уйти с понятным списком, кому предложить первым, и текстом первого сообщения · ≈ 20–25 мин · основа — урок 4 Пурвиньша (поиск клиентов)</p>
+<section class="item" id="p6-0" data-title="1. Вход" data-part="Урок 5 — Поиск клиентов" data-partid="p6" data-add="1">
+<h3>1. Вход<span class="time">0:00–1:00</span></h3>
+<div class="row ref" data-id="p6-0/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у4 00:00–00:25]</span>анонс четырёх вопросов урока: зачем рынку новички, кто основные клиенты, семь способов поиска клиентов, как закрыть клиента без отзывов и кейсов.</div></div>
+<div class="row p" data-id="p6-0/1"><span class="tc"></span><div class="txt">Привет! Сегодня урок, без которого всё предыдущее так и останется хобби. <mark class="acc">Навык без клиента — это хобби.</mark> Разберём четыре вещи: зачем рынку новичок, кто твои первые клиенты, где их искать и как продать, если у тебя ещё нет ни одного отзыва.</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p6-1" data-title="2. «Я не технарь» и «продавать — не моё»" data-part="Урок 5 — Поиск клиентов" data-partid="p6" data-add="1">
+<h3>2. «Я не технарь» и «продавать — не моё»<span class="time">1:00–3:00</span></h3>
+<div class="row ref" data-id="p6-1/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у4 02:27–03:40]</span>«никто не рождается с флешкой в голове»; «не умею водить, потому что не родился с рулём»; «инструкция есть буквально ко всему… любой результат — это просто алгоритм». Его мотивационную часть (служба, «почему ты такой умный, но такой бедный», кассирша в «Ленте», «невидимая клетка») не берём.</div></div>
+<div class="row p" data-id="p6-1/1"><span class="tc"></span><div class="txt">Перед тем как идти к клиентам, одна мысль. Многие на этом месте думают: «я не технарь, а продавать — тем более не моё».</div></div>
+<div class="row p" data-id="p6-1/2"><span class="tc"></span><div class="txt">Никто не рождается с этим. Водить ты тоже не умел, пока не сел за руль. <mark class="acc">Продажи — такой же навык, как всё остальное: есть шаги, есть инструкция, есть первая неловкая попытка и вторая, уже нормальная.</mark> Бот у тебя уже есть, хотя пару дней назад слово «токен», возможно, ничего тебе не говорило. С клиентами то же самое.</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p6-2" data-title="3. Зачем рынку новичок" data-part="Урок 5 — Поиск клиентов" data-partid="p6" data-add="1">
+<h3>3. Зачем рынку новичок<span class="time">3:00–5:00</span></h3>
+<div class="row ref" data-id="p6-2/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у4 07:00–07:31]</span>«зачем новички, когда есть опытные? Далеко не у всех есть 20 000 за бота… вы как новичок за 10–15 000, чтобы получить первые отзывы».</div></div>
+<div class="row p" data-id="p6-2/1"><span class="tc"></span><div class="txt">Логичный вопрос: зачем бизнесу новичок, если есть агентства и опытные специалисты?</div></div>
+<div class="row p" data-id="p6-2/2"><span class="tc"></span><div class="txt">У маленького салона нет денег на агентство. А бот ему нужен. Ты отвечаешь быстро, объясняешь по-человечески и ты рядом. Для такого клиента это ценнее, чем портфолио на сто проектов.</div></div>
+<div class="row p" data-id="p6-2/3"><span class="tc"></span><div class="txt">Честно: <mark class="acc">первые два-три заказа будут дешевле рынка — ради отзыва и портфолио. Но не бесплатно.</mark> Бесплатную работу не ценят и часто даже не внедряют.</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p6-3" data-title="4. Кто твои первые клиенты" data-part="Урок 5 — Поиск клиентов" data-partid="p6" data-add="1">
+<h3>4. Кто твои первые клиенты<span class="time">5:00–8:00</span></h3>
+<div class="row ref" data-id="p6-3/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у4 07:31–08:43]</span>категории: малый бизнес (барбершопы, салоны, мастера маникюра, залы) — бот записи; онлайн-школы — сайты, боты, рассылки; [10:20] два типа клиентов: разовые и сопровождение.</div></div>
+<div class="row p" data-id="p6-3/1"><span class="tc"></span><div class="txt">Кто покупает первым: <span class="ph">[СЕГМЕНТЫ — салоны и мастера; репетиторы, тренеры, психологи; кофейни и цветочные; эксперты и онлайн-школы; селлеры]</span>.</div></div>
+<div class="row p" data-id="p6-3/2"><span class="tc"></span><div class="txt"><mark class="acc">У половины из них ты и есть клиент. Это и есть твой первый список.</mark> Твой мастер, твой тренер, кофейня у дома, знакомая, которая ведёт блог.</div></div>
+<div class="row p" data-id="p6-3/3"><span class="tc"></span><div class="txt">И два типа клиентов. Разовые: сделать бота — получить деньги. И постоянные: после бота ведёшь его каждый месяц. <mark class="acc">Из разовых со временем вырастают постоянные — это и есть та стабильность, о которой мы говорили в первом уроке.</mark></div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p6-4" data-title="5. Где искать: семь способов" data-part="Урок 5 — Поиск клиентов" data-partid="p6" data-add="1">
+<h3>5. Где искать: семь способов<span class="time">8:00–15:00</span></h3>
+<div class="row ref" data-id="p6-4/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у4 10:42–12:23]</span>7 способов: чаты Telegram, биржи (Kwork, Яндекс Услуги, Авито), «передача вакансий в рамках курса», знакомые, сарафан, закрытые платные чаты, свои соцсети. Ни одного названия чата с вакансиями.</div></div>
+<div class="row ref" data-id="p6-4/1"><span class="tc"></span><div class="txt"><span class="lab">Наш скрипт 21.10</span>записная книжка → заведения у дома → чаты вакансий → биржи → смежники (SMM, таргетологи, дизайнеры) → свои соцсети → сарафан; текст первого сообщения на экране.</div></div>
+<div class="row p" data-id="p6-4/2"><span class="tc"></span><div class="txt">Где искать. Семь способов, и начнём с того, который у новичков срабатывает чаще всего. Он у тебя уже в телефоне.</div></div>
+<div class="row h" data-id="p6-4/3"><span class="tc"></span><div class="txt">1. Записная книжка</div></div>
+<div class="row p" data-id="p6-4/4"><span class="tc"></span><div class="txt">Открой контакты и найди пять человек, у которых есть своё дело. Напиши сегодня. Текст можно скопировать со страницы урока:</div></div>
+<div class="row p" data-id="p6-4/5"><span class="tc"></span><div class="txt"><mark class="acc">«<span class="ph">[ИМЯ]</span>, я учусь делать ботов для записи клиентов. Хочу собрать такого для вас за <span class="ph">[ЦЕНА]</span> в обмен на отзыв, займёт неделю. Показать пример?»</mark> Пример у тебя есть — бот из второго урока.</div></div>
+<div class="row h" data-id="p6-4/6"><span class="tc"></span><div class="txt">2. Заведения рядом с домом</div></div>
+<div class="row p" data-id="p6-4/7"><span class="tc"></span><div class="txt">Прийти с телефоном, показать бота и сказать то же самое вслух. Страшно только первый раз.</div></div>
+<div class="row h" data-id="p6-4/8"><span class="tc"></span><div class="txt">3. Чаты и каналы с заказами в Телеграме</div></div>
+<div class="row p" data-id="p6-4/9"><span class="tc"></span><div class="txt"><span class="ph">[НАЗВАНИЯ ЧАТОВ — ссылки на странице урока]</span>. Что писать в отклике: не «готов выполнить заказ», так пишут все. А: «Смотрю ваш канал — вот три вещи, которые бот снимет с вас уже на этой неделе». Конкретика про них, а не про тебя.</div></div>
+<div class="row h" data-id="p6-4/10"><span class="tc"></span><div class="txt">4. Биржи</div></div>
+<div class="row p" data-id="p6-4/11"><span class="tc"></span><div class="txt">Kwork, Авито Услуги, FL. Конкурентов там много, поэтому это не первый способ, а четвёртый.</div></div>
+<div class="row h" data-id="p6-4/12"><span class="tc"></span><div class="txt">5. Смежники</div></div>
+<div class="row p" data-id="p6-4/13"><span class="tc"></span><div class="txt">SMM-щики, таргетологи, дизайнеры. У них есть клиенты, которым нужен бот, а делать его некому. Предложи делать ботов для их клиентов за процент.</div></div>
+<div class="row h" data-id="p6-4/14"><span class="tc"></span><div class="txt">6. Свои соцсети</div></div>
+<div class="row p" data-id="p6-4/15"><span class="tc"></span><div class="txt">Пост «вот бот для салона, вот что он умеет» и видео на тридцать секунд с экрана. Не «ищу клиентов», а «смотрите, что получилось».</div></div>
+<div class="row h" data-id="p6-4/16"><span class="tc"></span><div class="txt">7. Сарафан</div></div>
+<div class="row p" data-id="p6-4/17"><span class="tc"></span><div class="txt">После каждого заказа одна просьба: отзыв и контакт одного знакомого, кому это тоже нужно. <mark class="acc">Через полгода это становится главным источником.</mark></div></div>
+<div class="row q" data-id="p6-4/18" data-q="В60"><span class="tc">В60</span><div class="txt">Текст первого сообщения: какую цену для знакомых в обмен на отзыв называем (в скрипте 21.10 было 3 000)?</div></div>
+<div class="row q" data-id="p6-4/19" data-q="В61"><span class="tc">В61</span><div class="txt">Чаты с заказами: какие конкретно называем (пять реальных со ссылками)? Кто собирает список?</div></div>
+<div class="row q" data-id="p6-4/20" data-q="В62"><span class="tc">В62</span><div class="txt">У Пурвиньша есть способ «передаю заказы ученикам». У нас такое есть (заказы от команды или подрядчика)? Если нет — не говорим.</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p6-5" data-title="6. Как продать без кейсов" data-part="Урок 5 — Поиск клиентов" data-partid="p6" data-add="1">
+<h3>6. Как продать без кейсов<span class="time">15:00–17:00</span></h3>
+<div class="row ref" data-id="p6-5/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у4 12:23–12:53]</span>«все мои ученики — члены нашей команды, и все многочисленные кейсы доступны ученикам. И это не будет враньём» — это не берём.</div></div>
+<div class="row p" data-id="p6-5/1"><span class="tc"></span><div class="txt">«А у меня нет ни одного кейса». У тебя есть бот из второго урока. Это демо. Присылаешь ссылку — пусть человек сам потыкает. <mark class="acc">Один живой бот, который можно потрогать, лучше десяти красивых слов.</mark></div></div>
+<div class="row p" data-id="p6-5/2"><span class="tc"></span><div class="txt">Чужие работы за свои не выдаём. И дело даже не в этике: на первом же созвоне спросят «а как вы это делали», и всё станет понятно.</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p6-6" data-title="7. Деньги и безопасность" data-part="Урок 5 — Поиск клиентов" data-partid="p6" data-add="1">
+<h3>7. Деньги и безопасность<span class="time">17:00–19:00</span></h3>
+<div class="row ref" data-id="p6-6/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у4 03:40–05:21]</span>«предоплата… переход на сопровождение за 60–80 000 в месяц».</div></div>
+<div class="row p" data-id="p6-6/1"><span class="tc"></span><div class="txt">Как брать деньги: <span class="ph">[ПРАВИЛО ОПЛАТЫ — например, 50 % предоплата и 50 % после сдачи]</span>. И правило, которое я прошу запомнить: <mark class="acc">не увольняйся.</mark> Пока несколько месяцев подряд доход от этого не выше зарплаты, это подработка по вечерам.</div></div>
+<div class="row q" data-id="p6-6/2" data-q="В63"><span class="tc">В63</span><div class="txt">Правило оплаты для новичков (50/50 из скрипта 21.10) — оставляем? Самозанятость упоминаем?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p6-7" data-title="8. Задание и закрывашка на урок 6" data-part="Урок 5 — Поиск клиентов" data-partid="p6" data-add="1">
+<h3>8. Задание и закрывашка на урок 6<span class="time">19:00–20:00</span></h3>
+<div class="row ref" data-id="p6-7/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у4 12:53–13:26]</span>«в следующем видео — ученик, который заработал более 3 000 000 и купил BMW».</div></div>
+<div class="row p" data-id="p6-7/1"><span class="tc"></span><div class="txt">Задание: выбери трёх человек из своих контактов, кому можно предложить бота, и <span class="ph">[КУДА ПРИСЛАТЬ]</span>. Это пригодится на разборе.</div></div>
+<div class="row p" data-id="p6-7/2"><span class="tc"></span><div class="txt">А в следующем уроке — живой разговор. <mark class="acc">Я созвонился с ученицей,</mark> и она расскажет, как это было у неё: с чего начинала, что было страшно и что получилось. Без глянца. До встречи!</div></div>
+<div class="row q" data-id="p6-7/3" data-q="В64"><span class="tc">В64</span><div class="txt">Задание после урока 5 нужно? Что именно (три контакта, текст о себе)?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<h2 class="part" id="p7">Урок 6 — Созвон с ученицей</h2>
+<p class="part-sub">цель: живой человек из нашей ЦА проходит путь «было → попробовала → получилось» и снимает страхи; переход к анкете и разбору · ≈ 15–25 мин · основа — урок 5 Пурвиньша (созвон с Даней, 13:42) и его интервью с Кристиной, Егором, Витей</p>
+<section class="item" id="p7-0" data-title="1. Вход: кто она и зачем этот разговор" data-part="Урок 6 — Созвон с ученицей" data-partid="p7" data-add="1">
+<h3>1. Вход: кто она и зачем этот разговор<span class="time">0:00–1:00</span></h3>
+<div class="row ref" data-id="p7-0/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у5]</span>Zoom без вступления и титров, вопросы по списку. Разбор 18.10: брать — вопросник и честные реплики героев; не брать — немонтированное интервью и финальный «посоветуешь ли программу».</div></div>
+<div class="row ref" data-id="p7-0/1"><span class="tc"></span><div class="txt"><span class="lab">Встреча 23.10 (Луиза)</span>такие ролики реально смотрят и пересказывают на диагностиках.</div></div>
+<div class="row p" data-id="p7-0/2"><span class="tc"></span><div class="txt">Привет! Последний урок тест-драйва — и он не про меня. Сегодня я созвонился с <span class="ph">[ИМЯ]</span>, <span class="ph">[КТО ОНА, ОДНОЙ ФРАЗОЙ]</span>. Она расскажет, как всё было у неё. Без сценария и без красивых цифр: как есть.</div></div>
+<div class="row dir" data-id="p7-0/3"><span class="tc">▶</span><div class="txt">Вступление — 30 секунд, дальше монтаж с главами и титрами.</div></div>
+<div class="row q" data-id="p7-0/4" data-q="В65"><span class="tc">В65</span><div class="txt">Кто ученица? Реальный человек, с согласием на запись и имя? На встрече это был открытый вопрос; в манифесте — «выпускников пока нет, не выдумываем».</div></div>
+<div class="row q" data-id="p7-0/5" data-q="В66"><span class="tc">В66</span><div class="txt">Формат: созвон в Zoom, запись в студии, кружки? Сколько длится после монтажа (у Пурвиньша созвон 13:42, интервью Кристины 27:20)?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p7-1" data-title="2. Вопросы созвона" data-part="Урок 6 — Созвон с ученицей" data-partid="p7" data-add="1">
+<h3>2. Вопросы созвона<span class="time">1:00–15:00</span></h3>
+<div class="row ref" data-id="p7-1/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш (интервью Егора, Вити, Кристины)</span>одна и та же сетка — кто → что было до → почему решил → страхи → откуда деньги на обучение → сложно ли → проекты и суммы → что помогло → что изменилось → посоветуешь ли. Честные реплики, которые работают: «уложила ребёнка и выполнила заказ за 2 часа», «меньше рилсов — за эти 2 часа могу найти заказ», «работа подстраивается под меня», «взял отпуск, подустал».</div></div>
+<div class="row p" data-id="p7-1/1"><span class="tc"></span><div class="txt">Сетка вопросов — она же главы монтажа:</div></div>
+<div class="row li" data-id="p7-1/2"><span class="tc"></span><div class="txt">Расскажи о себе: кто ты, чем занималась до этого.</div></div>
+<div class="row li" data-id="p7-1/3"><span class="tc"></span><div class="txt">Что было не так? Почему вообще начала смотреть в эту сторону?</div></div>
+<div class="row li" data-id="p7-1/4"><span class="tc"></span><div class="txt">Чего боялась? Что думала: «это не для меня», «не разберусь»?</div></div>
+<div class="row li" data-id="p7-1/5"><span class="tc"></span><div class="txt">Как было в первый раз — первый бот, первая нейронка? Сложно?</div></div>
+<div class="row li" data-id="p7-1/6"><span class="tc"></span><div class="txt">Первый заказ или первый результат: что за задача, как нашла, сколько заняло.</div></div>
+<div class="row li" data-id="p7-1/7"><span class="tc"></span><div class="txt">Что изменилось — по времени, по деньгам, по ощущениям?</div></div>
+<div class="row li" data-id="p7-1/8"><span class="tc"></span><div class="txt">Что было тяжело, если честно? Где хотелось бросить?</div></div>
+<div class="row li" data-id="p7-1/9"><span class="tc"></span><div class="txt">Что бы сказала себе в начале пути?</div></div>
+<div class="row scr" data-id="p7-1/10"><span class="tc">🎬</span><div class="txt">Титры глав на экране; цифры и даты — титрами, если она их называет.</div></div>
+<div class="row q" data-id="p7-1/11" data-q="В67"><span class="tc">В67</span><div class="txt">Вопросы — эти? Что добавить или убрать? Что должно прозвучать обязательно?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p7-2" data-title="3. Итог тест-драйва" data-part="Урок 6 — Созвон с ученицей" data-partid="p7" data-add="1">
+<h3>3. Итог тест-драйва<span class="time">15:00–17:00</span></h3>
+<div class="row ref" data-id="p7-2/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у6 00:00–00:23]</span>«после этого урока можешь приступить к домашнему заданию» (= анкета); система из четырёх шагов.</div></div>
+<div class="row p" data-id="p7-2/1"><span class="tc"></span><div class="txt">Ну вот и всё. Теперь ты знаешь, что за профессия — технический специалист нового времени. У тебя есть свой бот, ты видишь, как работают агенты и мини-приложения, и понимаешь, где искать первых клиентов.</div></div>
+<div class="row p" data-id="p7-2/2"><span class="tc"></span><div class="txt"><mark class="acc">Это и есть вся логика: от первого бота до первого клиента.</mark></div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<section class="item" id="p7-3" data-title="4. Анкета и персональный разбор" data-part="Урок 6 — Созвон с ученицей" data-partid="p7" data-add="1">
+<h3>4. Анкета и персональный разбор<span class="time">17:00–19:00</span></h3>
+<div class="row ref" data-id="p7-3/0"><span class="tc"></span><div class="txt"><span class="lab">Пурвиньш [у6 26:22–26:56]</span>«подробно заполняй анкету, чтобы попасть на персональный разбор… составим стратегию»; «перед вами последняя цифра кода… отправьте в чат».</div></div>
+<div class="row ref" data-id="p7-3/1"><span class="tc"></span><div class="txt"><span class="lab">Структура Егора</span>«пишете эмоции в конце — персональный разбор».</div></div>
+<div class="row p" data-id="p7-3/2"><span class="tc"></span><div class="txt">Теперь последний шаг. Заполни анкету — кнопка под уроком. Расскажи, кто ты, что получилось на практике и какие были эмоции. <mark class="acc">Пиши честно и подробно: чем больше мы о тебе знаем, тем точнее будет разбор.</mark></div></div>
+<div class="row p" data-id="p7-3/3"><span class="tc"></span><div class="txt">По анкете мы назначим персональный разбор. Посмотрим на твою ситуацию и скажем, с чего начать именно тебе. И, как я обещал в самом начале, расскажем про обучение: что там, сколько стоит и подходит ли оно тебе.</div></div>
+<div class="row p" data-id="p7-3/4"><span class="tc"></span><div class="txt">И последняя буква. 🎬 <span class="ph">[ПОСЛЕДНЯЯ БУКВА]</span>. Собери слово и отправь в чат — бот пришлёт <span class="ph">[БОНУС]</span>.</div></div>
+<div class="row p" data-id="p7-3/5"><span class="tc"></span><div class="txt">Спасибо, что этот путь мы прошли вместе. Увидимся на разборе!</div></div>
+<div class="row q" data-id="p7-3/6" data-q="В68"><span class="tc">В68</span><div class="txt">Вопросы анкеты — есть список? У Пурвиньша 22 вопроса. Сколько у нас и какие обязательные?</div></div>
+<div class="row q" data-id="p7-3/7" data-q="В69"><span class="tc">В69</span><div class="txt">Цену и программу обучения называем в конце урока 6 (в манифесте — «цена в открытом уроке») или только на разборе?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section>
+<h2 class="part" id="p8">Открытые вопросы со встречи 23.10</h2>
+<p class="part-sub">не привязаны к одному уроку</p>
+<section class="item" id="p8-0" data-title="Вне уроков" data-part="Открытые вопросы со встречи 23.10" data-partid="p8" data-add="1">
+<h3>Вне уроков</h3>
+<div class="row q" data-id="p8-0/0" data-q="В70"><span class="tc">В70</span><div class="txt">Боты с базами данных и CRM: говорим о них на тест-драйве или только на обучении?</div></div>
+<div class="row q" data-id="p8-0/1" data-q="В71"><span class="tc">В71</span><div class="txt">Бот-рассылка «картинки с 8 Марта подружкам в WhatsApp» — наша ЦА или нет? Если да, может стать шаблоном в уроке 2.</div></div>
+<div class="row q" data-id="p8-0/2" data-q="В72"><span class="tc">В72</span><div class="txt">Salebot: нужен ли где-то урок по конструктору («как это выглядит») или всё через нейронку?</div></div>
+<a class="top" href="#top">↑ к оглавлению</a></section></div>
+</div>
+<button class="btn main fab" id="fab">Сохранить файл</button>
+<div class="panel" id="panel"><div class="box">
+  <b>Список правок и ответов</b>
+  <textarea id="listText" readonly></textarea>
+  <div class="acts">
+    <button class="btn" id="copy">Скопировать</button>
+    <button class="btn" id="dl">Скачать .txt</button>
+    <button class="btn main" id="close">Закрыть</button>
+  </div>
+</div></div>
+<script type="application/json" id="td-meta">{"doc": "td-2026-10-24", "title": "Тест-драйв: структура и текст уроков", "short": "Тест-драйв_24.10"}</script>
+<script type="application/json" id="td-edits">{}</script>
+<script>
+(function () {
+  // Снимок файла до любых правок: «Сохранить файл» = этот же html, в котором заменён только блок td-edits.
+  var PRISTINE = "<!doctype html>\n" + document.documentElement.outerHTML;
+  document.documentElement.classList.add("js");
+  var D = JSON.parse(document.getElementById("td-meta").textContent);
+  var base = JSON.parse(document.getElementById("td-edits").textContent || "{}");
+  if (!base.items) base.items = {};
+  if (!base.added) base.added = {};
+  var LS = "testdrive-pravki:" + D.doc + ":" + (base.savedAt || "new");
+  var st = base, lsOk = true;
+  try { var l = JSON.parse(localStorage.getItem(LS) || "null"); if (l && l.items) { st = l; if (!st.added) st.added = {}; } } catch (e) { lsOk = false; }
+  var dirty = false, timer = null;
+  var $ = function (id) { return document.getElementById(id); };
+  var el = function (tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  var doc = $("doc"), ORIG = {}, ITEMS = [];
+
+  function editable(e) {
+    e.contentEditable = "plaintext-only";
+    if (e.contentEditable !== "plaintext-only") e.contentEditable = "true";
+    e.spellcheck = false;
+  }
+  function val(e) { return e.innerText.replace(/ /g, " ").replace(/[ \t]+\n/g, "\n").trim(); }
+  function side(isQ) {
+    var s = el("div", "side");
+    s.appendChild(el("button", "pen", "✎ комментарий"));
+    var n = el("div", "note"); n.dataset.ph = isQ ? "Ответ…" : "Правка / комментарий…"; editable(n); s.appendChild(n);
+    s.appendChild(el("button", "undo", "↺ вернуть как было"));
+    return s;
+  }
+
+  // оживить статичную разметку
+  doc.querySelectorAll(".item").forEach(function (sec) {
+    var it = { key: sec.id, sec: sec, title: sec.dataset.title, part: sec.dataset.part, toc: document.querySelector('.toc a[href="#' + sec.id + '"]'),
+               h2: $(sec.dataset.partid), rows: [] };
+    sec.querySelectorAll(".row").forEach(function (row) {
+      var t = row.querySelector(".txt"), isQ = row.classList.contains("q");
+      ORIG[row.dataset.id] = val(t);
+      if (!row.classList.contains("ref")) { editable(t); row.appendChild(el("div", "was", ORIG[row.dataset.id])); }
+      row.appendChild(side(isQ));
+      it.rows.push(row);
+    });
+    if (sec.querySelector(".row.q")) sec.classList.add("hasq");
+    if (sec.dataset.add) { var b = el("button", "addrow", "+ добавить пункт"); sec.insertBefore(b, sec.querySelector(".top")); it.addBtn = b; }
+    ITEMS.push(it);
+  });
+  var BYKEY = {}; ITEMS.forEach(function (it) { BYKEY[it.key] = it; });
+
+  function addRow(it, rec) {
+    var row = el("div", "row p added"); row.dataset.id = rec.id;
+    row.appendChild(el("span", "tc", "+"));
+    var t = el("div", "txt", rec.t || ""); editable(t); row.appendChild(t);
+    row.appendChild(side(false));
+    if (rec.n) { row.querySelector(".note").textContent = rec.n; row.classList.add("noted"); }
+    it.sec.insertBefore(row, it.addBtn);
+    return row;
+  }
+
+  // правки из файла / браузера
+  Object.keys(st.items).forEach(function (id) {
+    var rec = st.items[id], row = doc.querySelector('.row[data-id="' + id + '"]'); if (!row) return;
+    if (rec.t != null) { row.querySelector(".txt").textContent = rec.t; row.classList.add("edited"); row.classList.toggle("gone", rec.t === ""); }
+    if (rec.n) { row.querySelector(".note").textContent = rec.n; row.classList.add("noted"); }
+  });
+  Object.keys(st.added).forEach(function (k) { var it = BYKEY[k]; if (it) st.added[k].forEach(function (rec) { addRow(it, rec); }); });
+
+  function findAdded(id) {
+    var k = id.split("/+")[0], arr = st.added[k] || [];
+    for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i];
+    return null;
+  }
+  function changed() { dirty = true; recount(); clearTimeout(timer); timer = setTimeout(store, 400); }
+  function put(id, field, v) {
+    if (id.indexOf("/+") > 0) { var a = findAdded(id); if (a) { if (v == null || v === "") delete a[field]; else a[field] = v; } return changed(); }
+    var rec = st.items[id] || {};
+    if (v == null || (v === "" && field === "n")) delete rec[field]; else rec[field] = v;
+    if (rec.t == null && !rec.n) delete st.items[id]; else st.items[id] = rec;
+    changed();
+  }
+  function store() { try { localStorage.setItem(LS, JSON.stringify(st)); lsOk = true; } catch (e) { lsOk = false; } }
+  var QROWS = doc.querySelectorAll(".row.q");
+  function recount() {
+    var t = 0, n = 0, a = 0, ans = 0;
+    Object.keys(st.items).forEach(function (id) {
+      var r = st.items[id], row = doc.querySelector('.row[data-id="' + id + '"]'), q = row && row.classList.contains("q");
+      if (r.t != null) t++;
+      if (r.n) { if (q) ans++; else n++; }
+    });
+    Object.keys(st.added).forEach(function (k) { st.added[k].forEach(function (r) { if (r.t) a++; if (r.n) n++; }); });
+    $("cnt").textContent = "ответов: " + ans + " из " + QROWS.length + " · правок: " + t + " · добавлено: " + a + " · комментариев: " + n;
+    var hasP = {};
+    ITEMS.forEach(function (it) {
+      var has = it.rows.some(function (r) { return st.items[r.dataset.id]; }) || (st.added[it.key] || []).length > 0;
+      it.sec.classList.toggle("has", has); if (it.toc) it.toc.classList.toggle("has", has);
+      if (has) hasP[it.part] = 1;
+    });
+    ITEMS.forEach(function (it) { if (it.h2) { it.h2.classList.toggle("has", !!hasP[it.part]); var s = it.h2.nextElementSibling; if (s && s.classList.contains("part-sub")) s.classList.toggle("has", !!hasP[it.part]); } });
+  }
+  recount();
+
+  doc.addEventListener("input", function (e) {
+    var t = e.target, row = t.closest(".row"); if (!row) return;
+    var id = row.dataset.id;
+    if (t.classList.contains("txt")) {
+      var v = val(t);
+      if (row.classList.contains("added")) return put(id, "t", v);
+      var ch = v !== ORIG[id]; row.classList.toggle("edited", ch); row.classList.toggle("gone", ch && v === ""); put(id, "t", ch ? v : null);
+    }
+    if (t.classList.contains("note")) { var v2 = val(t); row.classList.toggle("noted", !!v2); put(id, "n", v2); }
+  });
+  doc.addEventListener("focusout", function (e) {
+    if (e.target.classList.contains("note") && !val(e.target)) { e.target.textContent = ""; var r = e.target.closest(".row"); if (r) r.classList.remove("open"); }
+  });
+  doc.addEventListener("click", function (e) {
+    var t = e.target;
+    if (t.classList.contains("addrow")) {
+      var it = BYKEY[t.closest(".item").id], rec = { id: it.key + "/+" + Date.now().toString(36), t: "" };
+      (st.added[it.key] = st.added[it.key] || []).push(rec);
+      var r = addRow(it, rec); r.querySelector(".txt").focus(); changed(); return;
+    }
+    var row = t.closest(".row"); if (!row) return;
+    if (t.classList.contains("pen")) { row.classList.add("open"); row.querySelector(".note").focus(); }
+    if (t.classList.contains("undo")) {
+      var id = row.dataset.id;
+      if (row.classList.contains("added")) {
+        var k = id.split("/+")[0]; st.added[k] = (st.added[k] || []).filter(function (x) { return x.id !== id; });
+        if (!st.added[k].length) delete st.added[k];
+        row.remove(); changed(); return;
+      }
+      row.querySelector(".txt").textContent = ORIG[id]; row.classList.remove("edited", "gone"); put(id, "t", null);
+    }
+  });
+  $("who").value = st.who || "";
+  $("who").addEventListener("input", function () { st.who = this.value.trim(); dirty = true; clearTimeout(timer); timer = setTimeout(store, 400); });
+  $("only").addEventListener("change", function () { document.body.classList.toggle("only-edits", this.checked); });
+  $("onlyq").addEventListener("change", function () { document.body.classList.toggle("only-q", this.checked); });
+  $("jump").addEventListener("change", function () { if (this.value) { $(this.value).scrollIntoView(); this.value = ""; } });
+
+  function download(name, text, type) {
+    var a = document.createElement("a"), url = URL.createObjectURL(new Blob([text], { type: type }));
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 3000);
+  }
+  function stamp() { var d = new Date(), p = function (x) { return String(x).padStart(2, "0"); }; return p(d.getDate()) + "." + p(d.getMonth() + 1) + "_" + p(d.getHours()) + "-" + p(d.getMinutes()); }
+  function fname(ext) { return D.short + "_правки" + (st.who ? "_" + st.who.replace(/[^\wа-яё -]/gi, "") : "") + "_" + stamp() + ext; }
+
+  $("fab").addEventListener("click", function () { $("save").click(); });
+  $("save").addEventListener("click", function () {
+    st.savedAt = new Date().toISOString();
+    var json = JSON.stringify(st).replace(/</g, "\\u003c");
+    var html = PRISTINE.replace(/(<script type="application\/json" id="td-edits">)[\s\S]*?(<\/script>)/, function (m, a, b) { return a + json + b; });
+    download(fname(".html"), html, "text/html");
+    dirty = false; store();
+  });
+
+  function cut(s) { return s.length > 160 ? s.slice(0, 160) + "…" : s; }
+  function listText() {
+    var out = ["Правки и ответы: " + D.title + (st.who ? " — " + st.who : ""), ""];
+    ITEMS.forEach(function (it) {
+      var lines = [];
+      it.rows.forEach(function (row) {
+        var id = row.dataset.id, rec = st.items[id]; if (!rec) return;
+        var o = ORIG[id];
+        if (row.classList.contains("q")) {
+          lines.push("❓ " + row.dataset.q + ". " + (rec.t != null ? rec.t : o));
+          if (rec.n) lines.push("ответ: " + rec.n);
+          lines.push(""); return;
+        }
+        if (rec.t === "") lines.push("убрать: " + o);
+        else if (rec.t != null) lines.push("было: " + o, "стало: " + rec.t);
+        else lines.push("«" + cut(o) + "»");
+        if (rec.n) lines.push("комментарий: " + rec.n);
+        lines.push("");
+      });
+      (st.added[it.key] || []).forEach(function (r) {
+        if (!r.t && !r.n) return;
+        if (r.t) lines.push("добавить: " + r.t);
+        if (r.n) lines.push("комментарий: " + r.n);
+        lines.push("");
+      });
+      if (lines.length) out.push("■ " + it.part + " — " + it.title, "", lines.join("\n"));
+    });
+    if (out.length === 2) out.push("Правок и ответов пока нет.");
+    return out.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
+  }
+  $("list").addEventListener("click", function () { $("listText").value = listText(); $("panel").classList.add("on"); });
+  $("close").addEventListener("click", function () { $("panel").classList.remove("on"); });
+  $("panel").addEventListener("click", function (e) { if (e.target === this) this.classList.remove("on"); });
+  $("dl").addEventListener("click", function () { download(fname(".txt"), $("listText").value, "text/plain"); });
+  $("copy").addEventListener("click", function () {
+    var ta = $("listText"), b = this;
+    var ok = function () { b.textContent = "Скопировано"; setTimeout(function () { b.textContent = "Скопировать"; }, 1500); };
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(ta.value).then(ok, function () { ta.select(); document.execCommand("copy"); ok(); });
+    else { ta.select(); document.execCommand("copy"); ok(); }
+  });
+  window.addEventListener("beforeunload", function (e) { if (dirty && !lsOk) { e.preventDefault(); e.returnValue = ""; } });
+})();
+</script>
+</body>
+</html>

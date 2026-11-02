@@ -1,0 +1,41 @@
+# Секреты и личные данные — никогда в GitHub
+private/
+.env
+**/.env
+*.token
+token.txt
+.bot_token.txt
+*.pem
+id_rsa*
+id_ed25519*
+
+# Базы и рабочие данные платформы
+platform/data/
+data/db/
+data/competitors/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Тяжёлые видео и медиа
+docs/course/video/
+docs/research/media/
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.wav
+*.mp3
+
+# Сборка, кэши, окружения
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+*.log
+.DS_Store
+Thumbs.db

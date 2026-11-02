@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сообщения бота v2</title>
+<style>
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: "Segoe UI", Roboto, Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #1d2433; background: #f4f6fb; }
+.wrap { max-width: 900px; margin: 0 auto; }
+a { color: #3b5bdb; }
+
+.hero { background: #14182e; background: linear-gradient(135deg, #14182e 0%, #2b2f6b 60%, #f08c00 160%); color: #fff; padding: 46px 20px 40px; }
+.hero .tag { display: inline-block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; background: rgba(255,255,255,.16); padding: 4px 10px; border-radius: 20px; margin-bottom: 14px; }
+.hero h1 { font-size: 34px; line-height: 1.15; margin: 0 0 10px; }
+.hero p { margin: 0; font-size: 17px; opacity: .92; max-width: 720px; }
+
+.bar { position: sticky; top: 0; z-index: 20; background: #fff; border-bottom: 1px solid #e1e5ee; box-shadow: 0 2px 10px rgba(31,42,90,.06); }
+.bar .wrap { display: flex; flex-wrap: wrap; align-items: center; padding: 10px 20px; }
+.bar input { border: 1px solid #c9cfdd; border-radius: 8px; padding: 7px 10px; font-size: 14.5px; width: 170px; margin: 3px 10px 3px 0; }
+.bar button { border: 0; border-radius: 8px; padding: 8px 14px; font-size: 14px; font-weight: 600; cursor: pointer; margin: 3px 8px 3px 0; }
+.bar .main { background: #f08c00; color: #fff; }
+.bar .sec { background: #eef1f8; color: #1f2a5a; }
+.bar .count { font-size: 14px; color: #5c6478; margin-left: auto; }
+.bar .count b { color: #d9480f; }
+.nav { display: flex; flex-wrap: wrap; padding: 0 20px 8px; max-width: 900px; margin: 0 auto; }
+.nav a { font-size: 13.5px; color: #3a4257; text-decoration: none; padding: 4px 10px; margin: 2px 6px 2px 0; border-radius: 8px; background: #f4f6fb; }
+.nav a b { color: #f08c00; }
+
+.howto { background: #fff; border-radius: 14px; padding: 18px 22px; margin: 24px 0 0; box-shadow: 0 2px 10px rgba(31,42,90,.06); }
+.howto h3 { margin: 0 0 8px; font-size: 18px; }
+.howto ol { margin: 0; padding-left: 20px; }
+.legend span { display: inline-block; margin: 8px 12px 0 0; font-size: 14px; }
+.decide { background: #fff8e6; border-left: 4px solid #f59f00; border-radius: 8px; padding: 14px 18px; margin: 16px 0 0; font-size: 15px; color: #5c4a14; }
+.decide ul { margin: 6px 0 0; padding-left: 20px; }
+details.pre { margin-top: 14px; font-size: 14.5px; color: #3a4257; }
+details.pre summary { cursor: pointer; font-weight: 600; color: #1f2a5a; }
+
+section { padding: 34px 20px 6px; }
+h2 { font-size: 26px; margin: 0 0 14px; color: #14182e; }
+h2 .letter { display: inline-block; width: 40px; height: 40px; line-height: 40px; text-align: center; border-radius: 10px; background: #f08c00; color: #fff; margin-right: 12px; font-size: 20px; vertical-align: 2px; }
+.intro { margin-bottom: 14px; }
+
+.block { background: #fff; border-radius: 14px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(31,42,90,.07); overflow: hidden; border: 2px solid transparent; }
+.block.has { border-color: #f08c00; }
+.bhead { padding: 14px 22px 0; }
+.bid { display: inline-block; background: #14182e; color: #fff; font-weight: 700; font-size: 13px; padding: 2px 9px; border-radius: 7px; margin-right: 10px; vertical-align: 1px; }
+.btitle { font-weight: 700; font-size: 17px; color: #14182e; }
+.btext { padding: 6px 22px 4px; }
+.btext p { margin: 8px 0; }
+.btext ul, .btext ol { margin: 8px 0; padding-left: 22px; }
+.btext li { margin: 3px 0; }
+.btext h4 { margin: 14px 0 4px; font-size: 16px; }
+h3.art { font-size: 22px; line-height: 1.3; margin: 10px 0; color: #14182e; }
+.goal { background: #f4f6fb; border-radius: 8px; padding: 9px 12px; margin: 8px 0 10px; font-size: 14.5px; color: #3a4257; }
+.goal b { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #8a91a5; }
+.team { background: #e7f0ff; border-left: 3px solid #3b5bdb; border-radius: 6px; padding: 8px 12px; margin: 10px 0; font-size: 14px; color: #1f3a7a; }
+.ph { background: #fff3bf; color: #7a5a00; border-radius: 4px; padding: 0 3px; font-weight: 600; }
+.mem { display: block; background: #f3f0ff; border: 1px dashed #9775fa; color: #5f3dc4; border-radius: 8px; padding: 6px 10px; margin: 8px 0; font-size: 14px; }
+.btn-ph { display: inline-block; background: #3b5bdb; color: #fff; border-radius: 8px; padding: 3px 12px; font-size: 14px; font-weight: 600; margin: 2px 0; }
+.tbl { overflow-x: auto; margin: 10px 0; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { border: 1px solid #e1e5ee; padding: 6px 9px; text-align: left; vertical-align: top; }
+th { background: #f4f6fb; }
+code { background: #f1f3f5; padding: 1px 4px; border-radius: 4px; }
+
+.cbox { background: #fffaf0; border-top: 1px dashed #f0c27a; padding: 10px 22px 14px; }
+.cbox label { display: block; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #b35c00; margin-bottom: 5px; }
+.cbox textarea { width: 100%; border: 1px solid #f0c27a; border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 15px; resize: vertical; min-height: 44px; background: #fff; }
+.cbox textarea:focus { outline: 2px solid #f08c00; border-color: #f08c00; }
+.block.general { box-shadow: none; background: transparent; }
+.block.general .cbox { border: 1px dashed #f0c27a; border-radius: 12px; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #14182e; color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 14.5px; display: none; z-index: 50; max-width: 90%; }
+#out { position: fixed; left: -9999px; top: 0; }
+footer { text-align: center; color: #8a91a5; font-size: 13px; padding: 30px 20px 60px; }
+@media (max-width: 640px) { .hero h1 { font-size: 26px; } section { padding: 26px 14px 4px; } .btext, .bhead, .cbox { padding-left: 14px; padding-right: 14px; } .bar .count { margin-left: 0; width: 100%; } }
+@media print { .bar, .cbox, .toast { display: none; } .block { box-shadow: none; page-break-inside: avoid; } }
+</style>
+</head>
+<body>
+
+<div class="hero"><div class="wrap">
+  <div class="tag">На согласование · 21 блоков</div>
+  <h1>Сообщения бота и лички Егора, версия 2</h1>
+  <p>Под утверждённые статьи (статья 1 v10, статья 2 v9) и по комментариям Луизы к первой версии: описание до «Старт», возвраты в статьи по таймерам, переход в личку Егора, группа тест-драйва. Под каждым блоком — поле для комментария. Пишите, какой смысл добавить, что убрать или переписать, — потом нейросеть перепишет тексты по вашим комментариям.</p>
+</div></div>
+
+<div class="bar">
+  <div class="wrap">
+    <input id="who" type="text" placeholder="Ваше имя">
+    <button class="main" id="copyBtn" type="button">Скопировать комментарии</button>
+    <button class="sec" id="dlBtn" type="button">Скачать .txt</button>
+    <button class="sec" id="clrBtn" type="button">Очистить</button>
+    <span class="count">Комментариев: <b id="cnt">0</b></span>
+  </div>
+  <div class="nav"><a href="#sec-A"><b>A</b> До кнопки «Старт» и первое сообщение</a><a href="#sec-B"><b>B</b> Если статья 1 не открыта</a><a href="#sec-C"><b>C</b> Переход к статье 2</a><a href="#sec-D"><b>D</b> После статьи 2 → личка Егора</a><a href="#sec-E"><b>E</b> Личка Егора и группа тест-драйва</a><a href="#sec-F"><b>F</b> Служебное</a></div>
+</div>
+
+<div class="wrap" style="padding:0 20px">
+  <div class="howto">
+    <h3>Как оставить комментарии</h3>
+    <ol>
+      <li>Впишите своё имя вверху.</li>
+      <li>Читайте блоки и пишите комментарий в жёлтое поле под нужным блоком. Пустые поля можно пропускать. Всё сохраняется само в этом браузере.</li>
+      <li>В конце нажмите «Скопировать комментарии» и вставьте в чат (или «Скачать .txt» и пришлите файл).</li>
+    </ol>
+    <div class="legend">
+      <span><span class="ph">[ПЛЕЙСХОЛДЕР]</span> — заполнить реальными данными</span>
+      <span><span class="btn-ph">Кнопка</span> — кнопка в боте или статье</span>
+      <span><span class="mem" style="display:inline-block;margin:0">🖼 МЕМ</span> — картинка, в тексте идея</span>
+      <span class="team" style="display:inline-block;margin:6px 0 0">Синие пометки — для команды, не публикуются</span>
+    </div>
+    <div class="decide"><b>Что учтено из комментариев Луизы</b>
+      <ul>
+        <li>A-1: до «Старт» — описание от Егора с обещанием плана; после «Старт» — коротко про нишу и сразу в статью; сообщение про канал «между делом».</li>
+        <li>A-2: возвраты в статью 1 через 15 минут (с картинкой), 45 минут, 2 часа, 24 часа — каждый с отсылкой к содержанию статьи.</li>
+        <li>A-3: «ты узнал это — во второй статье это — после неё поймёшь, как попасть на мини-обучение»; такие же возвраты для статьи 2.</li>
+        <li>A-4/A-5: в личку Егора по слову «БОТ», лично, не больше 10 человек, разбор как подарок, личный план как главное; плюс напоминание и финальное сообщение.</li>
+        <li>A-6: ответ в личке спокойный, ФИО, группа, 48 часов, 6 уроков со ссылками, анкета в конце, пуши «вижу, не начал».</li>
+        <li>A-7: на текст бот не отвечает, цепочка не сбивается.</li>
+      </ul>
+    </div>
+    <details class="pre"><summary>Пояснения автора текстов</summary><div class="team">Для команды: написано под утверждённые статьи (статья 1 — правка Егора v10, статья 2 — v9) и по комментариям Луизы к первой версии (A-1 … A-7). Пишет Егор от первого лица, на «ты». Окончаний в скобках нет. <span class="ph">[КАРТИНКА: …]</span> — место для картинки, <span class="ph">[ССЫЛКА]</span> — ссылка.</div>
+<div class="team">Для команды, техника: чтобы бот знал, открыта ли статья, ссылка на статью идёт с меткой человека (?tg_id=…), а сайт при открытии и при дочитывании отправляет событие в бота. Открыл — напоминания про эту статью отменяются. Нажал «Вернуться в бота» или дочитал — уходит следующее сообщение. Так делают все конкуренты. Если человек пишет боту текстом, бот молчит и цепочка не сбивается (A-7); отвечаем вручную при необходимости.</div></details>
+  </div>
+</div>
+
+<section id="sec-A"><div class="wrap">
+<h2><span class="letter">A</span>До кнопки «Старт» и первое сообщение</h2>
+<div class="block" id="b-A-1" data-id="A-1" data-title="До кнопки «Старт» и первое сообщение · Описание бота (видно до кнопки «Старт»)">
+<div class="bhead"><span class="bid">A-1</span><span class="btitle">Описание бота (видно до кнопки «Старт»)</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>первое, что видит человек в пустом боте. Приветствие от имени Егора, интрига и обещание плана. Лимит Telegram — 512 знаков.</div>
+<p>Привет! Я Егор Чумаков, 4 года на фрилансе.</p>
+<p>Я собрал готовый план, как выйти на доход 150 000+ ₽ на удалёнке в профессии, которую не заменит нейросеть. Без опыта и без увольнения в никуда.</p>
+<p>Пройдёшь план от начала до конца — поймёшь, что делать именно тебе и с чего начать уже сегодня.</p>
+<p>Жми «Старт» 👇</p>
+<div class="team">Для команды: короткое описание бота (видно в профиле и при пересылке, до 120 знаков): «План выхода на 150 000+ ₽ на удалёнке в профессии, которую не заменит нейросеть. От Егора Чумакова».</div></div>
+<div class="cbox"><label for="c-A-1">Комментарий к A-1</label><textarea id="c-A-1" data-id="A-1" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block" id="b-A-2" data-id="A-2" data-title="До кнопки «Старт» и первое сообщение · Первое сообщение после «Старт»">
+<div class="bhead"><span class="bid">A-2</span><span class="btitle">Первое сообщение после «Старт»</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>коротко про нишу (просто, денежно), что ждёт дальше, и сразу в статью 1. Без «когда будет 8 минут».</div>
+<p>Привет, это Егор 👋</p>
+<p>Есть ниша, где не нужен опыт, не нужно программировать, а за один заказ платят от 5 до 70 тысяч. Специалистов в ней не хватает, а нейросеть здесь работает на тебя, а не вместо тебя.</p>
+<p>Что тебя ждёт:</p>
+<ol><li>Статья о том, что сейчас происходит с работой и деньгами и где открыта дверь.</li><li>Статья, где я раскрываю профессию: что делать, кто платит и сколько.</li><li>Бесплатное мини-обучение, где ты своими руками соберёшь первого бота.</li></ol>
+<p>Начни прямо сейчас, первая статья читается за 7 минут 👇</p>
+<p><span class="btn-ph">Кнопка: Читать первую статью → ССЫЛКА</span></p></div>
+<div class="cbox"><label for="c-A-2">Комментарий к A-2</label><textarea id="c-A-2" data-id="A-2" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block" id="b-A-3" data-id="A-3" data-title="До кнопки «Старт» и первое сообщение · Подписка на канал (между делом)">
+<div class="bhead"><span class="bid">A-3</span><span class="btitle">Подписка на канал (между делом)</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>позвать в канал, не отвлекая от статьи. Отправить через 10 минут после того, как человек открыл статью 1.</div>
+<p>Кстати, у меня есть канал. Там разборы реальных заказов, цены и то, что не влезло в статьи.</p>
+<p>Подпишись, чтобы не потерять 👇</p>
+<p><span class="btn-ph">Кнопка: Перейти в канал → ССЫЛКА</span></p></div>
+<div class="cbox"><label for="c-A-3">Комментарий к A-3</label><textarea id="c-A-3" data-id="A-3" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block general" data-id="A-общее" data-title="До кнопки «Старт» и первое сообщение · весь раздел"><div class="cbox"><label for="c-A-общее">Общий комментарий к разделу A</label><textarea id="c-A-общее" data-id="A-общее" rows="2" placeholder="Замечания ко всему разделу целиком…"></textarea></div></div>
+</div></section>
+<section id="sec-B"><div class="wrap">
+<h2><span class="letter">B</span>Если статья 1 не открыта</h2>
+<div class="block" id="b-B-1" data-id="B-1" data-title="Если статья 1 не открыта · Через 15 минут">
+<div class="bhead"><span class="bid">B-1</span><span class="btitle">Через 15 минут</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>первый возврат, с картинкой. Статья короткая и полезная.</div>
+<p><span class="ph">[КАРТИНКА: скрин заголовка статьи 1 или мем «пятый будильник в 6:30» из статьи]</span></p>
+<p>Ты ещё не открыл статью.</p>
+<p>Она короткая. За несколько минут поймёшь, почему нейросети уже забирают работу у людей и какие профессии исчезают первыми. И главное, почему тебе пока рано писать заявление на увольнение 🙂</p>
+<p><span class="btn-ph">Кнопка: Открыть статью → ССЫЛКА</span></p></div>
+<div class="cbox"><label for="c-B-1">Комментарий к B-1</label><textarea id="c-B-1" data-id="B-1" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block" id="b-B-2" data-id="B-2" data-title="Если статья 1 не открыта · Через 45 минут">
+<div class="bhead"><span class="bid">B-2</span><span class="btitle">Через 45 минут</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>второй возврат — через «неприятную правду о фрилансе».</div>
+<p>Есть одна вещь, о которой авторы популярных курсов молчат.</p>
+<p>Почему люди проходят обучение на дизайнера, таргетолога или SMM и потом месяцами не находят ни одного платного клиента. В статье я разобрал это по пунктам. Если ты уже что-то пробовал и не получилось, она для тебя.</p>
+<p><span class="btn-ph">Кнопка: Читать → ССЫЛКА</span></p></div>
+<div class="cbox"><label for="c-B-2">Комментарий к B-2</label><textarea id="c-B-2" data-id="B-2" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block" id="b-B-3" data-id="B-3" data-title="Если статья 1 не открыта · Через 2 часа">
+<div class="bhead"><span class="bid">B-3</span><span class="btitle">Через 2 часа</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>третий возврат — через «мягкое совмещение» и страх увольнения.</div>
+<p>Самый частый страх, который мне пишут: «Боюсь уйти с работы и остаться ни с чем».</p>
+<p>Уходить и не нужно. В статье показываю, как начать с 1–2 часов вечером и уходить только тогда, когда доход из дома стабильно больше 30–50 тысяч.</p>
+<p><span class="btn-ph">Кнопка: Открыть статью → ССЫЛКА</span></p></div>
+<div class="cbox"><label for="c-B-3">Комментарий к B-3</label><textarea id="c-B-3" data-id="B-3" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block" id="b-B-4" data-id="B-4" data-title="Если статья 1 не открыта · Через 24 часа">
+<div class="bhead"><span class="bid">B-4</span><span class="btitle">Через 24 часа</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>последний возврат — интрига про нишу. Дальше про статью 1 не пишем.</div>
+<p>Вчера я обещал рассказать про нишу, в которую может зайти любой новичок.</p>
+<p>Где не нужно ничего выдумывать, где есть чёткое задание и где за один вечер можно заработать 5–7 тысяч. О ней пока знают единицы.</p>
+<p>Всё начинается с первой статьи. 7 минут 👇</p>
+<p><span class="btn-ph">Кнопка: Читать первую статью → ССЫЛКА</span></p></div>
+<div class="cbox"><label for="c-B-4">Комментарий к B-4</label><textarea id="c-B-4" data-id="B-4" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block general" data-id="B-общее" data-title="Если статья 1 не открыта · весь раздел"><div class="cbox"><label for="c-B-общее">Общий комментарий к разделу B</label><textarea id="c-B-общее" data-id="B-общее" rows="2" placeholder="Замечания ко всему разделу целиком…"></textarea></div></div>
+</div></section>
+<section id="sec-C"><div class="wrap">
+<h2><span class="letter">C</span>Переход к статье 2</h2>
+<div class="block" id="b-C-1" data-id="C-1" data-title="Переход к статье 2 · После статьи 1 → статья 2">
+<div class="bhead"><span class="bid">C-1</span><span class="btitle">После статьи 1 → статья 2</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>ты узнал это, во второй статье ждёт вот это, и после неё поймёшь, как попасть на бесплатное мини-обучение. Ссылка на статью 2 продублирована в конце статьи 1.</div>
+<p>Ты прочитал первую статью. Теперь ты знаешь:<br>• что нейросети на самом деле сделали с работой;<br>• почему «стабильность» в найме — это один источник денег;<br>• почему популярные онлайн-профессии требуют месяцев бесплатной работы.</p>
+<p>Во второй статье раскрываю карты:<br>• как называется профессия и что в ней делают;<br>• за какие задачи платят от 5 до 70 тысяч;<br>• из чего складываются 150–250 тысяч в месяц;<br>• почему её не заменит нейросеть.</p>
+<p>А в конце поймёшь, как бесплатно попасть на мини-обучение в небольшой группе, которую я веду лично.</p>
+<p>Беги читать 👇</p>
+<p><span class="btn-ph">Кнопка: Читать вторую статью → ССЫЛКА</span></p></div>
+<div class="cbox"><label for="c-C-1">Комментарий к C-1</label><textarea id="c-C-1" data-id="C-1" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block" id="b-C-2" data-id="C-2" data-title="Переход к статье 2 · Через 15 минут, если статья 2 не открыта">
+<div class="bhead"><span class="bid">C-2</span><span class="btitle">Через 15 минут, если статья 2 не открыта</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>первый возврат во вторую статью.</div>
+<p>Вторая статья ждёт тебя.</p>
+<p>В ней таблица: сколько бизнес платит за каждого бота. От 5 тысяч за простого до 70 тысяч за AI-консультанта. Посмотри и сразу поймёшь, с какого заказа начать.</p>
+<p><span class="btn-ph">Кнопка: Открыть статью → ССЫЛКА</span></p></div>
+<div class="cbox"><label for="c-C-2">Комментарий к C-2</label><textarea id="c-C-2" data-id="C-2" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block" id="b-C-3" data-id="C-3" data-title="Переход к статье 2 · Через 2 часа">
+<div class="bhead"><span class="bid">C-3</span><span class="btitle">Через 2 часа</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>второй возврат — через историю Егора.</div>
+<p>В 2015-м я таскал овощи со склада на овощебазы, и денег выходило меньше, чем у курьера. Потом было четыре бизнеса и ни одного, который кормил бы нормально.</p>
+<p>Где на самом деле лежали деньги, рассказал во второй статье. Спойлер: в соседней комнате.</p>
+<p><span class="btn-ph">Кнопка: Читать → ССЫЛКА</span></p></div>
+<div class="cbox"><label for="c-C-3">Комментарий к C-3</label><textarea id="c-C-3" data-id="C-3" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block" id="b-C-4" data-id="C-4" data-title="Переход к статье 2 · Через 24 часа">
+<div class="bhead"><span class="bid">C-4</span><span class="btitle">Через 24 часа</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>последний возврат — через «через год это сделает Алиса».</div>
+<p>Самый частый вопрос: «А через год это не сделает бесплатно Алиса?»</p>
+<p>Честный ответ — в конце второй статьи. И там же, как попасть на бесплатное мини-обучение, пока в группе есть места.</p>
+<p><span class="btn-ph">Кнопка: Читать вторую статью → ССЫЛКА</span></p></div>
+<div class="cbox"><label for="c-C-4">Комментарий к C-4</label><textarea id="c-C-4" data-id="C-4" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block general" data-id="C-общее" data-title="Переход к статье 2 · весь раздел"><div class="cbox"><label for="c-C-общее">Общий комментарий к разделу C</label><textarea id="c-C-общее" data-id="C-общее" rows="2" placeholder="Замечания ко всему разделу целиком…"></textarea></div></div>
+</div></section>
+<section id="sec-D"><div class="wrap">
+<h2><span class="letter">D</span>После статьи 2 → личка Егора</h2>
+<div class="block" id="b-D-1" data-id="D-1" data-title="После статьи 2 → личка Егора · Сразу после статьи 2">
+<div class="bhead"><span class="bid">D-1</span><span class="btitle">Сразу после статьи 2</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>перевести в личку Егора с кодовым словом. Лично со мной, не больше 10 человек. Разбор — как главный подарок, а самое ценное — личный план.</div>
+<p>Ты дочитал до конца. Значит, тебе правда интересно.</p>
+<p>Следующий шаг — бесплатный тест-драйв. 6 коротких уроков за 48 часов. Ты соберёшь своего первого бота и сделаешь бота-визитку, который покажет клиентам, что ты умеешь.</p>
+<p>Веду тебя я лично. Не кураторы и не менеджеры. Поэтому одновременно беру не больше 10 человек, и места разбирают быстро.</p>
+<p>🎁 В конце — подарок: разберу твою ситуацию и составлю личный план, как за две недели освоить профессию и найти первых клиентов.</p>
+<p>Напиши мне в личку слово «БОТ», и я добавлю тебя в группу 👇</p>
+<p><span class="btn-ph">Кнопка: Написать Егору → личка, текст «БОТ»</span></p></div>
+<div class="cbox"><label for="c-D-1">Комментарий к D-1</label><textarea id="c-D-1" data-id="D-1" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block" id="b-D-2" data-id="D-2" data-title="После статьи 2 → личка Егора · Через 3 часа, если не написал в личку">
+<div class="bhead"><span class="bid">D-2</span><span class="btitle">Через 3 часа, если не написал в личку</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>напоминание про места и личный план.</div>
+<p>Ты ещё не написал мне «БОТ».</p>
+<p>Напоминаю: я веду группу лично, поэтому в ней не больше 10 человек. Когда места заканчиваются, запись закрывается до следующей группы.</p>
+<p>Самое ценное в тест-драйве — личный план в конце. Как именно тебе за две недели освоить профессию и найти первых клиентов. С учётом твоей работы и свободного времени.</p>
+<p><span class="btn-ph">Кнопка: Написать Егору → личка, текст «БОТ»</span></p></div>
+<div class="cbox"><label for="c-D-2">Комментарий к D-2</label><textarea id="c-D-2" data-id="D-2" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block" id="b-D-3" data-id="D-3" data-title="После статьи 2 → личка Егора · Через 24 часа, финальное">
+<div class="bhead"><span class="bid">D-3</span><span class="btitle">Через 24 часа, финальное</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>последнее сообщение в этой цепочке. Дальше человек уходит в общие рассылки (автоворонка, вебинары).</div>
+<p>Это последнее сообщение про тест-драйв.</p>
+<p>Если сейчас неудобно, ничего страшного. Но если хочешь попробовать профессию руками и получить личный план, напиши мне «БОТ». Это бесплатно и займёт два вечера.</p>
+<p>Первого бота ты соберёшь уже на втором уроке.</p>
+<p><span class="btn-ph">Кнопка: Написать Егору → личка, текст «БОТ»</span></p></div>
+<div class="cbox"><label for="c-D-3">Комментарий к D-3</label><textarea id="c-D-3" data-id="D-3" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block general" data-id="D-общее" data-title="После статьи 2 → личка Егора · весь раздел"><div class="cbox"><label for="c-D-общее">Общий комментарий к разделу D</label><textarea id="c-D-общее" data-id="D-общее" rows="2" placeholder="Замечания ко всему разделу целиком…"></textarea></div></div>
+</div></section>
+<section id="sec-E"><div class="wrap">
+<h2><span class="letter">E</span>Личка Егора и группа тест-драйва</h2>
+<div class="block" id="b-E-1" data-id="E-1" data-title="Личка Егора и группа тест-драйва · Ответ на «БОТ» (автоответ в личке)">
+<div class="bhead"><span class="bid">E-1</span><span class="btitle">Ответ на «БОТ» (автоответ в личке)</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>спокойно, без восторга. Успел записаться, создаём группу, нужно ФИО.</div>
+<p>Привет, это Егор. Рад, что успел записаться.</p>
+<p>Тест-драйв проходит в отдельной группе: там уроки, задания и я на связи все 48 часов.</p>
+<p>Напиши, пожалуйста, своё имя и фамилию. Создам группу и добавлю тебя.</p>
+<div class="team">Для команды: здесь же галочка или строка согласия на обработку персональных данных (ссылка на политику), раз мы просим ФИО.</div></div>
+<div class="cbox"><label for="c-E-1">Комментарий к E-1</label><textarea id="c-E-1" data-id="E-1" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block" id="b-E-2" data-id="E-2" data-title="Личка Егора и группа тест-драйва · После ФИО">
+<div class="bhead"><span class="bid">E-2</span><span class="btitle">После ФИО</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>подтвердить и отправить в группу.</div>
+<p>Готово, группа создана, вот ссылка 👇</p>
+<p><span class="btn-ph">Кнопка: Перейти в группу → ССЫЛКА</span></p>
+<p>Всё остальное — внутри. Жду тебя там.</p></div>
+<div class="cbox"><label for="c-E-2">Комментарий к E-2</label><textarea id="c-E-2" data-id="E-2" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block" id="b-E-3" data-id="E-3" data-title="Личка Егора и группа тест-драйва · Приветствие в группе">
+<div class="bhead"><span class="bid">E-3</span><span class="btitle">Приветствие в группе</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>правила, 48 часов, 6 уроков кратко со ссылками, главное — анкета в конце.</div>
+<p>Привет! Это твоя группа тест-драйва.</p>
+<p>Как всё устроено:<br>• у тебя 48 часов с этой минуты;<br>• 6 коротких уроков, проходи по порядку;<br>• я здесь на связи, любые вопросы пиши прямо сюда.</p>
+<p>Уроки:</p>
+<ol><li>Фриланс в 2026: откуда в нём деньги и почему старые профессии закрылись → <span class="ph">[ССЫЛКА]</span></li><li>Первый бот своими руками: собираешь по шаблону за несколько минут → <span class="ph">[ССЫЛКА]</span></li><li>Профессия: что делает специалист по чат-ботам и AI-агентам и за что платят 5–70 тысяч → <span class="ph">[ССЫЛКА]</span></li><li>Бот-визитка: твой первый инструмент, чтобы показать клиенту, что ты умеешь → <span class="ph">[ССЫЛКА]</span></li><li>Где искать первых клиентов и что им писать → <span class="ph">[ССЫЛКА]</span></li><li>AI-агенты: за что бизнес платит больше всего → <span class="ph">[ССЫЛКА]</span></li></ol>
+<p>Главное — анкета в конце шестого урока. По ней я разберу твою ситуацию и составлю личный план: как за две недели освоить профессию и найти первых клиентов.</p>
+<p>Начинай с первого урока 👇</p></div>
+<div class="cbox"><label for="c-E-3">Комментарий к E-3</label><textarea id="c-E-3" data-id="E-3" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block" id="b-E-4" data-id="E-4" data-title="Личка Егора и группа тест-драйва · Через 3 часа, если урок 1 не открыт">
+<div class="bhead"><span class="bid">E-4</span><span class="btitle">Через 3 часа, если урок 1 не открыт</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>короткий живой пуш.</div>
+<p>Вижу, ты ещё не открыл первый урок. Что-то мешает? Если не открывается ссылка или неудобно со времени, напиши, разберёмся.</p></div>
+<div class="cbox"><label for="c-E-4">Комментарий к E-4</label><textarea id="c-E-4" data-id="E-4" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block" id="b-E-5" data-id="E-5" data-title="Личка Егора и группа тест-драйва · Через 12 часов, если застрял на уроках 1–2">
+<div class="bhead"><span class="bid">E-5</span><span class="btitle">Через 12 часов, если застрял на уроках 1–2</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>поддержать на самом «страшном» месте — первом боте.</div>
+<p>Вижу, ты остановился. Чаще всего застревают на втором уроке, на первом боте. Это нормально.</p>
+<p>Напиши, на каком шаге остановился, подскажу за пару минут.</p></div>
+<div class="cbox"><label for="c-E-5">Комментарий к E-5</label><textarea id="c-E-5" data-id="E-5" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block" id="b-E-6" data-id="E-6" data-title="Личка Егора и группа тест-драйва · За 12 часов до конца, если анкета не заполнена">
+<div class="bhead"><span class="bid">E-6</span><span class="btitle">За 12 часов до конца, если анкета не заполнена</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>напомнить про анкету и личный план.</div>
+<p>До конца тест-драйва 12 часов.</p>
+<p>Не забудь анкету в конце шестого урока. Без неё я не смогу составить твой личный план, а это самое ценное, что ты здесь получишь.</p></div>
+<div class="cbox"><label for="c-E-6">Комментарий к E-6</label><textarea id="c-E-6" data-id="E-6" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block general" data-id="E-общее" data-title="Личка Егора и группа тест-драйва · весь раздел"><div class="cbox"><label for="c-E-общее">Общий комментарий к разделу E</label><textarea id="c-E-общее" data-id="E-общее" rows="2" placeholder="Замечания ко всему разделу целиком…"></textarea></div></div>
+</div></section>
+<section id="sec-F"><div class="wrap">
+<h2><span class="letter">F</span>Служебное</h2>
+<div class="block" id="b-F-1" data-id="F-1" data-title="Служебное · Если человек пишет текстом">
+<div class="bhead"><span class="bid">F-1</span><span class="btitle">Если человек пишет текстом</span></div>
+<div class="btext"><div class="goal"><b>Задача блока</b>правило для бота, не текст.</div>
+<div class="team">Для команды: в боте на свободный текст не отвечаем и кнопок с выбором не даём, цепочка идёт дальше по таймерам. Если нужно, отвечаем вручную из лички Егора (там тоже работают автоответы). Сообщения людей видим в панели бота.</div></div>
+<div class="cbox"><label for="c-F-1">Комментарий к F-1</label><textarea id="c-F-1" data-id="F-1" rows="2" placeholder="Что добавить, убрать или переписать в этом блоке…"></textarea></div>
+</div>
+<div class="block general" data-id="F-общее" data-title="Служебное · весь раздел"><div class="cbox"><label for="c-F-общее">Общий комментарий к разделу F</label><textarea id="c-F-общее" data-id="F-общее" rows="2" placeholder="Замечания ко всему разделу целиком…"></textarea></div></div>
+</div></section>
+
+<textarea id="out" aria-hidden="true"></textarea>
+<div class="toast" id="toast"></div>
+<footer>Сообщения бота v2 · на согласование · 21 октября 2026</footer>
+
+<script>
+(function () {
+  var KEY = 'bot-v2-comments';
+  var store = {};
+  try { store = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { store = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+
+  var areas = document.querySelectorAll('.cbox textarea');
+  var who = document.getElementById('who');
+  if (store.__who) who.value = store.__who;
+  who.oninput = function () { store.__who = who.value; save(); };
+
+  function grow(t) { t.style.height = 'auto'; t.style.height = Math.max(44, t.scrollHeight + 2) + 'px'; }
+  function mark(t) {
+    var b = t.parentNode.parentNode;
+    if (t.value.replace(/\s/g, '')) { b.className = b.className.replace(/\s*has/g, '') + ' has'; }
+    else { b.className = b.className.replace(/\s*has/g, ''); }
+  }
+  function count() {
+    var n = 0;
+    for (var i = 0; i < areas.length; i++) if (areas[i].value.replace(/\s/g, '')) n++;
+    document.getElementById('cnt').innerHTML = n;
+    return n;
+  }
+  for (var i = 0; i < areas.length; i++) {
+    (function (t) {
+      var id = t.getAttribute('data-id');
+      if (store[id]) { t.value = store[id]; mark(t); grow(t); }
+      t.oninput = function () { store[id] = t.value; save(); mark(t); grow(t); count(); };
+    })(areas[i]);
+  }
+  count();
+
+  function collect() {
+    var lines = [];
+    var name = who.value.replace(/^\s+|\s+$/g, '') || 'без имени';
+    var d = new Date();
+    lines.push('Комментарии к сообщениям бота v2 — ' + name + ', ' + d.toLocaleDateString('ru-RU'));
+    lines.push('');
+    for (var i = 0; i < areas.length; i++) {
+      var t = areas[i];
+      var v = t.value.replace(/^\s+|\s+$/g, '');
+      if (!v) continue;
+      var blk = t.parentNode.parentNode;
+      lines.push(t.getAttribute('data-id') + ' (' + blk.getAttribute('data-title') + '):');
+      lines.push(v);
+      lines.push('');
+    }
+    return lines.join('\n');
+  }
+  function toast(msg) {
+    var el = document.getElementById('toast');
+    el.innerHTML = msg; el.style.display = 'block';
+    clearTimeout(toast.t); toast.t = setTimeout(function () { el.style.display = 'none'; }, 2600);
+  }
+  document.getElementById('copyBtn').onclick = function () {
+    if (!count()) { toast('Пока нет ни одного комментария'); return; }
+    var text = collect();
+    var out = document.getElementById('out');
+    out.value = text; out.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    if (!ok && navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function () { toast('Скопировано — вставьте в чат'); }, function () { toast('Не удалось скопировать — нажмите «Скачать .txt»'); });
+      return;
+    }
+    toast(ok ? 'Скопировано — вставьте в чат' : 'Не удалось скопировать — нажмите «Скачать .txt»');
+  };
+  document.getElementById('dlBtn').onclick = function () {
+    if (!count()) { toast('Пока нет ни одного комментария'); return; }
+    var blob = new Blob(['﻿' + collect()], { type: 'text/plain;charset=utf-8' });
+    var name = 'комментарии_бот_v2_' + (who.value.replace(/[^\wА-Яа-яЁё-]+/g, '_') || 'без_имени') + '.txt';
+    if (window.navigator.msSaveBlob) { window.navigator.msSaveBlob(blob, name); return; }
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  };
+  document.getElementById('clrBtn').onclick = function () {
+    if (!confirm('Удалить все комментарии на этой странице?')) return;
+    for (var i = 0; i < areas.length; i++) { areas[i].value = ''; mark(areas[i]); grow(areas[i]); }
+    var w = store.__who; store = {}; if (w) store.__who = w; save(); count();
+  };
+})();
+</script>
+</body>
+</html>

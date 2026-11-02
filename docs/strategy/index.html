@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Школа AI-агентов и платформа запуска — концепция</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070b1a; --bg2:#101a3d; --ink:#f4f6ff; --muted:#a7b0d6; --dim:#7b86b3;
+  --line:rgba(255,255,255,.13); --line2:rgba(255,255,255,.22);
+  --glass:rgba(255,255,255,.055);
+  --a1:#ff8a3d; --a2:#ff4f8b; --a3:#8b5cf6; --a4:#3ec7ff; --gold:#ffd166; --green:#3ddc97; --red:#ff6b6b;
+  --acc:#8b5cf6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#04060f;color:var(--ink);font-family:Manrope,"Segoe UI",Arial,sans-serif;overflow:hidden}
+body{display:flex;align-items:center;justify-content:center}
+.stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(900px 600px at 50% 20%,#111a3a,#04060f 70%)}
+.deck{width:1600px;height:900px;position:relative;transform-origin:center center;flex:none}
+.slide{
+  position:absolute;inset:0;width:1600px;height:900px;padding:52px 64px 58px;
+  display:none;flex-direction:column;overflow:hidden;border-radius:2px;
+  background:
+    radial-gradient(900px 620px at 10% 6%, color-mix(in srgb, var(--acc) 30%, transparent), transparent 62%),
+    radial-gradient(760px 560px at 94% 14%, color-mix(in srgb, var(--a2) 16%, transparent), transparent 64%),
+    radial-gradient(900px 700px at 72% 108%, color-mix(in srgb, var(--a4) 15%, transparent), transparent 62%),
+    linear-gradient(158deg,#070b1a 0%,#0c1430 55%,#101a3d 100%);
+}
+.slide.active{display:flex}
+.slide::after{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.20;
+  background-image:linear-gradient(rgba(255,255,255,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.055) 1px,transparent 1px);
+  background-size:56px 56px;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 52%,#000 28%,transparent 76%);
+  mask-image:radial-gradient(ellipse at 50% 52%,#000 28%,transparent 76%);
+}
+.slide > *{position:relative;z-index:2}
+.head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:22px}
+.kicker{display:inline-flex;align-items:center;gap:10px;font-weight:800;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#dbe2ff;
+  padding:8px 14px;border:1px solid var(--line2);border-radius:999px;background:rgba(255,255,255,.055)}
+.kicker .dot{width:9px;height:9px;border-radius:50%;background:var(--acc);box-shadow:0 0 14px var(--acc)}
+.head .meta{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);text-align:right;line-height:1.6}
+h1,h2,h3{font-family:Unbounded,Manrope,sans-serif;letter-spacing:-.01em}
+h1{font-weight:800;font-size:54px;line-height:1.06}
+h2{font-weight:700;font-size:38px;line-height:1.1}
+h3{font-weight:600;font-size:22px;line-height:1.2}
+.grad{background:linear-gradient(92deg,var(--a1),var(--a2) 46%,var(--a3));-webkit-background-clip:text;background-clip:text;color:transparent}
+.gold{color:var(--gold)}.acc{color:var(--acc)}.green{color:var(--green)}.muted{color:var(--muted)}
+.sub{margin-top:14px;font-size:21px;line-height:1.42;color:var(--muted);font-weight:500;max-width:1250px}
+.content{flex:1;min-height:0;display:flex;flex-direction:column}
+.foot{position:absolute;left:64px;right:64px;bottom:20px;display:flex;align-items:center;justify-content:space-between;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(167,176,214,.55);z-index:3}
+.foot b{color:rgba(244,246,255,.8);font-weight:800}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.085),rgba(255,255,255,.025));border:1px solid var(--line);border-radius:20px;padding:22px 24px;box-shadow:0 24px 60px rgba(0,0,0,.22)}
+.card.hl{border-color:color-mix(in srgb,var(--acc) 60%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--acc) 25%,transparent),0 24px 70px color-mix(in srgb,var(--acc) 18%,transparent)}
+.card.goldc{border-color:rgba(255,209,102,.55);background:linear-gradient(180deg,rgba(255,209,102,.14),rgba(255,209,102,.03))}
+.card p{font-size:17px;line-height:1.45;color:var(--muted);margin-top:8px}
+.card h3{font-size:21px}
+.card .num{font-family:Unbounded,sans-serif;font-weight:800;font-size:42px;line-height:1;color:var(--gold)}
+.card .tiny{font-size:14px;line-height:1.4;color:var(--dim);margin-top:10px}
+.ico{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex:none;
+  background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.22),rgba(255,255,255,.03) 65%),#141c42;
+  border:1px solid var(--line2);box-shadow:0 0 30px color-mix(in srgb,var(--acc) 35%,transparent)}
+.ico svg{width:23px;height:23px;fill:none;stroke:#fff;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ico.sm{width:34px;height:34px;border-radius:11px}.ico.sm svg{width:18px;height:18px}
+.ico.lg{width:58px;height:58px;border-radius:18px}.ico.lg svg{width:30px;height:30px}
+.row{display:flex;gap:18px;align-items:center}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+.b{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.03em;padding:5px 10px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.06);color:#e7ebff;white-space:nowrap}
+.b.green{background:rgba(61,220,151,.12);border-color:rgba(61,220,151,.4);color:#8ff0c6}
+.b.gold{background:rgba(255,209,102,.12);border-color:rgba(255,209,102,.4);color:var(--gold)}
+.b.blue{background:rgba(62,199,255,.12);border-color:rgba(62,199,255,.4);color:#9fe4ff}
+.b.pink{background:rgba(255,79,139,.12);border-color:rgba(255,79,139,.4);color:#ffa7c6}
+.b.violet{background:rgba(139,92,246,.16);border-color:rgba(139,92,246,.45);color:#c9b6ff}
+.tbl{width:100%;border-collapse:collapse;font-size:16px}
+.tbl th{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);font-weight:800;text-align:left;padding:0 10px 10px;border-bottom:1px solid var(--line)}
+.tbl td{padding:11px 10px;border-bottom:1px solid rgba(255,255,255,.075);vertical-align:top;color:#e6eaff;font-weight:600}
+.tbl tr:last-child td{border-bottom:0}
+.tbl .m{color:var(--muted);font-weight:500}
+.tbl .r{text-align:right;white-space:nowrap}
+.tbl .big{font-family:Unbounded,sans-serif;font-weight:700;font-size:20px;color:var(--gold)}
+.note{font-size:13px;line-height:1.5;color:var(--dim)}
+.strip{margin-top:auto;display:flex;align-items:center;gap:16px;padding:16px 22px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(90deg,rgba(255,255,255,.075),rgba(255,255,255,.015));font-size:18px;font-weight:700;line-height:1.35}
+.strip .ico{width:38px;height:38px;border-radius:12px}.strip .ico svg{width:20px;height:20px}
+.flow{display:flex;align-items:stretch;gap:0}
+.flow .step{flex:1;position:relative;padding:18px 16px;border:1px solid var(--line);background:rgba(255,255,255,.05);border-radius:14px;min-width:0}
+.flow .step + .step{margin-left:26px}
+.flow .step + .step::before{content:"→";position:absolute;left:-24px;top:50%;transform:translateY(-50%);color:var(--acc);font-size:22px;font-weight:800}
+.flow .step .t{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:800}
+.flow .step .h{font-family:Unbounded,sans-serif;font-weight:600;font-size:17px;line-height:1.2;margin-top:6px}
+.flow .step .d{font-size:13.5px;line-height:1.4;color:var(--muted);margin-top:6px}
+.flow .step.on{border-color:color-mix(in srgb,var(--acc) 65%,transparent);background:color-mix(in srgb,var(--acc) 12%,transparent)}
+.kpi{display:flex;flex-direction:column;gap:4px}
+.kpi .v{font-family:Unbounded,sans-serif;font-weight:800;font-size:38px;line-height:1;color:#fff}
+.kpi .l{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);font-weight:800}
+.kpi .s{font-size:13.5px;color:var(--muted);line-height:1.35}
+.hr{height:1px;background:var(--line);margin:16px 0}
+.timeline{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;position:relative;margin-top:10px}
+.timeline::before{content:"";position:absolute;left:2px;right:2px;top:18px;height:2px;background:linear-gradient(90deg,var(--a1),var(--a2),var(--a3),var(--a4))}
+.timeline .ph{position:relative;padding-top:40px}
+.timeline .ph::before{content:"";position:absolute;top:11px;left:0;width:14px;height:14px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 5px color-mix(in srgb,var(--acc) 20%,transparent),0 0 20px var(--acc)}
+.timeline .ph .dt{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:800}
+.timeline .ph .tt{font-family:Unbounded,sans-serif;font-weight:600;font-size:16px;line-height:1.2;margin-top:6px}
+.timeline .ph .dd{font-size:13px;line-height:1.45;color:var(--muted);margin-top:6px}
+.timeline .ph .gt{margin-top:8px;font-size:12px;color:#c9d2f5;border-left:2px solid var(--line2);padding-left:8px}
+@page{size:13.333in 7.5in;margin:0}
+@media print{
+  html,body{overflow:visible!important;background:#04060f!important;display:block!important;height:auto!important}
+  .stage{position:static!important;display:block!important;background:none!important}
+  .deck{transform:none!important;width:1600px!important;height:auto!important}
+  .slide{position:relative!important;display:flex!important;page-break-after:always;break-after:page;width:1600px!important;height:900px!important;border-radius:0;break-inside:avoid}
+  .slide:last-child{page-break-after:auto;break-after:auto}
+  .ui{display:none!important}
+  .grad{background:none!important;-webkit-background-clip:border-box!important;background-clip:border-box!important;color:#ff8a3d!important;-webkit-text-fill-color:#ff8a3d!important}
+  body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+.ui{position:fixed;z-index:50;color:#cfd6f5;font-family:Manrope,sans-serif}
+body.clean .ui{display:none!important}
+.nav{right:22px;bottom:18px;display:flex;gap:8px;align-items:center}
+.nav button{width:38px;height:38px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(10,14,30,.72);color:#fff;font-size:17px;cursor:pointer;backdrop-filter:blur(8px)}
+.nav button:hover{border-color:var(--a2)}
+.counter{left:22px;bottom:18px;font-size:12px;letter-spacing:.14em;font-weight:800;color:rgba(207,214,245,.7);background:rgba(10,14,30,.6);padding:9px 13px;border-radius:10px;border:1px solid rgba(255,255,255,.12)}
+.hint{right:22px;top:18px;font-size:11px;color:rgba(207,214,245,.5);letter-spacing:.04em}
+.progress{position:fixed;left:0;bottom:0;height:3px;background:linear-gradient(90deg,var(--a1),var(--a2),var(--a3),var(--a4));width:0;z-index:60;transition:width .25s ease}
+@media (max-width:700px){.hint{display:none}}
+</style>
+</head>
+<body>
+<div class="stage"><div class="deck" id="deck"></div></div>
+<div class="ui counter" id="counter">01 / 22</div>
+<div class="ui hint">← → · пробел · F — во весь экран · P — печать</div>
+<div class="ui nav"><button id="prev" title="Назад">←</button><button id="next" title="Вперёд">→</button></div>
+<div class="progress" id="progress"></div>
+
+<script>
+const I = {
+  bot: '<rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M8 13h.01M16 13h.01M9 17h6"/>',
+  agent: '<circle cx="12" cy="12" r="3"/><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M6.5 6.5 9.5 9.5M17.5 6.5 14.5 9.5M6.5 17.5 9.5 14.5M17.5 17.5 14.5 14.5"/>',
+  app: '<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 5h4M11 19h2"/>',
+  bolt: '<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/>',
+  lock: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+  rub: '<path d="M7 21V4h6a5 5 0 0 1 0 10H7M5 14h10"/>',
+  cloud: '<path d="M7 18a4 4 0 0 1-.5-8 6 6 0 0 1 11.5 1.5A4.5 4.5 0 0 1 17 18H7Z"/>',
+  code: '<path d="m8 8-5 4 5 4M16 8l5 4-5 4M14 4l-4 16"/>',
+  users: '<circle cx="9" cy="8" r="3"/><path d="M3 21a6 6 0 0 1 12 0M16 5a3 3 0 0 1 0 6M18 21a6 6 0 0 0-2-4.5"/>',
+  chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  rocket: '<path d="M5 15c-1 3-1 5-1 5s2 0 5-1M9 19l-4-4c1-6 5-11 13-12 1 8-4 12-9 16Z"/><circle cx="14" cy="8" r="1.5"/>',
+  shield: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+  check: '<path d="m4 12 5 5L20 6"/>',
+  folder: '<path d="M3 6a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Z"/>',
+  spark: '<path d="M12 2v6M12 16v6M2 12h6M16 12h6M5 5l4 4M15 15l4 4M19 5l-4 4M9 15l-4 4"/>',
+  play: '<path d="M8 5v14l11-7-11-7Z"/>',
+  arrow: '<path d="M4 12h16M14 6l6 6-6 6"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  db: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+  cpu: '<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
+  key: '<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 3l4 4M14 6l3 3"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  money: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/>'
+};
+const ic = (n, cls='') => `<div class="ico ${cls}"><svg viewBox="0 0 24 24">${I[n]||I.spark}</svg></div>`;
+
+const slides = [];
+
+/* 1. COVER */
+slides.push({acc:'#8b5cf6', html:`
+<div class="head">
+  <div class="kicker"><span class="dot"></span>Концепция · для команды · 02.11.2026</div>
+  <div class="meta">Версия 1.0<br>внутренний документ</div>
+</div>
+<div class="content" style="display:grid;grid-template-columns:1.15fr .85fr;gap:40px;align-items:center">
+  <div>
+    <h1 style="font-size:62px">Школа <span class="grad">AI-агентов</span><br>и платформа запуска</h1>
+    <div class="sub" style="font-size:23px;max-width:860px">Учим делать ботов, агентов и мини-аппы — и даём среду, где они работают <b style="color:#fff">без установки, VPN и API-ключей</b>.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:26px">
+      <span class="b pink">3 направления</span><span class="b gold">37 проектов</span><span class="b violet">31 шаблон</span><span class="b blue">9 модулей</span><span class="b green">первый деплой за вечер</span>
+    </div>
+    <div style="margin-top:34px;display:flex;gap:12px;align-items:center;font-size:14px;color:var(--dim)">${ic('bolt','sm')} <span>Не курс про нейросети. Школа, из которой выходят работающие продукты.</span></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="card hl" style="display:flex;gap:16px;align-items:center;transform:rotate(-1.6deg)">${ic('bot','lg')}<div><h3>Чат-бот</h3><p>5–60 тыс. ₽ за проект</p></div></div>
+    <div class="card" style="display:flex;gap:16px;align-items:center;margin-left:34px;transform:rotate(1.2deg)">${ic('agent','lg')}<div><h3>AI-агент</h3><p>15–60 тыс. ₽ + поддержка</p></div></div>
+    <div class="card" style="display:flex;gap:16px;align-items:center;transform:rotate(-.8deg)">${ic('app','lg')}<div><h3>Мини-приложение</h3><p>20–50 тыс. ₽ и выше</p></div></div>
+    <div class="note" style="margin-top:6px;text-align:right">одна среда · один аккаунт · один баланс</div>
+  </div>
+</div>
+<div class="foot"><span>school-funnel / strategy</span><span><b>01</b> / 22</span></div>`});
+
+/* 2. ONE SENTENCE */
+slides.push({acc:'#ff4f8b', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Суть</div><div class="meta">одной фразой</div></div>
+<div class="content" style="justify-content:center">
+  <div style="font-family:Unbounded,sans-serif;font-weight:700;font-size:46px;line-height:1.22;max-width:1400px">
+    Ученик заходит в браузер<br>и <span class="grad">за вечер запускает работающего бота</span>.<br>
+    <span style="color:var(--muted)">Дальше — курс, шаблоны и подписка.</span>
+  </div>
+  <div class="grid g3" style="margin-top:48px">
+    <div class="card"><div class="kpi"><div class="v">0</div><div class="l">установки</div><div class="s">Ни Node.js, ни Python, ни терминала. Всё в браузере.</div></div></div>
+    <div class="card"><div class="kpi"><div class="v">1</div><div class="l">вечер до деплоя</div><div class="s">Первый работающий продукт — на первом уроке, а не через месяц.</div></div></div>
+    <div class="card"><div class="kpi"><div class="v">1 990 ₽</div><div class="l">подписка на среду</div><div class="s">Агент, шаблоны, хостинг, лимиты. Курс можно купить отдельно.</div></div></div>
+  </div>
+  <div class="strip" style="margin-top:34px">${ic('spark')}<span>Мы продаём не доступ к модели, а результат: работающий продукт, который можно показать клиенту.</span></div>
+</div>
+<div class="foot"><span>позиционирование</span><span><b>02</b> / 22</span></div>`});
+
+/* 3. PROBLEM */
+slides.push({acc:'#ff8a3d', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Проблема</div><div class="meta">почему люди не доходят до результата</div></div>
+<h2>Три барьера между «хочу» и «работает»</h2>
+<div class="grid g3" style="margin:auto 0">
+  <div class="card">
+    ${ic('code','lg')}
+    <h3 style="margin-top:16px">Установка и настройка</h3>
+    <p>Node.js, Python, Git, терминал, права, переменные окружения. Для аудитории 30–50 это стена, а не «пара команд».</p>
+    <div class="tiny">Даже после курса застревают на первом запуске.</div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;line-height:1.5;color:#dfe5ff"><b style="color:#fff">Как решаем:</b> браузер, облачный проект, агент сам ставит зависимости.</div>
+  </div>
+  <div class="card">
+    ${ic('lock','lg')}
+    <h3 style="margin-top:16px">Доступ, оплата, блокировки</h3>
+    <p>Claude официально не работает в РФ, аккаунты блокируют. Зарубежная подписка картой РФ — отдельный квест.</p>
+    <div class="tiny">Ученик платит за курс, но не может открыть инструмент.</div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;line-height:1.5;color:#dfe5ff"><b style="color:#fff">Как решаем:</b> DeepSeek + шлюз, оплата в рублях, без VPN.</div>
+  </div>
+  <div class="card">
+    ${ic('clock','lg')}
+    <h3 style="margin-top:16px">Разрыв «урок → запуск»</h3>
+    <p>Курс заканчивается сертификатом. Ученик знает «как надо», но не сделал, не задеплоил, не показал клиенту.</p>
+    <div class="tiny">Первый заказ откладывается, мотивация падает.</div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;line-height:1.5;color:#dfe5ff"><b style="color:#fff">Как решаем:</b> каждый урок = артефакт, деплой в один клик.</div>
+  </div>
+</div>
+<div class="strip">${ic('arrow')}<span>Курс заканчивается сертификатом. <b style="color:#fff">Мы заканчиваем работающим продуктом.</b></span></div>
+<div class="foot"><span>проблема</span><span><b>03</b> / 22</span></div>`});
+
+/* 4. MARKET */
+slides.push({acc:'#3ec7ff', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Рынок</div><div class="meta">спрос есть · зазор есть</div></div>
+<h2>Рынок большой, но обучение не доводит до запуска</h2>
+<div class="content" style="display:grid;grid-template-columns:1.05fr .95fr;gap:30px;margin-top:26px;align-items:start">
+  <div>
+    <div class="grid g2">
+      <div class="card"><div class="kpi"><div class="v">6 млн</div><div class="l">малых и средних бизнесов РФ</div><div class="s">Каждому нужны боты, воронки, отчёты, ответы.</div></div></div>
+      <div class="card"><div class="kpi"><div class="v">13,6 млрд ₽</div><div class="l">оборот школ на GetCourse / мес</div><div class="s">Данные из разбора конкурентов, сентябрь 2026.</div></div></div>
+      <div class="card"><div class="kpi"><div class="v">7 000 ₽</div><div class="l">медиана заказа на бота</div><div class="s">До 50 тыс. ₽ за сложные проекты; AI-ассистенты 20–50 тыс.</div></div></div>
+      <div class="card"><div class="kpi"><div class="v">40–190 тыс. ₽</div><div class="l">цена курса у конкурентов</div><div class="s">Рассрочка, трипваеры, «осталось N мест».</div></div></div>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:14px">
+  <div class="card">
+    <div class="b pink">чего не хватает конкурентам</div>
+    <div style="margin-top:18px;display:flex;flex-direction:column;gap:14px">
+      <div class="row"><div class="ico sm">${`<svg viewBox="0 0 24 24">${I.check}</svg>`}</div><div style="font-size:17px;font-weight:700">Своя среда, а не чужой конструктор</div></div>
+      <div class="row"><div class="ico sm">${`<svg viewBox="0 0 24 24">${I.check}</svg>`}</div><div style="font-size:17px;font-weight:700">Шаблоны, которые уже работают у клиентов</div></div>
+      <div class="row"><div class="ico sm">${`<svg viewBox="0 0 24 24">${I.check}</svg>`}</div><div style="font-size:17px;font-weight:700">Деплой в один клик: бот, мини-апп, агент</div></div>
+      <div class="row"><div class="ico sm">${`<svg viewBox="0 0 24 24">${I.check}</svg>`}</div><div style="font-size:17px;font-weight:700">Оплата в рублях и поддержка на русском</div></div>
+    </div>
+    <div class="hr"></div>
+    <div style="font-size:18px;line-height:1.45"><b>Наш зазор:</b> не «ещё один курс», а <span class="gold">агрегатор: обучение + среда + шаблоны + хостинг</span>.</div>
+  </div>
+  <div class="card" style="padding:16px 20px">
+    <div class="b green">что уже доказано</div>
+    <div style="font-size:14px;line-height:1.65;margin-top:8px;color:#dfe5ff">
+      У двух ботов есть платящие пользователи.<br>
+      Один агент ведёт канал каждый день.<br>
+      Аналитикой WB пользуются 8 клиентов.<br>
+      18 кейсов и 31 продукт — не теория.
+    </div>
+  </div>
+  </div>
+</div>
+<div class="foot"><span>рынок и конкуренты</span><span><b>04</b> / 22</span></div>`});
+
+/* 5. THREE DIRECTIONS */
+slides.push({acc:'#ff8a3d', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Продукт</div><div class="meta">три направления · одна платформа</div></div>
+<h2>Три продукта, которые ученик умеет делать и продавать</h2>
+<div class="grid g3" style="margin:auto 0">
+  <div class="card hl">
+    <div class="row">${ic('bot','lg')}<span class="b pink">быстрый вход</span></div>
+    <h3 style="margin-top:18px;font-size:26px">Чат-бот</h3>
+    <p>Меню, ответы, запись, оплата, рассылки, админка. Первый продукт и первые деньги.</p>
+    <div style="margin-top:16px;display:flex;flex-direction:column;gap:7px;font-size:13.5px;color:#cfd6f5">
+      <span>• меню, кнопки, автоответы</span>
+      <span>• оплата и подписка</span>
+      <span>• рассылки и сегменты</span>
+      <span>• админка и аналитика</span>
+    </div>
+    <div class="hr"></div>
+    <div class="tiny" style="font-size:15px;color:#dfe5ff">Чек: <b class="gold" style="font-size:20px">5–60 тыс. ₽</b><br>Примеры: бот-визитка, воронка, клуб, каталог.</div>
+  </div>
+  <div class="card hl">
+    <div class="row">${ic('agent','lg')}<span class="b violet">высокий чек</span></div>
+    <h3 style="margin-top:18px;font-size:26px">AI-агент</h3>
+    <p>Работает сам: читает источники, пишет посты, собирает аналитику, следит за ценами.</p>
+    <div style="margin-top:16px;display:flex;flex-direction:column;gap:7px;font-size:13.5px;color:#cfd6f5">
+      <span>• расписание и триггеры</span>
+      <span>• база знаний и память</span>
+      <span>• отчёты в Telegram</span>
+      <span>• интеграции с сервисами</span>
+    </div>
+    <div class="hr"></div>
+    <div class="tiny" style="font-size:15px;color:#dfe5ff">Чек: <b class="gold" style="font-size:20px">15–60 тыс. ₽</b><br>Примеры: контент-завод, аналитик, мониторинг.</div>
+  </div>
+  <div class="card hl">
+    <div class="row">${ic('app','lg')}<span class="b blue">вау-эффект</span></div>
+    <h3 style="margin-top:18px;font-size:26px">Мини-приложение</h3>
+    <p>Приложение внутри Telegram: кабинет, клуб, витрина, запись, трекер.</p>
+    <div style="margin-top:16px;display:flex;flex-direction:column;gap:7px;font-size:13.5px;color:#cfd6f5">
+      <span>• экраны и навигация</span>
+      <span>• вход через Telegram</span>
+      <span>• оплата и подписка</span>
+      <span>• AI внутри приложения</span>
+    </div>
+    <div class="hr"></div>
+    <div class="tiny" style="font-size:15px;color:#dfe5ff">Чек: <b class="gold" style="font-size:20px">20–50 тыс. ₽+</b><br>Примеры: кабинет ученика, витрина, клуб.</div>
+  </div>
+</div>
+<div class="strip">${ic('spark')}<span><b style="color:#fff">Один конструктор, три продукта, одна подписка.</b> Ученик выбирает направление — платформа даёт шаблон и деплой.</span></div>
+<div class="foot"><span>продукт</span><span><b>05</b> / 22</span></div>`});
+
+/* 6. TWO PRODUCTS */
+slides.push({acc:'#8b5cf6', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Бизнес-модель</div><div class="meta">два продукта · один аккаунт</div></div>
+<h2>Школа приводит в платформу. Платформа удерживает после курса.</h2>
+<div class="content" style="display:grid;grid-template-columns:1fr 90px 1fr;gap:0;align-items:center;margin-top:30px">
+  <div class="card" style="padding:30px">
+    <div class="b gold">B2C · школа</div>
+    <h3 style="font-size:28px;margin-top:16px">Учит и доводит до первого продукта</h3>
+    <p style="font-size:16px">Тест-драйв 48 часов · 9 модулей · наставник · разборы · чат потока · задания на деньги.</p>
+    <div class="hr"></div>
+    <div style="display:flex;gap:26px">
+      <div class="kpi"><div class="v" style="font-size:28px">49,9–129,9 тыс. ₽</div><div class="l">курс</div></div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:center;color:var(--acc);font-size:34px;font-weight:800">⇄</div>
+  <div class="card" style="padding:30px">
+    <div class="b blue">B2B / B2C · платформа</div>
+    <h3 style="font-size:28px;margin-top:16px">Даёт среду, шаблоны и хостинг</h3>
+    <p style="font-size:16px">Проекты · агент · превью · деплой · баланс · шаблоны · хостинг · лимиты · поддержка.</p>
+    <div class="hr"></div>
+    <div style="display:flex;gap:26px">
+      <div class="kpi"><div class="v" style="font-size:28px">1 990 ₽/мес</div><div class="l">подписка</div></div>
+    </div>
+  </div>
+</div>
+<div class="grid g3" style="margin-top:24px">
+  <div class="card"><div class="row">${ic('users','sm')}<b>Курс → платформа</b></div><div class="tiny">6 месяцев подписки включены — ученик остаётся в среде после обучения.</div></div>
+  <div class="card"><div class="row">${ic('rocket','sm')}<b>Платформа → курс</b></div><div class="tiny">Кто пришёл за «харнессом без установки», видит курс и шаблоны.</div></div>
+  <div class="card"><div class="row">${ic('money','sm')}<b>Хостинг и топ-апы</b></div><div class="tiny">Бот 490 ₽/мес, мини-апп 690 ₽/мес, AI-токены сверх лимита.</div></div>
+</div>
+<div class="foot"><span>два продукта</span><span><b>06</b> / 22</span></div>`});
+
+/* 7. FUNNEL */
+slides.push({acc:'#ff4f8b', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Воронка</div><div class="meta">проверенная схема · новое ядро</div></div>
+<h2>Та же воронка, но тест-драйв — уже в платформе</h2>
+<div class="content" style="justify-content:space-evenly;gap:0">
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+  <div class="card" style="padding:16px"><div class="b blue">01 · трафик</div><div style="font-weight:800;margin-top:8px;font-size:16px">Посевы · Shorts · YouTube · VK · SEO</div><div class="tiny">метки на каждый источник</div></div>
+  <div class="card" style="padding:16px"><div class="b blue">02 · бот</div><div style="font-weight:800;margin-top:8px;font-size:16px">Вход без телефона</div><div class="tiny">25–35% из трафика</div></div>
+  <div class="card" style="padding:16px"><div class="b violet">03 · 2 статьи</div><div style="font-weight:800;margin-top:8px;font-size:16px">Проблема → ниша → цены</div><div class="tiny">возврат в бота между ними</div></div>
+  <div class="card" style="padding:16px;border-color:rgba(255,209,102,.6)"><div class="b gold">04 · тест-драйв</div><div style="font-weight:800;margin-top:8px;font-size:16px">48 часов · 5 уроков + финал</div><div class="tiny">каждый урок = артефакт</div></div>
+</div>
+<div style="display:flex;justify-content:center;font-size:22px;color:var(--acc);margin:10px 0">↓</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+  <div class="card" style="padding:16px"><div class="b gold">05 · анкета</div><div style="font-weight:800;margin-top:8px;font-size:16px">Точка старта и цель</div><div class="tiny">25–35% дошли до финала</div></div>
+  <div class="card" style="padding:16px"><div class="b gold">06 · разбор</div><div style="font-weight:800;margin-top:8px;font-size:16px">20–30 минут · маршрут</div><div class="tiny">продажа — следствие</div></div>
+  <div class="card" style="padding:16px"><div class="b pink">07 · курс</div><div style="font-weight:800;margin-top:8px;font-size:16px">9 модулей · 3 направления</div><div class="tiny">10–20% из разбора</div></div>
+  <div class="card" style="padding:16px"><div class="b green">08 · подписка</div><div style="font-weight:800;margin-top:8px;font-size:16px">Среда · шаблоны · хостинг</div><div class="tiny">LTV 6–12 месяцев</div></div>
+</div>
+<div class="strip">${ic('bolt')}<span>Сквозная конверсия визит → оплата: <b class="gold">0,2–0,5%</b>. При 10 000 визитов — 20–50 продаж. Цифры — гипотеза первого потока.</span></div>
+</div>
+<div class="foot"><span>воронка</span><span><b>07</b> / 22</span></div>`});
+
+/* 8. TEST DRIVE */
+slides.push({acc:'#ffd166', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Тест-драйв</div><div class="meta">48 часов · 5 уроков + финал</div></div>
+<h2>Каждый урок заканчивается артефактом, а не просмотром</h2>
+<div class="content" style="display:grid;grid-template-columns:1.35fr .65fr;gap:26px;margin-top:16px">
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div class="card" style="padding:14px 18px;display:flex;gap:14px;align-items:center"><div class="b gold">0</div><div><b>Старт.</b> «Ничего не устанавливай» — вход, проект, первый запуск агента</div><div style="margin-left:auto" class="b green">проект</div></div>
+    <div class="card" style="padding:14px 18px;display:flex;gap:14px;align-items:center"><div class="b gold">1</div><div><b>Бот за вечер.</b> Меню, ответы, кнопка «написать» — собираем в платформе</div><div style="margin-left:auto" class="b green">ссылка на бота</div></div>
+    <div class="card" style="padding:14px 18px;display:flex;gap:14px;align-items:center"><div class="b gold">2</div><div><b>Агент-сотрудник.</b> Задача, файлы, расписание — первый отчёт в Telegram</div><div style="margin-left:auto" class="b green">отчёт</div></div>
+    <div class="card" style="padding:14px 18px;display:flex;gap:14px;align-items:center"><div class="b gold">3</div><div><b>Мини-апп.</b> Витрина или кабинет — публикация на поддомене</div><div style="margin-left:auto" class="b green">ссылка на мини-апп</div></div>
+    <div class="card" style="padding:14px 18px;display:flex;gap:14px;align-items:center"><div class="b gold">4</div><div><b>Деньги.</b> Бриф клиента → оценка → КП. Учимся продавать</div><div style="margin-left:auto" class="b green">бриф + КП</div></div>
+    <div class="card" style="padding:14px 18px;display:flex;gap:14px;align-items:center;border-color:rgba(255,79,139,.55)"><div class="b pink">5</div><div><b>Финал.</b> Разбор, карта пути, анкета на персональный разбор</div><div style="margin-left:auto" class="b pink">анкета</div></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="card"><div class="b violet">механики удержания</div><div class="tiny" style="font-size:13.5px;line-height:1.55;margin-top:10px">Код из 4 цифр в уроках → подарок<br>Серия дней и бейдж «первый деплой»<br>Чат потока и куратор<br>«Плюс» в чат как сигнал «досмотрел»</div></div>
+    <div class="card goldc"><div class="kpi"><div class="v" style="font-size:30px">48 ч</div><div class="l">окно тест-драйва</div><div class="s">Доступ закрывается, если нет активности — но без грубого «вышибалы».</div></div></div>
+    <div class="note">Цель тест-драйва — не «продать любой ценой», а довести до первого работающего продукта. Оплата — следствие.</div>
+  </div>
+</div>
+<div class="strip">${ic('arrow')}<span><b style="color:#fff">После тест-драйва:</b> анкета → разбор → курс. Без «последнего шанса» и давления — человек сам решает, что дальше.</span></div>
+<div class="foot"><span>тест-драйв</span><span><b>08</b> / 22</span></div>`});
+
+/* 9. COURSE */
+slides.push({acc:'#3ec7ff', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Программа</div><div class="meta">9 модулей · 3 блока · 1 продукт на выходе</div></div>
+<h2>От бота к агенту и мини-аппу — с растущим чеком</h2>
+<div class="grid g3" style="margin-top:26px;flex:1">
+  <div class="card">
+    <div class="b pink">Блок 1 · модули 1–3</div>
+    <h3 style="margin-top:12px;font-size:25px">Чат-боты</h3>
+    <div class="tiny" style="font-size:14px;line-height:1.5;color:#dfe5ff;margin-top:4px">Самый быстрый путь к первым деньгам.</div>
+    <div class="hr"></div>
+    <div style="font-size:15px;line-height:1.55">
+      <b>M1 · База.</b> Первый бот, меню, автоответы, рассылки, лид-магнит.<br><br>
+      <b>M2 · Воронка.</b> Прогрев, сегменты, оплата, аналитика, AI, интеграции.<br><br>
+      <b>M3 · Банк идей.</b> 10 шаблонов с ценами и аудиторией.
+    </div>
+    <div class="b gold" style="margin-top:14px">чек 5–60 тыс. ₽</div>
+  </div>
+  <div class="card">
+    <div class="b violet">Блок 2 · модули 4–6</div>
+    <h3 style="margin-top:12px;font-size:25px">AI-агенты</h3>
+    <div class="tiny" style="font-size:14px;line-height:1.5;color:#dfe5ff;margin-top:4px">То, за что платят больше и сложнее скопировать.</div>
+    <div class="hr"></div>
+    <div style="font-size:15px;line-height:1.55">
+      <b>M4 · База.</b> Чем агент отличается от бота, первый агент, контент-агент.<br><br>
+      <b>M5 · Агент-сотрудник.</b> Память, база знаний, расписание, команда, медиа, расчёт выгоды.<br><br>
+      <b>M6 · Банк идей.</b> 10 агентов с ценами и выгодой для клиента.
+    </div>
+    <div class="b gold" style="margin-top:14px">чек 15–60 тыс. ₽</div>
+  </div>
+  <div class="card">
+    <div class="b blue">Блок 3 · модули 7–9</div>
+    <h3 style="margin-top:12px;font-size:25px">Мини-приложения</h3>
+    <div class="tiny" style="font-size:14px;line-height:1.5;color:#dfe5ff;margin-top:4px">«Своё приложение» — вау-эффект и высокий чек.</div>
+    <div class="hr"></div>
+    <div style="font-size:15px;line-height:1.55">
+      <b>M7 · База.</b> Первое приложение, экраны, вход через Telegram, публикация.<br><br>
+      <b>M8 · Продукт.</b> База данных, оплата, подписка, AI внутри, кабинет, удержание.<br><br>
+      <b>M9 · Банк идей.</b> 10 мини-аппов под разные ниши.
+    </div>
+    <div class="b gold" style="margin-top:14px">чек 20–50 тыс. ₽+</div>
+  </div>
+</div>
+<div class="strip">${ic('check')}<span><b style="color:#fff">Каждый модуль = уроки + артефакт + задание на деньги + чек-лист сдачи.</b> В конце — защита проекта и разбор с куратором.</span></div>
+<div class="foot"><span>программа</span><span><b>09</b> / 22</span></div>`});
+
+/* 10. ASSETS */
+slides.push({acc:'#3ddc97', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Активы</div><div class="meta">не начинаем с нуля</div></div>
+<h2>У нас уже есть школа, каталог и инфраструктура контента</h2>
+<div class="grid g4" style="margin-top:24px">
+  <div class="card"><div class="kpi"><div class="v">37</div><div class="l">папок проектов</div><div class="s">Реальные продукты и заготовки</div></div></div>
+  <div class="card"><div class="kpi"><div class="v">18</div><div class="l">кейсов в портфолио</div><div class="s">С задачами, решением, результатом</div></div></div>
+  <div class="card"><div class="kpi"><div class="v">31</div><div class="l">продукт в каталоге</div><div class="s">С ценами и аудиторией</div></div></div>
+  <div class="card"><div class="kpi"><div class="v">4 199</div><div class="l">постов конкурентов</div><div class="s">База для контента и анализа</div></div></div>
+</div>
+<div class="content" style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px;align-content:center">
+  <div class="card" style="padding:18px 22px">
+    <div class="b green">уже готово</div>
+    <div style="font-size:15.5px;line-height:1.6;margin-top:10px">
+      Воронка из двух статей и бота<br>
+      Скрипт и монтаж вводного модуля (v5)<br>
+      Программа 9 модулей и банки идей<br>
+      Каталог 31 продукта и 18 кейсов<br>
+      Пайплайн видео и база конкурентов
+    </div>
+  </div>
+  <div class="card" style="padding:18px 22px">
+    <div class="b gold">нужно собрать</div>
+    <div style="font-size:15.5px;line-height:1.6;margin-top:10px">
+      Платформу: вход, проект, чат, превью, деплой<br>
+      3 шаблона MVP и манифесты<br>
+      Биллинг, лимиты, учёт токенов<br>
+      Лендинг платформы и оферту<br>
+      Первый поток и куратора
+    </div>
+  </div>
+</div>
+<div class="strip">${ic('bolt')}<span>Наша скорость — не «написать курс с нуля», а <b style="color:#fff">упаковать существующие продукты в шаблоны и среду</b>.</span></div>
+<div class="foot"><span>активы</span><span><b>10</b> / 22</span></div>`});
+
+/* 11. PLATFORM UI */
+slides.push({acc:'#8b5cf6', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Платформа</div><div class="meta">что видит ученик</div></div>
+<h2>Никакого терминала. Задача, агент, превью, кнопка «Опубликовать»</h2>
+<div style="margin-top:22px;border:1px solid var(--line2);border-radius:18px;overflow:hidden;background:#0a1024;box-shadow:0 30px 80px rgba(0,0,0,.45)">
+  <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(255,255,255,.06);border-bottom:1px solid var(--line)">
+    <span style="width:10px;height:10px;border-radius:50%;background:#ff6b6b"></span><span style="width:10px;height:10px;border-radius:50%;background:#ffd166"></span><span style="width:10px;height:10px;border-radius:50%;background:#3ddc97"></span>
+    <div style="margin-left:10px;font-size:13px;font-weight:700;color:#cfd6f5">project / «Бот для салона»</div>
+    <div style="margin-left:auto;display:flex;gap:8px"><span class="b green">Баланс 1 240 ₽</span><span class="b pink">Опубликовать</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:220px 1fr 360px;min-height:470px">
+    <div style="border-right:1px solid var(--line);padding:14px 12px">
+      <div class="tiny" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)">Проекты</div>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700">
+        <div style="padding:8px 10px;border-radius:8px;background:rgba(139,92,246,.18);border:1px solid rgba(139,92,246,.4)">▸ Бот-визитка</div>
+        <div style="padding:8px 10px;color:var(--muted)">▸ AI-ассистент</div>
+        <div style="padding:8px 10px;color:var(--muted)">▸ Мини-апп</div>
+        <div style="padding:8px 10px;color:var(--dim)">+ Новый проект</div>
+      </div>
+      <div class="tiny" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-top:20px">Файлы</div>
+      <div style="margin-top:8px;font-size:12px;line-height:1.9;color:var(--muted);font-family:Consolas,monospace">bot.py<br>menu.py<br>prompts/<br>content.json<br>README.md</div>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:10px;background:radial-gradient(500px 300px at 30% 0%,rgba(62,199,255,.08),transparent 70%)">
+      <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:800">Чат с агентом</div>
+      <div style="max-width:88%;padding:11px 13px;border-radius:12px 12px 12px 4px;background:#182533;font-size:13.5px;line-height:1.45">Сделай меню: «Услуги», «Записаться», «Цены», «Связаться». Добавь ответы на 5 частых вопросов.</div>
+      <div style="max-width:94%;align-self:flex-end;padding:11px 13px;border-radius:12px 12px 4px 12px;background:#2b5278;font-size:13.5px;line-height:1.45">План: 1) структура меню 2) тексты 3) тест сценария. Уже правлю <b>menu.py</b> и <b>content.json</b> — покажу дифф.</div>
+      <div style="padding:10px 12px;border-radius:10px;border:1px dashed rgba(255,255,255,.25);font-size:12.5px;color:var(--muted)">tool_call: read_file / edit_file / run_tests<br>tool_result: 12 тестов, 0 ошибок</div>
+      <div style="margin-top:auto;display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.04)"><span style="color:var(--dim);font-size:13px">Напиши задачу или вставь бриф…</span><span style="margin-left:auto" class="b violet">→</span></div>
+    </div>
+    <div style="border-left:1px solid var(--line);padding:14px;background:rgba(255,255,255,.02)">
+      <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:800">Превью</div>
+      <div style="margin-top:10px;border-radius:16px;border:1px solid var(--line2);overflow:hidden;background:#0e1621">
+        <div style="padding:10px 12px;background:#17212b;font-size:12px;font-weight:700">Салон «Лотос» <span style="color:#6c7883;font-weight:500">бот</span></div>
+        <div style="padding:12px;display:flex;flex-direction:column;gap:8px">
+          <div style="align-self:flex-start;padding:8px 10px;border-radius:10px 10px 10px 3px;background:#182533;font-size:12px">Здравствуйте! Выберите услугу 👇</div>
+          <div style="padding:8px;border-radius:8px;background:rgba(43,82,120,.6);text-align:center;font-size:12px">Услуги и цены</div>
+          <div style="padding:8px;border-radius:8px;background:rgba(43,82,120,.6);text-align:center;font-size:12px">Записаться</div>
+        </div>
+      </div>
+      <div class="tiny" style="margin-top:10px">Эмулятор Telegram · веб-превью · логи · ссылка для клиента</div>
+    </div>
+  </div>
+</div>
+<div class="strip" style="margin-top:16px">${ic('spark')}<span>Слева — папки, в центре — агент, справа — результат. <b style="color:#fff">Ученик не видит API-ключей и терминала.</b></span></div>
+<div class="foot"><span>платформа · интерфейс</span><span><b>11</b> / 22</span></div>`});
+
+/* 12. BRIEF TO DEPLOY */
+slides.push({acc:'#ff8a3d', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Конструктор</div><div class="meta">бриф → промпт → шаблон → деплой</div></div>
+<h2>Ученик отвечает на 8 вопросов — платформа делает остальное</h2>
+<div class="flow" style="margin-top:34px">
+  <div class="step"><div class="t">01</div><div class="h">Шаблон</div><div class="d">Бот-воронка, AI-ассистент, мини-апп, контент-агент</div></div>
+  <div class="step"><div class="t">02</div><div class="h">Бриф</div><div class="d">Ниша, продукт, цена, аудитория, цель, тон, FAQ, ссылки</div></div>
+  <div class="step"><div class="t">03</div><div class="h">Промпт</div><div class="d">JSON-бриф + системный промпт + критерии приёмки</div></div>
+  <div class="step on"><div class="t">04</div><div class="h">Генерация</div><div class="d">Агент разворачивает шаблон, правит тексты и логику, тестирует</div></div>
+  <div class="step"><div class="t">05</div><div class="h">Деплой</div><div class="d">Токен бота / поддомен / расписание — в один клик</div></div>
+</div>
+<div class="grid g3" style="margin-top:30px">
+  <div class="card"><div class="row">${ic('bot','sm')}<b>Бот</b></div><div class="tiny">Создать бота в @BotFather (30 сек) → вставить токен → платформа проверяет <b>getMe</b>, поднимает контейнер, ставит webhook.</div></div>
+  <div class="card"><div class="row">${ic('app','sm')}<b>Мини-апп</b></div><div class="tiny">Сборка → публикация на <b>*.app.school.ru</b> → кнопка в боте → проверка initData.</div></div>
+  <div class="card"><div class="row">${ic('agent','sm')}<b>Агент</b></div><div class="tiny">Расписание, канал для отчётов, лимиты, первый запуск и лог.</div></div>
+</div>
+<div class="strip">${ic('key')}<span><b style="color:#fff">Единственное, что ученик делает руками, — создаёт бота в BotFather.</b> Всё остальное — платформа. Это и есть «без установки».</span></div>
+<div class="foot"><span>конструктор</span><span><b>12</b> / 22</span></div>`});
+
+/* 13. ARCHITECTURE */
+slides.push({acc:'#3ec7ff', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Архитектура</div><div class="meta">слои · компоненты · потоки</div></div>
+<h2>Платформа = оболочка, оркестратор, рантайм и шлюз моделей</h2>
+<div class="content" style="justify-content:space-evenly;gap:0">
+<div style="display:flex;flex-direction:column;gap:9px;font-size:13px">
+  <div class="card" style="padding:12px 18px;display:flex;align-items:center;gap:14px"><span class="b blue" style="min-width:110px;justify-content:center">Клиент</span><b>Браузер</b><span class="muted">Next.js UI · чат · файлы · превью · баланс · уроки</span></div>
+  <div class="card" style="padding:12px 18px;display:flex;align-items:center;gap:14px"><span class="b violet" style="min-width:110px;justify-content:center">Edge</span><b>Cloudflare / nginx</b><span class="muted">TLS · WAF · rate limit · поддомены клиентских приложений</span></div>
+  <div class="card" style="padding:12px 18px;display:flex;align-items:center;gap:14px;border-color:rgba(255,209,102,.5)"><span class="b gold" style="min-width:110px;justify-content:center">App</span><b>Next.js + BFF</b><span class="muted">Postgres · Redis · S3/MinIO · биллинг · LMS · RBAC</span></div>
+  <div style="display:grid;grid-template-columns:1.1fr .9fr;gap:9px">
+    <div class="card" style="padding:12px 18px;display:flex;align-items:center;gap:14px"><span class="b pink" style="min-width:110px;justify-content:center">Orchestrator</span><b>Agent Service</b><span class="muted">Docker/K8s · очередь · лимиты · таймауты</span></div>
+    <div class="card" style="padding:12px 18px;display:flex;align-items:center;gap:14px"><span class="b green" style="min-width:110px;justify-content:center">Deployer</span><b>сборка и запуск</b><span class="muted">боты · статика · API · домены · логи</span></div>
+  </div>
+  <div class="card" style="padding:12px 18px;display:flex;align-items:center;gap:14px;border-color:rgba(139,92,246,.6);background:rgba(139,92,246,.08)"><span class="b violet" style="min-width:110px;justify-content:center">Workspace</span><b>DSH в контейнере</b><span class="muted">файлы проекта · сессия JSONL · песочница · skills · AGENTS.md</span></div>
+  <div class="card" style="padding:12px 18px;display:flex;align-items:center;gap:14px;border-color:rgba(255,79,139,.6)"><span class="b pink" style="min-width:110px;justify-content:center">Model Gateway</span><b>наш прокси</b><span class="muted">виртуальные ключи · токены · квоты · роутинг flash/pro · фолбэк</span><span class="b gold" style="margin-left:auto">DeepSeek API</span></div>
+</div>
+<div class="grid g3" style="margin-top:14px">
+  <div class="card" style="padding:12px 16px"><div class="tiny"><b style="color:#fff">Изоляция:</b> non-root, read-only root FS, egress allowlist, лимиты CPU/RAM/диска, без docker socket.</div></div>
+  <div class="card" style="padding:12px 16px"><div class="tiny"><b style="color:#fff">Данные:</b> Postgres — пользователи и деньги; S3 — файлы и бэкапы сессий; Redis — очередь и лимиты.</div></div>
+  <div class="card" style="padding:12px 16px"><div class="tiny"><b style="color:#fff">Наблюдаемость:</b> OTel, Grafana, стоимость на пользователя, алерты по 5xx и runaway-сессиям.</div></div>
+</div>
+</div>
+<div class="foot"><span>архитектура</span><span><b>13</b> / 22</span></div>`});
+
+/* 14. AGENT RUNTIME */
+slides.push({acc:'#ff4f8b', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Рантайм</div><div class="meta">DSH · сессии · инструменты · шлюз</div></div>
+<h2>Один ход агента: от сообщения до диффа и деплоя</h2>
+<div class="flow" style="margin-top:26px">
+  <div class="step"><div class="t">01</div><div class="h">Сообщение</div><div class="d">Ученик пишет задачу в нашем UI</div></div>
+  <div class="step"><div class="t">02</div><div class="h">Очередь</div><div class="d">Проверка квоты, проект, контейнер</div></div>
+  <div class="step on"><div class="t">03</div><div class="h">DSH</div><div class="d">headless --json · --session-id</div></div>
+  <div class="step"><div class="t">04</div><div class="h">Инструменты</div><div class="d">файлы, shell, web, skills, subagents</div></div>
+  <div class="step"><div class="t">05</div><div class="h">Модель</div><div class="d">через наш gateway · DeepSeek</div></div>
+  <div class="step"><div class="t">06</div><div class="h">События</div><div class="d">SSE в UI: текст, tool_call, diff</div></div>
+</div>
+<div class="content" style="display:grid;grid-template-columns:1.1fr .9fr;gap:18px;margin-top:24px">
+  <div class="card">
+    <div class="b violet">что даёт DSH</div>
+    <div style="font-size:14.5px;line-height:1.6;margin-top:10px">
+      <b>MIT, open-source</b> — можно хостить и форкать.<br>
+      <b>Сессии</b> — JSONL, продолжение по id, восстановление.<br>
+      <b>Песочница</b> — политики файлов и команд.<br>
+      <b>Инструменты</b> — файлы, shell, web, subagents, workflows, MCP.<br>
+      <b>Skills</b> — упаковка «как делать бота/мини-апп/деплой».<br>
+      <b>Headless + JSON</b> — стрим событий в наш UI.
+    </div>
+  </div>
+  <div class="card">
+    <div class="b gold">что пишем сами</div>
+    <div style="font-size:14.5px;line-height:1.6;margin-top:10px">
+      Мультитенантность и авторизация.<br>
+      Биллинг, квоты, учёт токенов.<br>
+      LMS, уроки, прогресс, куратор.<br>
+      Деплой ботов и мини-аппов.<br>
+      Шаблоны, брифы, критерии приёмки.<br>
+      Админка, мониторинг, поддержка.
+    </div>
+  </div>
+</div>
+<div class="strip">${ic('shield')}<span><b style="color:#fff">DSH — не «магия», а инфраструктура.</b> Наша ценность — оболочка, шаблоны, деплой и поддержка, которых у конкурентов нет.</span></div>
+<div class="foot"><span>рантайм</span><span><b>14</b> / 22</span></div>`});
+
+/* 15. TEMPLATES */
+slides.push({acc:'#ffd166', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Шаблоны</div><div class="meta">37 папок → 31 продукт → 12 шаблонов → 3 MVP</div></div>
+<h2>Не «сделай с нуля», а «разверни и адаптируй»</h2>
+<div class="content" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:20px;align-content:start">
+  <div class="card" style="padding:16px">
+    <div class="b pink">Боты · 6 из 12</div>
+    <div style="font-size:14px;line-height:1.75;margin-top:10px">
+      Бот-визитка <span class="b green">MVP</span><br>
+      AI-ассистент (RAG) <span class="b green">MVP</span><br>
+      Бот-воронка с оплатой<br>
+      Клуб с подпиской<br>
+      Каталог с подпиской<br>
+      Отзывы и розыгрыши
+    </div>
+  </div>
+  <div class="card" style="padding:16px">
+    <div class="b violet">Агенты · 3 из 12</div>
+    <div style="font-size:14px;line-height:1.75;margin-top:10px">
+      Контент-завод<br>
+      AI-редакция канала<br>
+      Мониторинг цен<br>
+      <span class="muted">+ аналитик, реклама, видео, фото — фаза 2</span>
+    </div>
+  </div>
+  <div class="card" style="padding:16px">
+    <div class="b blue">Мини-аппы · 3 из 12</div>
+    <div style="font-size:14px;line-height:1.75;margin-top:10px">
+      Витрина/клуб <span class="b green">MVP</span><br>
+      Кабинет ученика<br>
+      Трекер и дневник<br>
+      <span class="muted">+ запись, дашборд, квиз — фаза 2</span>
+    </div>
+  </div>
+</div>
+<div class="note" style="margin-top:12px">Готовность: <b style="color:#8ff0c6">MVP</b> — в первом потоке · <b style="color:#dfe5ff">есть</b> — рабочий код · <b style="color:#ffd166">части</b> — собираем из готового · <b style="color:#c9b6ff">новое</b> — с нуля.</div>
+<div class="grid g2" style="margin-top:14px">
+  <div class="card" style="padding:14px 18px">
+    <div class="b gold">манифест шаблона</div>
+    <div style="font-family:Consolas,monospace;font-size:12px;line-height:1.65;color:#cfd6f5;margin-top:8px">
+      id: bot-funnel<br>
+      stack: python/aiogram/postgres<br>
+      brief: [niche, product, price, audience, goal, tone, faq]<br>
+      env: BOT_TOKEN · DATABASE_URL · MODEL_BASE_URL<br>
+      deploy: container · port 8080 · 0.3 CPU / 256 Mi<br>
+      price: 2 990 ₽ · demo: /bot-funnel
+    </div>
+  </div>
+  <div class="card" style="padding:14px 18px">
+    <div class="b green">гигиена перед выдачей</div>
+    <div class="tiny" style="font-size:13px;line-height:1.55">Убрать токены и клиентские данные · перевыпустить ключи · проверить лицензии · прогнать деплой на чистой машине · демо-данные и обезличенные скриншоты · README + AGENTS.md + бриф.</div>
+  </div>
+</div>
+<div class="foot"><span>шаблоны</span><span><b>15</b> / 22</span></div>`});
+
+/* 16. DEPLOY */
+slides.push({acc:'#3ddc97', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Деплой</div><div class="meta">боты · мини-аппы · агенты</div></div>
+<h2>Три типа запуска — один сценарий для ученика</h2>
+<div class="grid g3" style="margin-top:26px;flex:1">
+  <div class="card">
+    ${ic('bot','lg')}
+    <h3 style="margin-top:14px">Бот</h3>
+    <p>Контейнер на бота: aiogram/Node, webhook или polling.</p>
+    <div class="hr"></div>
+    <div class="tiny" style="font-size:13.5px;line-height:1.6">
+      Что делает ученик: создаёт бота в @BotFather, вставляет токен.<br><br>
+      Что делает платформа: getMe → контейнер → webhook → health-check → логи.<br><br>
+      <b class="gold">490 ₽/мес</b>
+    </div>
+  </div>
+  <div class="card">
+    ${ic('app','lg')}
+    <h3 style="margin-top:14px">Мини-апп</h3>
+    <p>Статика на CDN + API в контейнере, домен и TLS.</p>
+    <div class="hr"></div>
+    <div class="tiny" style="font-size:13.5px;line-height:1.6">
+      Что делает ученик: выбирает адрес, нажимает «Опубликовать».<br><br>
+      Что делает платформа: build → CDN → поддомен → кнопка в боте → initData.<br><br>
+      <b class="gold">690 ₽/мес</b>
+    </div>
+  </div>
+  <div class="card">
+    ${ic('agent','lg')}
+    <h3 style="margin-top:14px">Агент</h3>
+    <p>Контейнер + планировщик, отчёты в Telegram.</p>
+    <div class="hr"></div>
+    <div class="tiny" style="font-size:13.5px;line-height:1.6">
+      Что делает ученик: выбирает расписание и чат для отчётов.<br><br>
+      Что делает платформа: cron → запуск → лимиты → лог → алерт при сбое.<br><br>
+      <b class="gold">590 ₽/мес</b>
+    </div>
+  </div>
+</div>
+<div class="strip">${ic('shield')}<span><b style="color:#fff">Изоляция, лимиты, секреты, логи и рестарт — наша забота.</b> Ученик отвечает за смысл продукта и общение с клиентом.</span></div>
+<div class="foot"><span>деплой и хостинг</span><span><b>16</b> / 22</span></div>`});
+
+/* 17. ECONOMICS */
+slides.push({acc:'#ff8a3d', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Экономика</div><div class="meta">цены · себестоимость · маржа</div></div>
+<h2>Курс даёт основную выручку, подписка — предсказуемость</h2>
+<div class="content" style="display:grid;grid-template-columns:1.05fr .95fr;gap:24px;margin-top:22px">
+  <div>
+    <table class="tbl">
+      <tr><th>Продукт</th><th>Цена</th><th>Что входит</th></tr>
+      <tr><td>Курс «Сам»</td><td class="big">49 900 ₽</td><td class="m">9 модулей · шаблоны · 6 мес платформы</td></tr>
+      <tr><td>Курс «С наставником»</td><td class="big">79 900 ₽</td><td class="m">+ 6 разборов · проверка ДЗ</td></tr>
+      <tr><td>Курс «Под ключ»</td><td class="big">129 900 ₽</td><td class="m">+ сопровождение до первого клиента</td></tr>
+      <tr><td>Подписка</td><td class="big">1 990 ₽/мес</td><td class="m">среда · агент · шаблоны · лимит токенов</td></tr>
+      <tr><td>Хостинг бота / мини-аппа</td><td class="big">490 / 690 ₽</td><td class="m">контейнер · домен · логи · рестарт</td></tr>
+      <tr><td>Топ-ап AI</td><td class="big">1 000 ₽</td><td class="m">~1 млн токенов flash с запасом</td></tr>
+    </table>
+    <div class="note" style="margin-top:10px">Цены — гипотеза первого потока; конкуренты продают курсы за 40–190 тыс. ₽.</div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <div class="card goldc" style="padding:18px 22px">
+      <div class="row" style="justify-content:space-between"><span class="b gold">курс · на одну продажу</span><span class="num">65%</span></div>
+      <table class="tbl" style="margin-top:8px;font-size:14px">
+        <tr><td>Выручка</td><td class="r">49 900 ₽</td></tr>
+        <tr><td class="m">Эквайринг 3%</td><td class="r m">−1 497 ₽</td></tr>
+        <tr><td class="m">CAC</td><td class="r m">−6 000 ₽</td></tr>
+        <tr><td class="m">Куратор, 2 мес</td><td class="r m">−6 000 ₽</td></tr>
+        <tr><td class="m">Платформа + AI</td><td class="r m">−2 000 ₽</td></tr>
+        <tr><td class="m">Контент</td><td class="r m">−2 000 ₽</td></tr>
+        <tr><td><b>Валовая прибыль</b></td><td class="r"><b class="gold">32 403 ₽</b></td></tr>
+      </table>
+    </div>
+    <div class="card" style="padding:18px 22px">
+      <div class="row" style="justify-content:space-between"><span class="b blue">подписка · месяц</span><span class="num">54%</span></div>
+      <table class="tbl" style="margin-top:8px;font-size:14px">
+        <tr><td>Выручка</td><td class="r">1 990 ₽</td></tr>
+        <tr><td class="m">Эквайринг · AI · хостинг · поддержка</td><td class="r m">−910 ₽</td></tr>
+        <tr><td><b>Валовая прибыль</b></td><td class="r"><b class="gold">1 080 ₽</b></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="foot"><span>экономика</span><span><b>17</b> / 22</span></div>`});
+
+/* 18. BREAK-EVEN */
+slides.push({acc:'#ffd166', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Юнит-экономика</div><div class="meta">точка безубыточности · LTV/CAC</div></div>
+<h2>700 тыс. ₽/мес фиксированных — 22 курса или 650 подписок</h2>
+<div class="grid g3" style="margin-top:26px">
+  <div class="card"><div class="kpi"><div class="v">22</div><div class="l">продажи курса / мес</div><div class="s">Чтобы покрыть фиксированные расходы только курсами.</div></div></div>
+  <div class="card"><div class="kpi"><div class="v">650</div><div class="l">подписчиков / мес</div><div class="s">Только подписка, без курсов и хостинга.</div></div></div>
+  <div class="card goldc"><div class="kpi"><div class="v">15 + 250</div><div class="l">смешанный сценарий</div><div class="s">15 курсов + 250 подписок ≈ 756 тыс. ₽ выручки.</div></div></div>
+</div>
+<div class="content" style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px;align-items:start">
+  <div class="card">
+    <div class="b green">LTV / CAC</div>
+    <div class="row" style="margin-top:14px;gap:30px;align-items:flex-end">
+      <div class="kpi"><div class="v" style="font-size:46px">7,6×</div><div class="l">при 12 мес подписки</div></div>
+      <div class="kpi"><div class="v" style="font-size:46px;color:var(--muted)">6,5×</div><div class="l">консервативно, 6 мес</div></div>
+    </div>
+    <div class="tiny" style="margin-top:12px">LTV = валовая прибыль курса + подписка. CAC 6 000 ₽ — гипотеза, проверить на трафике.</div>
+    <div class="hr"></div>
+    <div style="font-size:13.5px;line-height:1.6;color:#dfe5ff">Курс 32 403 + 12 × 1 080 = <b class="gold">45 363 ₽</b><br>Консервативно: 32 403 + 6 × 1 080 = <b>38 883 ₽</b></div>
+  </div>
+  <div class="card">
+    <div class="b pink">себестоимость AI</div>
+    <div style="font-size:14.5px;line-height:1.6;margin-top:10px">
+      Сессия 2 часа ≈ 1,5 млн входных (80% cache hit) + 100 тыс. выходных.<br>
+      <b>deepseek-flash:</b> ≈ $0,22 за сессию → 10 сессий ≈ 200 ₽/мес.<br>
+      С запасом на компакцию и ретраи — <b class="gold">400 ₽/мес</b>.<br>
+      <b>deepseek-v4-pro</b> — в 4–5 раз дороже, включаем точечно.
+    </div>
+    <div class="tiny" style="margin-top:10px">Цены DeepSeek: input $0,15–0,30 / 1M, output $0,60–1,20 / 1M (off-peak/peak), flash.</div>
+    <div class="hr"></div>
+    <div style="font-size:13.5px;line-height:1.6;color:#dfe5ff">В подписке — <b>2 млн токенов flash</b>. Сверх лимита — топ-ап 1 000 ₽ за ~1 млн.<br>Pro — по кнопке и только на сложных задачах.</div>
+  </div>
+</div>
+<div class="strip">${ic('chart')}<span><b style="color:#fff">Экономика сходится, если удержание подписки ≥ 6 месяцев и CAC ≤ 6 тыс. ₽.</b> Это главные два числа для первого потока.</span></div>
+<div class="foot"><span>юнит-экономика</span><span><b>18</b> / 22</span></div>`});
+
+/* 19. RISKS */
+slides.push({acc:'#ff4f8b', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Риски</div><div class="meta">что может сломать запуск</div></div>
+<h2>Главные риски — доступ к моделям, безопасность и поддержка</h2>
+<div class="content" style="justify-content:center">
+<table class="tbl" style="font-size:14.5px">
+  <tr><th style="width:24%">Риск</th><th style="width:10%">Вероятность</th><th>Что делаем</th></tr>
+  <tr><td><b>DeepSeek API недоступен / оплата из РФ</b></td><td><span class="b gold">средняя</span></td><td class="m">Шлюз с фолбэком (Qwen/GLM/локальная модель), юрлицо и платёжный маршрут, BYOK-режим.</td></tr>
+  <tr><td><b>ToS за перепродажу доступа</b></td><td><span class="b gold">средняя</span></td><td class="m">Продаём продукт (среда + шаблоны + поддержка), а не «доступ к модели»; проверка условий юристом.</td></tr>
+  <tr><td><b>Утечка или абьюз контейнеров</b></td><td><span class="b gold">средняя</span></td><td class="m">Изоляция, egress allowlist, лимиты, модерация, KYC для хостинга, kill switch.</td></tr>
+  <tr><td><b>Спам и баны ботов учеников</b></td><td><span class="b pink">высокая</span></td><td class="m">Лимиты, антиспам, обучение, мониторинг, перенос бота, дисклеймер.</td></tr>
+  <tr><td><b>DSH молодой (0.2.1-rc)</b></td><td><span class="b pink">высокая</span></td><td class="m">Фиксируем версию, форк, интеграционные тесты, абстракция рантайма.</td></tr>
+  <tr><td><b>152-ФЗ и передача данных</b></td><td><span class="b gold">средняя</span></td><td class="m">Согласие, политика, хранение ПДн в РФ, раскрытие передачи в модель, локальная модель как опция.</td></tr>
+  <tr><td><b>Нагрузка поддержки</b></td><td><span class="b pink">высокая</span></td><td class="m">AI-ассистент, база знаний, шаблоны, куратор на 50–100 учеников, SLA 24 ч.</td></tr>
+</table>
+<div class="note" style="margin-top:14px">Вероятность — экспертная оценка; проверяем на первом потоке и обновляем раз в квартал.</div>
+<div class="grid g3" style="margin-top:16px">
+  <div class="card" style="padding:12px 16px"><div class="row"><div class="b gold">01</div><b>Юрист до запуска</b></div><div class="tiny">Оферта, 152-ФЗ, условия возврата, проверка ToS провайдера.</div></div>
+  <div class="card" style="padding:12px 16px"><div class="row"><div class="b gold">02</div><b>Аудит шаблонов</b></div><div class="tiny">Токены, лицензии, тесты на чистой машине, обезличенные данные.</div></div>
+  <div class="card" style="padding:12px 16px"><div class="row"><div class="b gold">03</div><b>План Б по модели</b></div><div class="tiny">Фолбэк-провайдер, BYOK, локальная модель как опция.</div></div>
+</div>
+</div>
+<div class="strip">${ic('shield')}<span>Отдельно: <b style="color:#fff">не строим продукт на обходе блокировок.</b> В уроках — доступные в РФ инструменты и легальная работа с моделями.</span></div>
+<div class="foot"><span>риски</span><span><b>19</b> / 22</span></div>`});
+
+/* 20. ROADMAP */
+slides.push({acc:'#8b5cf6', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Роудмап</div><div class="meta">ноябрь 2026 — июнь 2027</div></div>
+<h2>Первый платный поток — январь 2027</h2>
+<div class="content" style="justify-content:space-evenly">
+<div class="timeline">
+  <div class="ph"><div class="dt">2–22 ноября</div><div class="tt">Фаза 0 · прототип</div><div class="dd">DSH в Docker · шлюз · 1 шаблон · деплой бота · замер стоимости</div><div class="gt">Гейт: путь «зашёл → задеплоил» без разработчика</div></div>
+  <div class="ph"><div class="dt">23 ноября — 31 декабря</div><div class="tt">Фаза 1 · MVP</div><div class="dd">Вход · проект · чат · превью · 3 шаблона · биллинг · LMS 5 уроков</div><div class="gt">Гейт: 10–20 бета, 50% дошли до деплоя</div></div>
+  <div class="ph"><div class="dt">январь 2027</div><div class="tt">Фаза 2 · первый поток</div><div class="dd">9 модулей · 10 шаблонов · куратор · 30–50 учеников</div><div class="gt">Гейт: 30 оплат, 30% первый заказ</div></div>
+  <div class="ph"><div class="dt">февраль — апрель</div><div class="tt">Фаза 3 · масштаб</div><div class="dd">12–20 шаблонов · маркетплейс · подписки · партнёрка · 100–300 учеников</div><div class="gt">Гейт: 100+ оплат, маржа 55%+</div></div>
+  <div class="ph"><div class="dt">май — июнь</div><div class="tt">Фаза 4 · платформа</div><div class="dd">Тариф «Профи» · локальная папка · команды · B2B · 300–500 учеников</div><div class="gt">Гейт: 30% выручки из платформы</div></div>
+</div>
+<div class="grid g3" style="margin-top:26px">
+  <div class="card" style="padding:14px 18px"><div class="b green">метрика активации</div><div class="kpi" style="margin-top:6px"><div class="v" style="font-size:28px">50%</div><div class="s">первый деплой за 24 часа</div></div></div>
+  <div class="card" style="padding:14px 18px"><div class="b gold">метрика продаж</div><div class="kpi" style="margin-top:6px"><div class="v" style="font-size:28px">10–15%</div><div class="s">тест-драйв → оплата</div></div></div>
+  <div class="card" style="padding:14px 18px"><div class="b blue">метрика удержания</div><div class="kpi" style="margin-top:6px"><div class="v" style="font-size:28px">50%</div><div class="s">подписка на 3-й месяц</div></div></div>
+</div>
+</div>
+<div class="strip">${ic('check')}<span><b style="color:#fff">Гейт перед стартом:</b> 10 бета-учеников, 3 шаблона, себестоимость ≤ 600 ₽/ученик. Если не готово — сдвигаем поток, а не режем качество.</span></div>
+<div class="foot"><span>роудмап</span><span><b>20</b> / 22</span></div>`});
+
+/* 21. TEAM BUDGET */
+slides.push({acc:'#3ddc97', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Команда и бюджет</div><div class="meta">минимум для запуска</div></div>
+<h2>4–5 человек и 1,2–2,3 млн ₽ на три месяца</h2>
+<div class="content" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:24px">
+  <div class="card">
+    <div class="b green">команда</div>
+    <div style="font-size:14.5px;line-height:1.75;margin-top:10px">
+      <b>Основатель</b> — продукт, продажи, контент<br>
+      <b>CTO</b> — платформа, инфра, безопасность<br>
+      <b>Full-stack</b> — кабинет, LMS, биллинг<br>
+      <b>AI-инженер</b> — промпты, шаблоны, evals<br>
+      <b>Методолог</b> — программа и уроки<br>
+      <b>Куратор</b> — чат и разборы (частично)
+    </div>
+    <div class="tiny" style="margin-top:10px">Подрядчики: дизайн, видео, юрист, бухгалтер.</div>
+  </div>
+  <div class="card">
+    <div class="b gold">бюджет · 3 мес</div>
+    <table class="tbl" style="margin-top:8px;font-size:13.5px">
+      <tr><td>Разработка</td><td class="r">1 200 000 ₽</td></tr>
+      <tr><td class="m">Контент и видео</td><td class="r m">300 000 ₽</td></tr>
+      <tr><td class="m">Дизайн и бренд</td><td class="r m">150 000 ₽</td></tr>
+      <tr><td class="m">Инфра и API</td><td class="r m">100 000 ₽</td></tr>
+      <tr><td class="m">Юридика</td><td class="r m">80 000 ₽</td></tr>
+      <tr><td class="m">Маркетинг</td><td class="r m">300 000 ₽</td></tr>
+      <tr><td class="m">Резерв</td><td class="r m">200 000 ₽</td></tr>
+      <tr><td><b>Итого</b></td><td class="r"><b class="gold">2 330 000 ₽</b></td></tr>
+    </table>
+    <div class="tiny" style="margin-top:8px">Минимальный вариант — 1,2–1,5 млн ₽.</div>
+  </div>
+  <div class="card">
+    <div class="b blue">метрики первого потока</div>
+    <div style="font-size:14px;line-height:1.9;margin-top:10px">
+      Активация: <b>50%</b><br>
+      Тест-драйв → оплата: <b>10–15%</b><br>
+      Первый заказ за 30 дней: <b>30%</b><br>
+      Подписка M3: <b>50%</b><br>
+      Валовая маржа: <b>55–65%</b><br>
+      Тикетов на 100 учеников: <b>≤ 5</b><br>
+      Успешных деплоев с 1-го раза: <b>80%</b>
+    </div>
+  </div>
+</div>
+<div class="strip">${ic('users')}<span><b style="color:#fff">Стартуем малой командой, но с сильным ядром:</b> платформа + 3 шаблона + первый поток. Остальное — по метрикам.</span></div>
+<div class="foot"><span>команда и бюджет</span><span><b>21</b> / 22</span></div>`});
+
+/* 22. DECISIONS */
+slides.push({acc:'#ff4f8b', html:`
+<div class="head"><div class="kicker"><span class="dot"></span>Решения</div><div class="meta">что нужно от команды</div></div>
+<h2>Восемь решений, чтобы стартовать в ноябре</h2>
+<div class="content" style="display:grid;grid-template-columns:1fr 1fr;gap:12px 26px;margin-top:22px;align-content:start">
+  <div class="card" style="padding:14px 18px"><div class="row"><div class="b gold">01</div><b>Название и бренд</b></div><div class="tiny">Школа + платформа: одно имя или два?</div></div>
+  <div class="card" style="padding:14px 18px"><div class="row"><div class="b gold">02</div><b>Цена курса и подписки</b></div><div class="tiny">49,9 / 79,9 / 129,9 тыс. ₽ и 1 990 ₽/мес — утверждаем?</div></div>
+  <div class="card" style="padding:14px 18px"><div class="row"><div class="b gold">03</div><b>Доступ к API</b></div><div class="tiny">Наш ключ с квотой, BYOK или гибрид?</div></div>
+  <div class="card" style="padding:14px 18px"><div class="row"><div class="b gold">04</div><b>Юрлицо и платежи</b></div><div class="tiny">РФ или Казахстан; кто отвечает за 152-ФЗ?</div></div>
+  <div class="card" style="padding:14px 18px"><div class="row"><div class="b gold">05</div><b>Хостинг и данные</b></div><div class="tiny">Где храним ПДн, артефакты, сессии?</div></div>
+  <div class="card" style="padding:14px 18px"><div class="row"><div class="b gold">06</div><b>Первый поток</b></div><div class="tiny">Дата, размер, цена, куратор.</div></div>
+  <div class="card" style="padding:14px 18px"><div class="row"><div class="b gold">07</div><b>Техлид платформы</b></div><div class="tiny">Кто ведёт MVP и отвечает за деплой?</div></div>
+  <div class="card" style="padding:14px 18px"><div class="row"><div class="b gold">08</div><b>3 шаблона MVP</b></div><div class="tiny">Бот-визитка, AI-ассистент, витрина — ок?</div></div>
+</div>
+<div style="margin-top:26px;display:flex;align-items:center;justify-content:space-between;gap:20px">
+  <div style="font-family:Unbounded,sans-serif;font-weight:700;font-size:30px;line-height:1.2">Следующий шаг — <span class="grad">технический прототип за 2–3 недели</span></div>
+  <div class="b pink" style="font-size:14px;padding:12px 18px">Первый платный поток · январь 2027</div>
+</div>
+<div class="foot"><span>решения</span><span><b>22</b> / 22</span></div>`});
+
+/* RENDER */
+const deck = document.getElementById('deck');
+deck.innerHTML = slides.map((s,i)=>`<section class="slide" data-i="${i}" style="--acc:${s.acc}">${s.html}</section>`).join('');
+const nodes = [...deck.querySelectorAll('.slide')];
+let cur = 0;
+const counter = document.getElementById('counter');
+const progress = document.getElementById('progress');
+function show(n){
+  cur = Math.max(0, Math.min(nodes.length-1, n));
+  nodes.forEach((el,i)=>el.classList.toggle('active', i===cur));
+  counter.textContent = String(cur+1).padStart(2,'0') + ' / ' + String(nodes.length).padStart(2,'0');
+  progress.style.width = ((cur)/(nodes.length-1)*100)+'%';
+  if (location.hash !== '#'+(cur+1)) history.replaceState(null,'','#'+(cur+1));
+}
+function fit(){
+  const pad = 24;
+  const sx = (window.innerWidth - pad*2) / 1600;
+  const sy = (window.innerHeight - pad*2) / 900;
+  const s = Math.min(sx, sy);
+  deck.style.transform = 'scale('+s+')';
+}
+window.addEventListener('resize', fit);
+document.getElementById('next').onclick = ()=>show(cur+1);
+document.getElementById('prev').onclick = ()=>show(cur-1);
+window.addEventListener('keydown', e=>{
+  if (['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); show(cur+1); }
+  else if (['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); show(cur-1); }
+  else if (e.key === 'Home'){ show(0); }
+  else if (e.key === 'End'){ show(nodes.length-1); }
+  else if (e.key.toLowerCase() === 'f'){ if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+  else if (e.key.toLowerCase() === 'p'){ e.preventDefault(); window.print(); }
+});
+document.querySelector('.stage').addEventListener('click', e=>{
+  if (e.target.closest('.ui')) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  if (e.clientX - r.left > r.width/2) show(cur+1); else show(cur-1);
+});
+const initial = parseInt((location.hash||'').replace('#','').replace(/^c/,''),10);
+if((location.hash||'').replace('#','').startsWith('c')) document.body.classList.add('clean');
+fit(); show(Number.isFinite(initial) && initial>0 ? initial-1 : 0);
+</script>
+</body>
+</html>

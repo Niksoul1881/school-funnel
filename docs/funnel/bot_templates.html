@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Шаблоны первого бота</title>
+<style>
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: "Segoe UI", Roboto, Arial, sans-serif; font-size: 15.5px; line-height: 1.55; color: #1d2433; background: #f4f6fb; }
+.wrap { max-width: 1100px; margin: 0 auto; }
+a { color: #3b5bdb; }
+.hero { background: #14182e; background: linear-gradient(135deg, #14182e 0%, #2b2f6b 55%, #f08c00 150%); color: #fff; padding: 52px 24px 86px; }
+.hero .tag { display: inline-block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; background: rgba(255,255,255,.16); padding: 4px 10px; border-radius: 20px; margin-bottom: 14px; }
+.hero h1 { font-size: 38px; line-height: 1.12; margin: 0 0 12px; }
+.hero p { font-size: 18px; margin: 0; opacity: .93; max-width: 780px; }
+.stats { display: flex; flex-wrap: wrap; margin: -56px auto 0; max-width: 1100px; padding: 0 12px; }
+.stat { flex: 1 1 200px; margin: 0 12px 16px; background: #fff; border-radius: 14px; padding: 18px 22px; box-shadow: 0 6px 24px rgba(31,42,90,.10); }
+.stat b { display: block; font-size: 28px; color: #f08c00; line-height: 1.15; }
+.stat span { color: #5c6478; font-size: 14px; }
+.nav { position: sticky; top: 0; z-index: 10; background: rgba(244,246,251,.97); border-bottom: 1px solid #e1e5ee; margin-top: 14px; }
+.nav .wrap { display: flex; flex-wrap: wrap; padding: 10px 24px; }
+.nav a { font-size: 14px; color: #3a4257; text-decoration: none; padding: 6px 12px; margin: 2px 4px 2px 0; border-radius: 8px; }
+.nav a:hover { background: #fff1db; }
+section { padding: 36px 24px 8px; }
+h2 { font-size: 28px; margin: 0 0 6px; color: #14182e; }
+.lead { font-size: 16.5px; color: #3a4257; margin: 0 0 22px; max-width: 880px; }
+
+.flow { display: flex; flex-wrap: wrap; margin: 0 -6px; counter-reset: s; }
+.fs { flex: 1 1 170px; margin: 0 6px 12px; background: #fff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 2px 10px rgba(31,42,90,.06); border-top: 4px solid #3b5bdb; counter-increment: s; }
+.fs:before { content: "Шаг " counter(s); display: block; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #d9480f; }
+.fs h4 { margin: 4px 0; font-size: 15.5px; color: #14182e; }
+.fs p { margin: 0; font-size: 13.5px; color: #3a4257; }
+.fs.wow { border-top-color: #f08c00; background: #fffaf0; }
+
+.tpls { display: flex; flex-wrap: wrap; margin: 0 -9px; }
+.tpl { flex: 1 1 480px; margin: 0 9px 18px; background: #fff; border-radius: 16px; box-shadow: 0 3px 14px rgba(31,42,90,.07); overflow: hidden; display: flex; flex-direction: column; }
+.tpl .top { padding: 16px 20px 10px; border-bottom: 1px solid #edf0f6; }
+.tpl .num { display: inline-block; background: #14182e; color: #fff; font-weight: 800; font-size: 13px; padding: 2px 9px; border-radius: 7px; margin-right: 8px; vertical-align: 2px; }
+.tpl h3 { display: inline; font-size: 19px; color: #14182e; }
+.tpl .who { margin: 6px 0 0; font-size: 14px; color: #5c6478; }
+.pills { margin-top: 8px; }
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 12px; margin: 0 6px 4px 0; background: #eef1f8; color: #1f2a5a; }
+.pill.mvp { background: #ebfbee; color: #2b8a3e; }
+.pill.ai { background: #f3f0ff; color: #6741d9; }
+.pill.hard { background: #fff4e6; color: #d9480f; }
+.tpl .body { padding: 12px 20px 16px; flex: 1; }
+.lbl { display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #8a91a5; margin: 10px 0 4px; }
+.tpl ol, .tpl ul { margin: 0; padding-left: 20px; font-size: 14.5px; }
+.tpl li { margin: 2px 0; }
+.q { background: #f4f6fb; border-radius: 10px; padding: 8px 12px; font-size: 14px; }
+.q div { margin: 3px 0; }
+.q i { color: #6b7389; font-style: normal; }
+.wowbox { background: #fff8e6; border-radius: 10px; padding: 8px 12px; font-size: 14px; color: #5c3a00; margin-top: 10px; }
+.money { display: flex; flex-wrap: wrap; margin-top: 10px; }
+.money div { flex: 1 1 150px; background: #ebfbee; border-radius: 10px; padding: 8px 12px; margin: 0 8px 6px 0; font-size: 13.5px; color: #1e5128; }
+.money b { display: block; font-size: 17px; color: #2b8a3e; }
+.money div.up { background: #f3f0ff; color: #3b2a7a; } .money div.up b { color: #6741d9; }
+
+.tbl { overflow-x: auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(31,42,90,.06); margin-bottom: 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { padding: 9px 12px; border-bottom: 1px solid #edf0f6; text-align: left; vertical-align: top; }
+th { background: #f7f8fc; font-size: 13px; color: #3a4257; }
+td.n { font-weight: 700; color: #14182e; }
+.cards { display: flex; flex-wrap: wrap; margin: 0 -8px; }
+.card { flex: 1 1 300px; margin: 0 8px 16px; background: #fff; border-radius: 14px; padding: 16px 20px; box-shadow: 0 2px 12px rgba(31,42,90,.07); border-top: 4px solid #e03131; }
+.card.or { border-top-color: #f08c00; } .card.bl { border-top-color: #3b5bdb; }
+.card h4 { margin: 0 0 6px; font-size: 16.5px; color: #14182e; }
+.card p, .card ul { margin: 4px 0; font-size: 14.5px; }
+.card ul { padding-left: 18px; }
+.note { background: #fff8e6; border-left: 4px solid #f59f00; border-radius: 8px; padding: 12px 16px; color: #5c4a14; margin: 6px 0 14px; font-size: 14.5px; }
+.note.blue { background: #e7f0ff; border-left-color: #3b5bdb; color: #1f3a7a; }
+footer { text-align: center; color: #8a91a5; font-size: 13px; padding: 34px 24px 50px; }
+@media (max-width: 640px) { .hero h1 { font-size: 27px; } section { padding: 28px 16px 4px; } .tpl { flex-basis: 100%; } }
+</style>
+</head>
+<body>
+
+<div class="hero"><div class="wrap">
+  <div class="tag">Тест-драйв · конструктор первого бота · черновик для команды</div>
+  <h1>Пул шаблонных ботов: собрать за 5 минут, продать клиенту</h1>
+  <p>Ученица жмёт «Создать первого бота», выбирает шаблон, создаёт бота в BotFather, присылает ключ, отвечает на 3–5 вопросов — и получает ссылку на своего работающего бота. Все шаблоны коммерческие: каждый можно сразу показать знакомой мастерице, эксперту или кафе.</p>
+</div></div>
+
+<div class="stats">
+  <div class="stat"><b>11</b><span>шаблонов: бот-визитка ученицы + 10 для клиентов</span></div>
+  <div class="stat"><b>3–5</b><span>вопросов в конструкторе на шаблон</span></div>
+  <div class="stat"><b>5–30 тыс. ₽</b><span>ориентир цены для клиента, медиана рынка — 7 000 ₽</span></div>
+  <div class="stat"><b>3</b><span>шаблона с нейросетью — «вау» на тест-драйве</span></div>
+</div>
+
+<div class="nav"><div class="wrap">
+  <a href="#flow">Как работает конструктор</a>
+  <a href="#zero">Шаблон 0</a>
+  <a href="#list">Шаблоны</a>
+  <a href="#order">Что делать первым</a>
+  <a href="#decide">Что решить</a>
+  <a href="#risks">Риски</a>
+</div></div>
+
+<!-- FLOW -->
+<section id="flow"><div class="wrap">
+  <h2>Как работает конструктор</h2>
+  <p class="lead">Сценарий для ученицы, без реализации. Самое сложное для новичка — шаг с BotFather, поэтому на нём видео на 40 секунд и проверка ключа сразу.</p>
+  <div class="flow">
+    <div class="fs"><h4>Выбор шаблона</h4><p>«Создать первого бота» → карточки шаблонов. У каждой кнопка «Посмотреть демо» — готовый бот, где можно потыкать как клиент.</p></div>
+    <div class="fs"><h4>BotFather</h4><p>Видео 40 секунд и 3 сообщения: /newbot → название → имя с «bot» на конце → скопировать ключ.</p></div>
+    <div class="fs"><h4>Прислать ключ</h4><p>Сразу проверяем ключ и отвечаем: «Нашла! Твой бот — @salon_roma_bot ✅». Если ошибка — подсказка, что пошло не так.</p></div>
+    <div class="fs"><h4>3–5 вопросов</h4><p>Название, услуги, расписание, куда присылать заявки. Под каждым вопросом кнопка «Заполнить примером» — для тех, у кого пока нет клиента.</p></div>
+    <div class="fs"><h4>Сборка</h4><p>«Собираю твоего бота…» 10–20 секунд. Бот запускается на нашем сервере с её настройками.</p></div>
+    <div class="fs wow"><h4>Ссылка и первый клиент</h4><p>Ссылка на её бота + «зайди как клиентка и запишись». Заявка приходит ей же — это вау-момент.</p></div>
+    <div class="fs"><h4>Как продать</h4><p>Кому предложить, сколько взять, готовое сообщение знакомой мастерице, кнопка «Показать бота клиенту».</p></div>
+  </div>
+  <div class="note blue">После сборки — простая админка в том же боте: «Изменить услуги», «Изменить тексты», «Выгрузить заявки». Править без кода — частая просьба заказчиков: часть клиентов отказывается от ботов, которые нельзя поправить самим.</div>
+</div></section>
+
+<!-- TEMPLATE ZERO -->
+<section id="zero"><div class="wrap">
+  <h2>Шаблон 0 — первый бот продаёт её услуги</h2>
+  <p class="lead">Идея Луизы: первый бот ученицы — не «бот для себя», а её собственный бот-продавец услуг техспеца. Она выбирает, кому будет продавать, и получает бота, который рассказывает клиентам, что она умеет, показывает живые примеры и собирает заявки. Это сразу и практика, и инструмент для первого заказа, и демонстрация «смотри, что умеет автоматизация».</p>
+  <div class="tpls">
+    <div class="tpl" style="flex-basis:100%"><div class="top"><span class="num">0</span><h3>«Мой бот-визитка техспеца»</h3>
+      <p class="who">Сама ученица. Её клиенты: эксперты, продюсеры и онлайн-школы, бьюти-мастера, частные врачи и клиники, магазины, кафе</p>
+      <div class="pills"><span class="pill mvp">урок 1</span><span class="pill">главный шаблон</span><span class="pill ai">AI — по желанию</span></div></div>
+      <div class="body">
+        <span class="lbl">Что делает бот</span>
+        <ol>
+          <li>Встречает клиента: «Здравствуйте! Я помогаю [нише] автоматизировать запись и продажи в Telegram, MAX и VK»</li>
+          <li>Короткая статья под нишу: «Что бот сделает для вашего салона» / «…для вашего запуска» / «…для вашей практики» — готовый текст на 1 экран</li>
+          <li><b>«Посмотреть примеры»</b> — кнопки на живые демо-боты из шаблонов 1–9, подписанные под выбранную нишу (например, для мастера — запись и отзывы, для эксперта — воронка к эфиру и подарок за подписку)</li>
+          <li>Услуги и цены ученицы, ответы на частые вопросы</li>
+          <li>«Обсудить задачу» → имя, телефон, что нужно → заявка приходит ей в личку</li>
+        </ol>
+        <span class="lbl">Вопросы в конструкторе</span>
+        <div class="q">
+          <div>1. Кому будете продавать? <i>— кнопки: эксперт / продюсер и онлайн-школа / бьюти-мастер / врач и клиника / магазин / кафе</i></div>
+          <div>2. Как вас зовут и чем вы занимались раньше <i>— «Ольга, 12 лет администратором салона»: прошлая профессия становится доверием</i></div>
+          <div>3. Какие услуги и цены показать <i>— подставим вилки по шаблонам, можно поправить</i></div>
+          <div>4. Куда присылать заявки</div>
+        </div>
+        <div class="wowbox"><b>Вау:</b> через 5 минут у неё есть ссылка, которую можно отправить знакомой мастерице: «Посмотри, я теперь делаю такие боты — вот примеры». Ей не нужно объяснять словами, что она умеет: бот показывает сам.</div>
+        <div class="money"><div><b>0 ₽</b>это её инструмент продаж, не заказ</div><div class="up"><b>дальше</b>каждый следующий урок добавляет в «Примеры» новый демо-бот — к концу тест-драйва у неё портфолио из 3–5 работающих ботов</div></div>
+        <div class="note" style="margin:10px 0 0">Ниша «врач и клиника»: в текстах для медицины нельзя обещать результат лечения, а в рекламе медицинских услуг по закону нужно предупреждение о противопоказаниях. Для первого бота лучше предлагать бьюти, экспертов и магазины.</div>
+      </div></div>
+  </div>
+</div></section>
+
+<!-- TEMPLATES -->
+<section id="list"><div class="wrap">
+  <h2>Шаблоны</h2>
+  <p class="lead">Цены — ориентир для первого заказа новичка и с допродажами. Опора: медиана заказа на бота на биржах — 7 000 ₽ (разбор конкурентов), открытый прайс фрилансера @myvibeai — простой бот 10–20 тыс., AI-бот 20–50 тыс. Перед публикацией сверить с биржами.</p>
+  <div class="tpls">
+
+    <div class="tpl"><div class="top"><span class="num">1</span><h3>Запись на бьюти-процедуры</h3>
+      <p class="who">Мастер маникюра, брови и ресницы, косметолог, массаж, барбер, небольшой салон</p>
+      <div class="pills"><span class="pill mvp">MVP</span><span class="pill">самый понятный</span></div></div>
+      <div class="body">
+        <span class="lbl">Что делает бот</span>
+        <ol><li>Меню услуг с ценами и длительностью</li><li>Выбор дня и свободного времени</li><li>Имя и телефон, согласие на обработку данных</li><li>Подтверждение клиентке и уведомление мастеру</li><li>Напоминание за сутки и за 2 часа, кнопки «Перенести» и «Отменить»</li></ol>
+        <span class="lbl">Вопросы в конструкторе</span>
+        <div class="q"><div>1. Название студии или имя мастера <i>— «Студия Ромашка»</i></div><div>2. Услуги: название — цена — минут <i>— «Маникюр с покрытием — 2000 — 120»</i></div><div>3. Рабочие дни и часы <i>— «Пн–Сб, 10–20»</i></div><div>4. Адрес и как пройти</div><div>5. Куда присылать заявки — себе или мастеру</div></div>
+        <div class="wowbox"><b>Вау:</b> ученица записывается в своего бота как клиентка — и через секунду получает «Новая запись: маникюр, четверг 15:00».</div>
+        <div class="money"><div><b>5–15 тыс. ₽</b>первый заказ</div><div class="up"><b>+ допродажи</b>предоплата, сбор отзывов после визита, мини-приложение с календарём, копия в MAX и VK, сопровождение</div></div>
+      </div></div>
+
+    <div class="tpl"><div class="top"><span class="num">2</span><h3>Автоворонка к вебинару</h3>
+      <p class="who">Эксперт, коуч, психолог, онлайн-школа — все, кто проводит эфиры</p>
+      <div class="pills"><span class="pill mvp">MVP</span><span class="pill">главный заказ в нише онлайн-школ</span></div></div>
+      <div class="body">
+        <span class="lbl">Что делает бот</span>
+        <ol><li>Регистрация на эфир и подарок сразу (файл или ссылка)</li><li>Напоминания: за сутки, за час, «начинаем» со ссылкой</li><li>После эфира — запись и предложение продукта со сроком</li><li>Отчёт владельцу: сколько зарегистрировались, сколько дошли</li></ol>
+        <span class="lbl">Вопросы в конструкторе</span>
+        <div class="q"><div>1. Тема эфира и имя эксперта</div><div>2. Дата и время</div><div>3. Ссылка на эфир</div><div>4. Подарок за регистрацию (файл или ссылка)</div><div>5. Что продаём после эфира и ссылка на оплату</div></div>
+        <div class="wowbox"><b>Вау:</b> «эфир» ставится через 3 минуты — ученица получает всю цепочку напоминаний за 5 минут вживую.</div>
+        <div class="money"><div><b>10–25 тыс. ₽</b>первый заказ</div><div class="up"><b>+ допродажи</b>сегменты по ответам, дожимы «не пришёл», связка с GetCourse или CRM, ведение под каждый запуск</div></div>
+      </div></div>
+
+    <div class="tpl"><div class="top"><span class="num">3</span><h3>Прогрев таролога с AI-разбором</h3>
+      <p class="who">Таролог, астролог, нумеролог, коуч по отношениям</p>
+      <div class="pills"><span class="pill mvp">MVP</span><span class="pill ai">нейросеть</span></div></div>
+      <div class="body">
+        <span class="lbl">Что делает бот</span>
+        <ol><li>Бесплатный мини-разбор: карта дня или разбор по дате рождения — пишет нейросеть в стиле специалиста</li><li>3 дня тёплых сообщений: польза, история клиентки, ответы на вопросы</li><li>Предложение личной консультации и запись</li></ol>
+        <span class="lbl">Вопросы в конструкторе</span>
+        <div class="q"><div>1. Имя специалиста и чем занимается</div><div>2. Стиль общения <i>— кнопки: тёплый / деловой / с юмором</i></div><div>3. Что даём бесплатно <i>— карта дня / разбор по дате рождения</i></div><div>4. Консультация: что входит и цена</div><div>5. Контакт для записи</div></div>
+        <div class="wowbox"><b>Вау:</b> ученица вводит свою дату рождения и получает живой, «человеческий» разбор — это то, что продаёт тему нейросетей лучше любых слов.</div>
+        <div class="money"><div><b>15–30 тыс. ₽</b>первый заказ</div><div class="up"><b>+ допродажи</b>платные разборы прямо в боте, подписка «карта дня», ежемесячная плата за нейросеть</div></div>
+        <div class="note" style="margin:10px 0 0">В каждом разборе — строка «носит развлекательный характер». Нейросети запрещаем советы про здоровье, деньги и юридические вопросы.</div>
+      </div></div>
+
+    <div class="tpl"><div class="top"><span class="num">4</span><h3>Подарок за подписку на канал</h3>
+      <p class="who">Эксперт, блогер, магазин с Telegram-каналом</p>
+      <div class="pills"><span class="pill mvp">MVP</span><span class="pill">самый массовый</span></div></div>
+      <div class="body">
+        <span class="lbl">Что делает бот</span>
+        <ol><li>Проверяет подписку на канал — без неё подарок не отдаёт</li><li>Выдаёт гайд, чек-лист или промокод</li><li>3 полезных сообщения в следующие дни</li><li>Предложение продукта или записи</li></ol>
+        <span class="lbl">Вопросы в конструкторе</span>
+        <div class="q"><div>1. Ссылка на канал (бота нужно добавить в админы — покажем как)</div><div>2. Подарок: файл, ссылка или промокод</div><div>3. Что предложить после подарка</div></div>
+        <div class="wowbox"><b>Вау:</b> бот не отдаёт подарок, пока не подпишешься, — ученица видит, как растят каналы. У BotHelp подборка таких ботов — самый просматриваемый пост, Пурвиньш: «боты для лид-магнитов буквально везде».</div>
+        <div class="money"><div><b>5–10 тыс. ₽</b>первый заказ</div><div class="up"><b>+ допродажи</b>разные подарки под разные рилсы с метками, статистика, рассылки по базе</div></div>
+      </div></div>
+
+    <div class="tpl"><div class="top"><span class="num">5</span><h3>Бот-визитка с заявкой</h3>
+      <p class="who">Любой частный специалист: юрист, риелтор, репетитор, фотограф, ремонт, кондитер</p>
+      <div class="pills"><span class="pill mvp">MVP</span><span class="pill">самый простой</span></div></div>
+      <div class="body">
+        <span class="lbl">Что делает бот</span>
+        <ol><li>О специалисте, услуги и цены, примеры работ, отзывы</li><li>Частые вопросы кнопками</li><li>«Оставить заявку» → имя, телефон, удобное время → владельцу</li></ol>
+        <span class="lbl">Вопросы в конструкторе</span>
+        <div class="q"><div>1. Кто вы и чем занимаетесь (2–3 предложения)</div><div>2. Услуги и цены</div><div>3. 3 частых вопроса с ответами</div><div>4. Куда присылать заявки</div></div>
+        <div class="wowbox"><b>Вау:</b> за 3 минуты у ученицы «свой сайт внутри Telegram» — его можно поставить в описание профиля.</div>
+        <div class="money"><div><b>3–7 тыс. ₽</b>первый заказ</div><div class="up"><b>+ допродажи</b>AI-ответы на вопросы, мини-приложение-портфолио, запись</div></div>
+      </div></div>
+
+    <div class="tpl"><div class="top"><span class="num">6</span><h3>AI-администратор: ответы на вопросы 24/7</h3>
+      <p class="who">Салон, клиника, детский центр, школа, магазин</p>
+      <div class="pills"><span class="pill ai">нейросеть</span><span class="pill">второй этап</span></div></div>
+      <div class="body">
+        <span class="lbl">Что делает бот</span>
+        <ol><li>Отвечает на вопросы клиентов по прайсу и правилам — только по тому, что загрузили</li><li>Если не знает — честно говорит и зовёт человека</li><li>Собирает заявку и передаёт владельцу</li></ol>
+        <span class="lbl">Вопросы в конструкторе</span>
+        <div class="q"><div>1. Вставить прайс и правила текстом или файлом</div><div>2. Как обращаться к клиентам и стиль</div><div>3. Куда передавать сложные вопросы и заявки</div></div>
+        <div class="wowbox"><b>Вау:</b> спрашиваешь «а у вас есть парковка?» — бот отвечает по её же тексту.</div>
+        <div class="money"><div><b>15–30 тыс. ₽</b>первый заказ</div><div class="up"><b>+ ежемесячно</b>плата за нейросеть и обновление знаний — готовое сопровождение</div></div>
+      </div></div>
+
+    <div class="tpl"><div class="top"><span class="num">7</span><h3>Квиз-диагностика → запись</h3>
+      <p class="who">Фитнес-тренер, нутрициолог, психолог, репетитор, косметолог</p>
+      <div class="pills"><span class="pill ai">нейросеть по желанию</span><span class="pill">второй этап</span></div></div>
+      <div class="body">
+        <span class="lbl">Что делает бот</span>
+        <ol><li>5–7 вопросов кнопками («Какая у вас цель?»)</li><li>Результат: по баллам или короткий разбор от нейросети</li><li>Предложение консультации и запись</li></ol>
+        <span class="lbl">Вопросы в конструкторе</span>
+        <div class="q"><div>1. Тема теста</div><div>2. Вопросы и варианты (или «Предложить вопросы» — их напишет нейросеть)</div><div>3. Что предлагаем в конце</div></div>
+        <div class="wowbox"><b>Вау:</b> нейросеть сама предлагает вопросы теста под нишу — ученица только выбирает.</div>
+        <div class="money"><div><b>10–20 тыс. ₽</b>первый заказ</div><div class="up"><b>+ допродажи</b>сегменты по результатам, рассылки, мини-приложение-тест</div></div>
+      </div></div>
+
+    <div class="tpl"><div class="top"><span class="num">8</span><h3>Приём заказов: торты, цветы, хендмейд</h3>
+      <p class="who">Кондитер, флорист, мастер на заказ, небольшой магазин</p>
+      <div class="pills"><span class="pill">второй этап</span></div></div>
+      <div class="body">
+        <span class="lbl">Что делает бот</span>
+        <ol><li>Каталог с фото и ценами</li><li>Заказ: что, на какую дату, доставка или самовывоз, пожелания</li><li>Заказ — владельцу, статус «принят / готов» — клиенту</li></ol>
+        <span class="lbl">Вопросы в конструкторе</span>
+        <div class="q"><div>1. Название</div><div>2. Товары: фото, название, цена</div><div>3. Доставка: да или нет, зона, стоимость</div><div>4. Куда присылать заказы</div></div>
+        <div class="wowbox"><b>Вау:</b> ученица загружает 3 фото со своего телефона — и это уже магазин.</div>
+        <div class="money"><div><b>7–15 тыс. ₽</b>первый заказ</div><div class="up"><b>+ допродажи</b>оплата, мини-приложение-витрина, отзывы</div></div>
+      </div></div>
+
+    <div class="tpl"><div class="top"><span class="num">9</span><h3>Отзывы и розыгрыш</h3>
+      <p class="who">Кафе, магазин, продавец на маркетплейсе</p>
+      <div class="pills"><span class="pill">второй этап</span><span class="pill">есть у нас в портфолио</span></div></div>
+      <div class="body">
+        <span class="lbl">Что делает бот</span>
+        <ol><li>Клиент присылает отзыв или скрин</li><li>Владелец одобряет кнопкой</li><li>Участник попадает в розыгрыш, бот выбирает победителя</li></ol>
+        <span class="lbl">Вопросы в конструкторе</span>
+        <div class="q"><div>1. Что разыгрываем и когда итоги</div><div>2. Условия участия</div><div>3. Кто одобряет отзывы</div></div>
+        <div class="wowbox"><b>Вау:</b> ученица одобряет «чужой» отзыв одной кнопкой — понятно, зачем это продавцу с маркетплейса.</div>
+        <div class="money"><div><b>5–10 тыс. ₽</b>первый заказ</div><div class="up"><b>+ допродажи</b>регулярные розыгрыши, сбор базы для рассылок</div></div>
+      </div></div>
+
+    <div class="tpl"><div class="top"><span class="num">10</span><h3>Платный закрытый канал</h3>
+      <p class="who">Эксперт, клуб, сообщество по подписке</p>
+      <div class="pills"><span class="pill hard">не за 5 минут</span></div></div>
+      <div class="body">
+        <span class="lbl">Что делает бот</span>
+        <ol><li>Оплата → доступ в закрытый канал</li><li>Напоминание о продлении</li><li>Удаляет из канала, если не продлили</li></ol>
+        <span class="lbl">Почему не в первой пятёрке</span>
+        <p style="margin:0;font-size:14.5px">За 5 минут реально только с оплатой в Telegram Stars. Оплата картой требует договора с платёжным сервисом (ЮKassa, Prodamus и т. п.) — это показываем в курсе, а не в тест-драйве.</p>
+        <div class="money"><div><b>15–30 тыс. ₽</b>первый заказ</div><div class="up"><b>+ ежемесячно</b>сопровождение клуба</div></div>
+      </div></div>
+
+  </div>
+</div></section>
+
+<!-- ORDER -->
+<section id="order"><div class="wrap">
+  <h2>Что делать первым</h2>
+  <div class="tbl"><table>
+    <tr><th>Порядок</th><th>Шаблон</th><th>Где в тест-драйве</th><th>Почему</th></tr>
+    <tr><td class="n">0</td><td>Мой бот-визитка техспеца</td><td>Урок 1 — «твой первый бот продаёт тебя»</td><td>Сразу инструмент для первого заказа; все следующие шаблоны становятся его «примерами»</td></tr>
+    <tr><td class="n">1</td><td>Запись на бьюти-процедуры</td><td>Урок 1 или 2 — первый «клиентский» бот</td><td>Понятно всем женщинам 30–50, клиентка-мастерица есть у каждой знакомой</td></tr>
+    <tr><td class="n">2</td><td>Бот-визитка с заявкой</td><td>Запасной вариант</td><td>Самый простой: подходит под любую прошлую профессию ученицы</td></tr>
+    <tr><td class="n">3</td><td>Подарок за подписку</td><td>Урок 2 — «кто платит за ботов»</td><td>Самый массовый заказ у экспертов и блогеров</td></tr>
+    <tr><td class="n">4</td><td>Автоворонка к вебинару</td><td>Урок 2 или 3</td><td>Главный продукт для онлайн-школ, показывает цепочку сообщений по времени</td></tr>
+    <tr><td class="n">5</td><td>Таролог с AI-разбором</td><td>Урок 3 — нейросеть в боте</td><td>Главное «вау» тест-драйва и мостик к агентам в курсе</td></tr>
+    <tr><td class="n">6–10</td><td>AI-администратор, квиз, заказы, отзывы, платный канал</td><td>Уже в курсе или как бонус после анкеты</td><td>Дают повод вернуться и показывают, что можно продавать дальше</td></tr>
+  </table></div>
+  <div class="note blue">Один движок вместо десяти ботов: все шаблоны — это один сервис, а шаблон — набор сообщений и вопросов. Запись на бьюти и запись на пробное занятие (репетитор, танцы, детский центр) — один шаблон с разными подписями, так пул легко расширять без программиста.</div>
+  <h2 style="margin-top:26px">Слои поверх одного бота</h2>
+  <p class="lead">Идея Егора: все данные клиента (услуги, цены, расписание, заявки, тексты) лежат в нашей базе на сервере, а сверху можно наслаивать что угодно. Для ученицы это готовая лестница допродаж одному и тому же клиенту — то, чего нет у конструкторов.</p>
+  <div class="tbl"><table>
+    <tr><th>Слой</th><th>Что получает клиент</th><th>Ориентир</th></tr>
+    <tr><td class="n">1. Бот из шаблона</td><td>Запись, заявки, воронка — работает в первый же день</td><td>5–15 тыс. ₽</td></tr>
+    <tr><td class="n">2. AI-помощник</td><td>Отвечает клиентам по тем же данным из базы: прайс, расписание, правила</td><td>+10–20 тыс. ₽ и ежемесячно</td></tr>
+    <tr><td class="n">3. Мини-приложение</td><td>Календарь записи, каталог, личный кабинет — на тех же данных</td><td>+15–40 тыс. ₽</td></tr>
+    <tr><td class="n">4. Копия в MAX и VK</td><td>Те же данные и логика в другом мессенджере</td><td>+5–15 тыс. ₽</td></tr>
+    <tr><td class="n">5. Сопровождение</td><td>Правки, отчёты владельцу, новые сценарии</td><td>ежемесячно</td></tr>
+  </table></div>
+</div></section>
+
+<!-- DECIDE -->
+<section id="decide"><div class="wrap">
+  <h2>Что решить до разработки</h2>
+  <div class="cards">
+    <div class="card or"><h4>Свой конструктор, а не Salebot</h4><p>Луиза: «нужна платформа без долгих регистраций — зашёл, сделал, всё супер». Наш бот-конструктор это и есть: ни регистрации на сторонней платформе, ни подписки. У конкурентов практика на Salebot по реферальному промокоду автора — они зарабатывают на подписке ученика годами. У нас такого конфликта интересов нет, и это можно говорить вслух.</p></div>
+    <div class="card or"><h4>Сколько живёт бот ученицы</h4><p>Бот работает на нашем сервере. Если она продаст его клиентке, кто за него отвечает через полгода? Варианты: бесплатно на время обучения, потом платный хостинг по подписке, или выгрузка и перенос к клиенту. Решить до первой продажи.</p></div>
+    <div class="card or"><h4>Какая нейросеть</h4><p>Для шаблонов 3, 6 и 7 — сервис, который официально работает в России, с лимитом ответов в день на каждый бот, иначе расходы улетят. Это тот же вопрос, что [ИНСТРУМЕНТ] в текстах воронки.</p></div>
+    <div class="card or"><h4>Только Telegram или сразу MAX</h4><p>Конкуренты уже переносят ботов в MAX, а у нас это часть обещания. Решить, будет ли копия шаблона в MAX в первой версии или во второй.</p></div>
+    <div class="card or"><h4>Тексты воронки</h4><p>Урок 1 и урок 3 в funnel_texts.html написаны под «собери бота с нейросетью». Если тест-драйв строится на конструкторе — переписать эти уроки под него.</p></div>
+  </div>
+</div></section>
+
+<!-- RISKS -->
+<section id="risks"><div class="wrap">
+  <h2>Риски и как их закрыть</h2>
+  <div class="cards">
+    <div class="card"><h4>Ключ от бота</h4><p>Ключ из BotFather даёт полный доступ к боту. Храним в зашифрованном виде, нигде не показываем, в сообщении говорим: «Ключ можно в любой момент сменить в BotFather — бот перестанет работать у нас».</p></div>
+    <div class="card"><h4>Персональные данные</h4><p>Шаблоны записи, заявок и квиза собирают имя и телефон. Шаг согласия на обработку данных и ссылка на политику конфиденциальности — в каждом шаблоне по умолчанию, данные лежат у нас — значит, нужна наша политика и договор с учеником.</p></div>
+    <div class="card"><h4>Честность «5 минут»</h4><p>За 5 минут собирается шаблон. Чтобы продать его клиентке, нужно настроить под неё — обычно 1–3 вечера. В текстах так и пишем, иначе это то же «бот за 30 минут = 10 000 ₽», от которого мы отстраиваемся.</p></div>
+    <div class="card"><h4>BotFather — главный барьер</h4><p>Женщине 40+ самое трудное — не шаблон, а BotFather. Проверить на 5 живых людях из аудитории, засечь время, переснять видео по их ошибкам.</p></div>
+    <div class="card"><h4>Злоупотребления</h4><p>Конструктор доступен только участникам тест-драйва, лимит на количество ботов у одного человека, проверка текстов на спам.</p></div>
+    <div class="card"><h4>Эзотерика и нейросеть</h4><p>Шаблон таролога: пометка «развлекательный характер», запрет нейросети на советы про здоровье, деньги и право.</p></div>
+  </div>
+</div></section>
+
+<footer>Пул шаблонов для конструктора первого бота · черновик · 18 октября 2026 · цены — ориентир, сверить с биржами</footer>
+</body>
+</html>

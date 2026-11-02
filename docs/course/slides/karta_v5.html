@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><title>v5 бенто</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#09090b}
+.s{position:relative;width:1920px;height:1080px;padding:64px 72px;font-family:Inter,sans-serif;color:#fafafa;
+ background:radial-gradient(1200px 600px at 50% -10%,rgba(99,102,241,.18),transparent 60%),#09090b}
+.hd{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px}
+.hd h1{font-size:68px;font-weight:900;letter-spacing:-.045em;line-height:1}
+.hd h1 span{color:#71717a}
+.hd .t{text-align:right}.hd .t b{display:block;font-size:56px;font-weight:900;letter-spacing:-.04em;line-height:1;background:linear-gradient(90deg,#fb923c,#f472b6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hd .t span{font-size:18px;color:#a1a1aa;font-weight:600}
+.g{display:grid;grid-template-columns:300px 1fr 1fr 1fr;grid-template-rows:1fr 1fr 150px;gap:18px;height:830px}
+.c{position:relative;border-radius:28px;background:linear-gradient(180deg,#17171b,#111114);border:1px solid #27272a;overflow:hidden;padding:24px}
+.c .n{font-size:15px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#a1a1aa}
+.c .n i{font-style:normal;display:inline-flex;width:30px;height:30px;border-radius:9px;align-items:center;justify-content:center;margin-right:10px;color:#fff;font-size:15px;background:#27272a}
+.c h2{margin-top:12px;font-size:32px;font-weight:800;letter-spacing:-.03em;line-height:1.05}
+.c p{margin-top:8px;font-size:17px;color:#a1a1aa;line-height:1.4;font-weight:500}
+.ph{position:absolute;border-radius:34px;overflow:hidden;border:6px solid #2a2a2e;box-shadow:0 30px 60px rgba(0,0,0,.6),0 0 0 1px #3f3f46}
+.ph img{display:block;width:100%}
+.glow{position:absolute;width:420px;height:420px;border-radius:50%;filter:blur(80px);opacity:.55}
+.tag{display:inline-block;margin-top:12px;font-size:14px;font-weight:700;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid #3f3f46;color:#e4e4e7}
+.fin{background:linear-gradient(120deg,#7c3aed,#db2777 60%,#f97316);border:0;display:flex;align-items:center;gap:28px;padding:28px 40px}
+.fin .big{font-size:46px;font-weight:900;letter-spacing:-.04em}
+.fin p{color:rgba(255,255,255,.9);font-size:20px;margin:0}
+</style></head><body><div class="s">
+<div class="hd"><h1>Тест-драйв. <span>Шесть уроков —</span><br>три продукта своими руками.</h1><div class="t"><b>48 часов</b><span>и личный план в финале</span></div></div>
+<div class="g">
+ <div class="c" style="grid-row:1"><div class="n"><i>0</i>Старт</div><h2>Правила и цель</h2><p>Что будет за 2 дня и главное задание — анкета на разбор</p></div>
+ <div class="c" style="grid-row:1 / 3;grid-column:2"><div class="glow" style="background:#22c55e;left:60px;top:300px"></div>
+  <div class="n"><i style="background:#16a34a">2</i>Чат-боты</div><h2>Первый бот<br>за вечер</h2><span class="tag">как наш «Профессор Квасич»</span>
+  <div class="ph" style="width:300px;left:50%;margin-left:-150px;top:250px"><img src="screens/kvasich.png"></div></div>
+ <div class="c" style="grid-row:1 / 3;grid-column:3"><div class="glow" style="background:#8b5cf6;left:60px;top:300px"></div>
+  <div class="n"><i style="background:#7c3aed">3</i>AI-агенты</div><h2>Виртуальный<br>сотрудник</h2><span class="tag">как «Пульс мира» — 498 источников</span>
+  <div class="ph" style="width:300px;left:50%;margin-left:-150px;top:250px"><img src="screens/pulse.png"></div></div>
+ <div class="c" style="grid-row:1 / 3;grid-column:4"><div class="glow" style="background:#ec4899;left:60px;top:300px"></div>
+  <div class="n"><i style="background:#db2777">4</i>Mini Apps</div><h2>Приложение<br>в Telegram</h2><span class="tag">Школа гимнастики · Манекен</span>
+  <div class="ph" style="width:250px;left:28px;top:280px;transform:rotate(-5deg)"><img src="screens/gym.png"></div>
+  <div class="ph" style="width:250px;right:24px;top:250px;transform:rotate(5deg)"><img src="screens/manekken.png"></div></div>
+ <div class="c" style="grid-row:2"><div class="n"><i>1</i>Профессия</div><h2>Техспец и AI-автоматизатор</h2><p>Кто платит и сколько</p><div class="n" style="margin-top:22px"><i>5</i>Клиенты</div><h2>Где искать</h2><p>и сколько просить</p></div>
+ <div class="c fin" style="grid-column:1 / 5;grid-row:3"><div class="big">★ Анкета → личный разбор</div><p>План: какие заказы брать первыми, где искать клиентов и сколько просить — под твою ситуацию.</p></div>
+</div></div></body></html>

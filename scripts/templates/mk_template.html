@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Перезапуск Манекена</title>
+<style>
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: "Segoe UI", Roboto, Arial, sans-serif; font-size: 15.5px; line-height: 1.55; color: #1d2433; background: #f4f6fb; }
+.wrap { max-width: 1140px; margin: 0 auto; }
+a { color: #3b5bdb; }
+.hero { background: #0b0b0f; background: linear-gradient(135deg, #0b0b0f 0%, #1f2340 60%, #6b2bd9 150%); color: #fff; padding: 54px 24px 90px; }
+.hero .tag { display: inline-block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; background: rgba(255,255,255,.14); padding: 4px 10px; border-radius: 20px; margin-bottom: 14px; }
+.hero h1 { font-size: 40px; line-height: 1.1; margin: 0 0 12px; }
+.hero p { font-size: 18px; margin: 0; opacity: .93; max-width: 820px; }
+.stats { display: flex; flex-wrap: wrap; margin: -58px auto 0; max-width: 1140px; padding: 0 12px; }
+.stat { flex: 1 1 200px; margin: 0 12px 16px; background: #fff; border-radius: 14px; padding: 18px 22px; box-shadow: 0 6px 24px rgba(31,42,90,.10); }
+.stat b { display: block; font-size: 27px; color: #6b2bd9; line-height: 1.15; }
+.stat span { color: #5c6478; font-size: 14px; }
+.nav { position: sticky; top: 0; z-index: 10; background: rgba(244,246,251,.97); border-bottom: 1px solid #e1e5ee; margin-top: 14px; }
+.nav .wrap { display: flex; flex-wrap: wrap; padding: 9px 24px; }
+.nav a { font-size: 14px; color: #3a4257; text-decoration: none; padding: 6px 12px; margin: 2px 4px 2px 0; border-radius: 8px; }
+.nav a:hover { background: #efe6ff; }
+section { padding: 38px 24px 8px; }
+h2 { font-size: 29px; margin: 0 0 6px; color: #14182e; }
+h3 { font-size: 20px; margin: 28px 0 12px; color: #14182e; }
+.lead { font-size: 16.5px; color: #3a4257; margin: 0 0 22px; max-width: 900px; }
+.cards { display: flex; flex-wrap: wrap; margin: 0 -8px; }
+.card { flex: 1 1 300px; margin: 0 8px 16px; background: #fff; border-radius: 14px; padding: 16px 20px; box-shadow: 0 2px 12px rgba(31,42,90,.07); border-top: 4px solid #6b2bd9; }
+.card.gr { border-top-color: #2b8a3e; } .card.rd { border-top-color: #e03131; } .card.or { border-top-color: #f08c00; }
+.card h4 { margin: 0 0 6px; font-size: 16.5px; color: #14182e; }
+.card p, .card ul, .card ol { margin: 4px 0; font-size: 14.5px; }
+.card ul, .card ol { padding-left: 18px; } .card li { margin: 3px 0; }
+.tbl { overflow-x: auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(31,42,90,.06); margin-bottom: 18px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { padding: 9px 12px; border-bottom: 1px solid #edf0f6; text-align: left; vertical-align: top; }
+th { background: #f7f8fc; font-size: 13px; color: #3a4257; }
+td.n { font-weight: 700; color: #14182e; white-space: nowrap; }
+.note { background: #fff8e6; border-left: 4px solid #f59f00; border-radius: 8px; padding: 12px 16px; color: #5c4a14; margin: 6px 0 14px; font-size: 14.5px; }
+.note.red { background: #fff5f5; border-left-color: #e03131; color: #7a1f1f; }
+.note.blue { background: #ede7ff; border-left-color: #6b2bd9; color: #33206b; }
+.big { counter-reset: n; list-style: none; padding: 0; margin: 0; }
+.big li { counter-increment: n; background: #fff; border-radius: 12px; padding: 13px 18px 13px 58px; margin-bottom: 10px; position: relative; box-shadow: 0 2px 10px rgba(31,42,90,.06); }
+.big li:before { content: counter(n); position: absolute; left: 16px; top: 12px; width: 30px; height: 30px; border-radius: 9px; background: #6b2bd9; color: #fff; font-weight: 800; text-align: center; line-height: 30px; }
+
+.posts { display: flex; flex-wrap: wrap; margin: 0 -8px; align-items: flex-start; }
+.tg { flex: 1 1 340px; max-width: 540px; margin: 0 8px 22px; }
+.tg .lbl { font-size: 14px; font-weight: 700; color: #14182e; margin: 0 0 6px 4px; }
+.tg .lbl .no { display: inline-block; background: #14182e; color: #fff; font-size: 12px; padding: 1px 7px; border-radius: 6px; margin-right: 4px; }
+.bubble { background: #fff; border-radius: 4px 16px 16px 16px; box-shadow: 0 1px 2px rgba(0,0,0,.12); padding: 10px 14px 8px; font-size: 15px; line-height: 1.5; }
+.bubble .ch { font-weight: 700; font-size: 14.5px; color: #6b2bd9; margin-bottom: 4px; }
+.bubble p { margin: 0 0 9px; }
+.bubble .img { background: repeating-linear-gradient(45deg,#f1f3f5,#f1f3f5 10px,#e9ecef 10px,#e9ecef 20px); border-radius: 10px; padding: 18px 12px; text-align: center; color: #868e96; font-size: 13px; margin: 0 0 9px; }
+.bubble .ft { text-align: right; font-size: 12px; color: #adb5bd; }
+.bubble .ft a { color: #6b2bd9; }
+.btns { display: flex; flex-wrap: wrap; margin: 4px -3px 6px; }
+.btns span { flex: 1 1 140px; margin: 3px; background: #f8f9fa; border-radius: 10px; text-align: center; font-size: 14px; font-weight: 600; padding: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.12); color: #1c7ed6; }
+.ph { background: #fff3bf; padding: 0 3px; border-radius: 3px; color: #7a5a00; }
+.raw { position: absolute; left: -9999px; width: 10px; height: 10px; }
+.info { font-size: 12.5px; color: #5c6478; margin: 6px 4px 0; }
+.info div { margin: 1px 0; } .info b { color: #3a4257; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #14182e; color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 14.5px; display: none; z-index: 50; }
+footer { text-align: center; color: #8a91a5; font-size: 13px; padding: 36px 24px 50px; }
+@media (max-width: 640px) { .hero h1 { font-size: 28px; } section { padding: 30px 14px 4px; } }
+</style>
+</head>
+<body>
+
+<div class="hero"><div class="wrap">
+  <div class="tag">@manekken · перезапуск под школу ботов · 21 октября 2026</div>
+  <h1>Перезапуск Манекена: план и готовые посты</h1>
+  <p>Как превратить заброшенный канал на 10,7 тыс. подписчиков в канал школы, не потеряв доверие. План по дням, что делать со старыми постами, премиум-эмодзи, %%NBASE%% постов «фундамента» и %%NWARM%% постов прогрева к тест-драйву. У каждого поста кнопка «скопировать текст».</p>
+</div></div>
+
+<div class="stats">
+  <div class="stat"><b>10,7 тыс.</b><span>подписчиков, канал вырос с нуля за 4 месяца</span></div>
+  <div class="stat"><b>~4,2 тыс.</b><span>медиана просмотров в феврале–апреле, пик 8,6 тыс.</span></div>
+  <div class="stat"><b>6 месяцев</b><span>тишины: последний пост 28 апреля</span></div>
+  <div class="stat"><b>%%NBASE%% + %%NWARM%%</b><span>постов: фундамент + прогрев к тест-драйву</span></div>
+</div>
+
+<div class="nav"><div class="wrap">
+  <a href="#idea">Как обыграть</a>
+  <a href="#old">Старые посты</a>
+  <a href="#plan">План по дням</a>
+  <a href="#emoji">Премиум-эмодзи</a>
+  <a href="#base">Посты: фундамент</a>
+  <a href="#warm">Посты: прогрев</a>
+</div></div>
+
+<!-- IDEA -->
+<section id="idea"><div class="wrap">
+  <h2>Как обыграть перезапуск</h2>
+  <p class="lead">Главная находка: Манекен — это не просто старый канал, а ваш собственный кейс. Вы с нуля сделали канал на 10,7 тыс., бота с кодами из видео и мини-приложение в Telegram с переходом на WB. Ровно этому школа и учит. Поэтому перезапуск строим не как «сменили тему», а как «показываем, что было за кулисами».</p>
+  <ol class="big">
+    <li><b>Пост «Банда, серьёзный разговор».</b> В старом голосе и формате, как ваш пост про Poizon. Честно: Манекен делали мы, мы технари, канал меняется. Кто пришёл за образами — спасибо и свобода уйти.</li>
+    <li><b>Сериал «Как мы сделали Манекен» из 3 частей.</b> Канал и видео → бот → мини-приложение. Это сразу доказательство навыка и демонстрация, за что платят бизнесы.</li>
+    <li><b>Голос оставляем.</b> «Банда», 🥷💀🔪, коротко и дерзко, но без мата. Аудитория Манекена — молодые парни, а 18–24 по нашим анкетам — вторая по силе группа покупателей.</li>
+    <li><b>Название меняем мягко.</b> Сначала «Манекен | боты и деньги», через месяц — финальное. Юзернейм @manekken пока не трогаем: на него ведут старые видео.</li>
+    <li><b>Ожидание.</b> Часть подписчиков уйдёт, и это нормально: оставшиеся — живая аудитория под новую тему. Первый пост покажет реальный охват после полугода тишины; от него и считаем дальнейшие цифры.</li>
+  </ol>
+  <div class="note blue">Бот @manekken_bot и мини-приложение — это ваше живое портфолио. Если они ещё работают, ставьте ссылку на них в кейсе: человек сам пощупает, что вы умеете. Если не работают — лучше поднять перед перезапуском.</div>
+</div></section>
+
+<!-- OLD POSTS -->
+<section id="old"><div class="wrap">
+  <h2>Что делать со старыми постами</h2>
+  <div class="cards">
+    <div class="card rd"><h4>Переписывать старые посты — плохая идея</h4><ul>
+      <li>Telegram помечает отредактированный пост словом «изменено» — это видно всем</li>
+      <li>У старых постов останутся просмотры и реакции от аудитории про одежду: несостыковка бросается в глаза</li>
+      <li>«Отзывы учеников» задним числом — это придуманная история. На таком конкуренты и горят: поиск по Пурвиньшу и Кораблёву забит «разоблачениями»</li>
+    </ul></div>
+    <div class="card gr"><h4>Как сделать правильно</h4><ul>
+      <li><b>Черновой закрытый канал</b> (ваша идея): туда выкладываем все посты, правим, смотрим глазами</li>
+      <li>В Манекен переносим <b>отложенными сообщениями</b>, а не пересылкой: пересылка показывает «переслано из»</li>
+      <li>Фундамент публикуем <b>без звука</b> (долгое нажатие на «отправить»), 3–4 поста в день, чтобы не засыпать 10 тыс. человек уведомлениями</li>
+      <li>Старые образы удаляем пачками в Telegram Desktop. Оставляем только посты про бота, приложение и Poizon — на них ссылается кейс</li>
+    </ul></div>
+    <div class="card or"><h4>«Лайкните, кто прошёл обучение»</h4><p>Хорошая механика, если ученики реальные. По анкетам у вас 37 покупателей за август–октябрь. Их надо сначала позвать в канал, потом выпускать пост №10 «Если ты учился у нас — отметься». Тогда реакции и комментарии будут настоящими и станут лучшим доказательством.</p></div>
+  </div>
+  <div class="note red"><b>«Заливать ботами».</b> Если речь про автопостинг — да, отложенные сообщения или бот-публикатор. Если про накрутку просмотров и реакций — не советую: Telegram её режет, по ней не видно, какие посты реально работают, а несостыковка «8 тыс. просмотров и 0 комментариев» отталкивает новых людей.</div>
+</div></section>
+
+<!-- PLAN -->
+<section id="plan"><div class="wrap">
+  <h2>План по дням</h2>
+  <div class="tbl"><table>
+    <tr><th>Когда</th><th>Что делаем</th><th>Посты</th></tr>
+    <tr><td class="n">21–27 октября</td><td>Черновой канал, правка постов, реальные данные в [скобки]: скрины, суммы, отзывы. Новая аватарка (тот же манекен, но за ноутбуком) и описание. Проверить бота и приложение. Пригласить прошлых учеников.</td><td>—</td></tr>
+    <tr><td class="n">День 0</td><td>Пост «Банда, серьёзный разговор» со звуком. Смотрим просмотры за сутки — это реальный живой охват.</td><td>01</td></tr>
+    <tr><td class="n">День 1</td><td>Меняем название и описание. Сериал о Манекене.</td><td>02–05</td></tr>
+    <tr><td class="n">Дни 2–9</td><td>Фундамент без звука, 3–4 поста в день. Закреп-навигатор в конце, когда все ссылки на месте.</td><td>06–36</td></tr>
+    <tr><td class="n">Дни 10–14</td><td>Обычный ритм: 1 пост в день. Запуск посевов с меткой на каждую площадку и «18+» в тексте. YouTube Shorts — лучший источник по анкетам.</td><td>по контент-плану</td></tr>
+    <tr><td class="n">Дни 15–28</td><td>Прогрев к тест-драйву: 14 дней до эфира, эфир, набор группы до 10 человек, закрытие.</td><td>W01–W19</td></tr>
+    <tr><td class="n">1–12 января</td><td>Новогодний «адвент» и второй набор — лучший сезон по охватам.</td><td>—</td></tr>
+  </table></div>
+</div></section>
+
+<!-- EMOJI -->
+<section id="emoji"><div class="wrap">
+  <h2>Премиум-эмодзи</h2>
+  <div class="cards">
+    <div class="card gr"><h4>Самый простой путь</h4><p>Кастомные эмодзи в посте видят все подписчики, а вставить их может только аккаунт с Telegram Premium. Значит, один админ с Premium пишет посты и ставит их в отложенные сообщения канала. Этого достаточно: никакие сервисы не нужны.</p></div>
+    <div class="card or"><h4>Бот с премиумом — не получится</h4><p>Боту нельзя купить Premium. Отправлять кастомные эмодзи через Bot API могут только боты, которые купили дополнительный юзернейм на Fragment (оплата в TON, дорого). Для автопостинга с эмодзи проще отложка от премиум-аккаунта.</p></div>
+    <div class="card"><h4>Фирменные реакции</h4><p>Свои реакции из кастомных эмодзи открываются бустами канала: чем выше уровень, тем больше таких реакций. Бусты дают подписчики с Premium. Сделать фирменную реакцию 🥷 вместо стандартных 👍🔥 — хороший штрих для перезапуска.</p></div>
+  </div>
+  <div class="note">Перед покупкой проверьте актуальные условия в настройках канала: Telegram периодически меняет уровни бустов и что они открывают.</div>
+</div></section>
+
+<!-- BASE -->
+<section id="base"><div class="wrap">
+  <h2>Посты: фундамент</h2>
+  <p class="lead">%%NBASE%% постов, которые нужно опубликовать до прихода новых людей. Жёлтое в квадратных скобках — заменить реальными данными, придумывать нельзя. Под каждым постом: рубрика, зачем он нужен и у кого взята идея.</p>
+  <div class="posts">%%BASE%%</div>
+</div></section>
+
+<!-- WARM -->
+<section id="warm"><div class="wrap">
+  <h2>Посты: прогрев к тест-драйву</h2>
+  <p class="lead">%%NWARM%% постов: 14 дней до эфира, день эфира и 4 дня набора. Механики конкурентов (сериал, загадка, квиз, «страшная продажа», эфир, набор), в честной версии: реальный лимит 10 человек, без фальшивых дедлайнов, запись эфира доступна всем.</p>
+  <div class="posts">%%WARM%%</div>
+</div></section>
+
+<div class="toast" id="toast">Текст скопирован</div>
+<footer>Перезапуск @manekken · фундамент и прогрев · 21 октября 2026 · опирается на разбор 9 каналов конкурентов и 285 анкет</footer>
+<script>
+(function () {
+  var links = document.querySelectorAll('a.cp');
+  for (var i = 0; i < links.length; i++) {
+    links[i].onclick = function () {
+      var t = document.getElementById('raw' + this.getAttribute('data-i'));
+      t.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      var el = document.getElementById('toast');
+      el.innerHTML = ok ? 'Текст скопирован' : 'Не удалось скопировать: выделите текст вручную';
+      el.style.display = 'block';
+      setTimeout(function () { el.style.display = 'none'; }, 2000);
+      return false;
+    };
+  }
+})();
+</script>
+</body>
+</html>

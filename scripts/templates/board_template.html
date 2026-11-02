@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Доска воронок конкурентов</title>
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; font-family: "Segoe UI", Roboto, Arial, sans-serif; color: #1d2433; }
+#app { display: flex; height: 100%; }
+#side { width: 250px; flex: none; background: #fff; border-right: 1px solid #e3e6ee; display: flex; flex-direction: column; z-index: 3; }
+#side .logo { padding: 16px 16px 10px; font-weight: 800; font-size: 16px; color: #14182e; }
+#side .upd { padding: 0 16px 10px; font-size: 12px; color: #8a91a5; }
+#list { overflow-y: auto; flex: 1; padding: 4px 8px 12px; }
+#list a { display: block; padding: 9px 12px; margin: 2px 0; border-radius: 10px; color: #3a4257; text-decoration: none; font-size: 14px; cursor: pointer; }
+#list a:hover { background: #f1f3f9; }
+#list a.on { background: #14182e; color: #fff; }
+#list a small { display: block; font-size: 11.5px; color: #8a91a5; margin-top: 2px; }
+#list a.on small { color: #c9cde0; }
+#list a.star { background: #fff1db; color: #14182e; font-weight: 700; }
+#list a.star.on { background: #f08c00; color: #fff; }
+#grid { flex: 1; overflow: auto; background: #f7f8fb; display: none; padding: 18px 20px 40px; }
+#grid h2 { margin: 0 0 4px; font-size: 22px; color: #14182e; }
+#grid .hint { font-size: 13px; color: #8a91a5; margin-bottom: 12px; }
+#grid .bar { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+#grid .chip { border: 0; border-radius: 16px; padding: 6px 12px; margin: 3px 6px 3px 0; font-size: 13px; cursor: pointer; opacity: .45; }
+#grid .chip.on { opacity: 1; box-shadow: inset 0 0 0 2px rgba(20,24,46,.35); }
+#grid input { border: 1px solid #d6dae5; border-radius: 10px; padding: 7px 12px; font-size: 13.5px; width: 220px; margin: 3px 10px 3px 0; }
+#gt table { border-collapse: separate; border-spacing: 0; min-width: 1100px; width: 100%; }
+#gt th { position: sticky; top: -18px; background: #14182e; color: #fff; font-size: 13px; padding: 9px 10px; text-align: left; z-index: 1; }
+#gt th:first-child { border-radius: 10px 0 0 0; } #gt th:last-child { border-radius: 0 10px 0 0; }
+#gt td { vertical-align: top; padding: 8px; border-bottom: 1px solid #e6e9f0; border-right: 1px solid #eef0f5; background: #fff; width: 19%; }
+#gt td.sc { width: 150px; font-weight: 700; font-size: 13.5px; color: #14182e; background: #fafbfd; }
+#gt td.sc small { display: block; font-weight: 400; color: #8a91a5; font-size: 11.5px; margin-top: 3px; }
+.mc { border-radius: 8px; padding: 6px 8px; margin: 0 0 6px; font-size: 12.5px; line-height: 1.3; cursor: pointer; box-shadow: 0 1px 4px rgba(20,24,46,.1); }
+.mc:hover { box-shadow: 0 3px 10px rgba(20,24,46,.2); }
+.mc .w { font-size: 10.5px; font-weight: 800; opacity: .7; margin-bottom: 2px; }
+.mc .w i { font-style: normal; display: inline-block; border-radius: 4px; padding: 0 4px; margin-left: 4px; background: rgba(255,255,255,.7); }
+.mc img { display: block; width: 100%; height: 46px; object-fit: cover; border-radius: 4px; margin-bottom: 3px; }
+#main { flex: 1; position: relative; overflow: hidden; background: #f7f8fb;
+  background-image: radial-gradient(#d3d7e3 1.2px, transparent 1.2px); background-size: 22px 22px; cursor: grab; }
+#main.drag { cursor: grabbing; }
+#top { position: absolute; left: 16px; right: 16px; top: 12px; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; pointer-events: none; }
+#top > * { pointer-events: auto; }
+#title { font-size: 22px; font-weight: 800; color: #14182e; background: rgba(255,255,255,.92); padding: 6px 14px; border-radius: 12px; margin-right: 12px; box-shadow: 0 2px 10px rgba(20,24,46,.08); }
+.seg { display: inline-flex; background: #fff; border-radius: 12px; padding: 3px; box-shadow: 0 2px 10px rgba(20,24,46,.08); margin-right: 10px; }
+.seg button { border: 0; background: transparent; padding: 7px 12px; border-radius: 9px; font-size: 13.5px; cursor: pointer; color: #3a4257; }
+.seg button.on { background: #14182e; color: #fff; }
+#sum { position: absolute; left: 16px; bottom: 14px; right: 16px; z-index: 2; pointer-events: none; }
+#sum div { display: inline-block; background: rgba(255,255,255,.95); border-radius: 10px; padding: 6px 12px; margin: 3px 6px 0 0; font-size: 12.5px; box-shadow: 0 2px 8px rgba(20,24,46,.08); pointer-events: auto; max-width: 100%; }
+#legend { position: absolute; right: 16px; bottom: 90px; z-index: 2; background: rgba(255,255,255,.95); border-radius: 12px; padding: 10px 12px; font-size: 12px; box-shadow: 0 2px 10px rgba(20,24,46,.08); }
+#legend div { margin: 3px 0; } #legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -2px; }
+#world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+svg#wires { position: absolute; left: 0; top: 0; overflow: visible; }
+.band { position: absolute; border-radius: 18px; }
+.band .lbl { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-weight: 800; font-size: 15px; color: #5c6478; letter-spacing: .03em; }
+.branch { position: absolute; font-size: 18px; font-weight: 800; color: #14182e; white-space: nowrap; }
+.branch small { font-weight: 400; color: #8a91a5; font-size: 13px; margin-left: 8px; }
+.card { position: absolute; width: 230px; height: 124px; border-radius: 6px; padding: 9px 11px; box-shadow: 0 3px 10px rgba(20,24,46,.13); cursor: pointer; overflow: hidden; transition: box-shadow .15s; }
+.card:hover { box-shadow: 0 6px 18px rgba(20,24,46,.22); }
+.card .k { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; opacity: .75; }
+.card .s { float: right; font-size: 10.5px; opacity: .6; }
+.card .t { font-size: 13px; line-height: 1.32; margin-top: 4px; max-height: 52px; overflow: hidden; }
+.card .im { display: block; width: 100%; height: 58px; object-fit: cover; border-radius: 4px; margin-top: 4px; background: rgba(255,255,255,.5); }
+.card.hi .t { max-height: 17px; white-space: nowrap; text-overflow: ellipsis; }
+.card .play { position: absolute; left: 50%; top: 52px; transform: translateX(-50%); width: 30px; height: 30px; border-radius: 50%; background: rgba(20,24,46,.72); color: #fff; font-size: 13px; line-height: 30px; text-align: center; }
+.card .imr { width: 58px; margin: 4px auto 0; border-radius: 50%; }
+#modal video.pic.round { width: 320px; height: 320px; border-radius: 50%; object-fit: cover; }
+#modal audio { display: block; width: 100%; margin-bottom: 12px; }
+#modal .pic { display: block; max-width: 100%; max-height: 60vh; margin: 0 auto 12px; border-radius: 10px; }
+.card .bt { margin-top: 5px; white-space: nowrap; overflow: hidden; }
+.card .bt span { display: inline-block; font-size: 11px; background: rgba(255,255,255,.75); border-radius: 6px; padding: 1px 6px; margin-right: 4px; }
+.k-article { background: #d0ebff; } .k-push { background: #ffd8d8; } .k-lessons { background: #d3f9d8; } .k-form { background: #ffe8cc; }
+.k-channel { background: #e5dbff; } .k-event { background: #ffdeeb; } .k-act { background: #e9ecef; } .k-msg { background: #fff3bf; }
+.k-phone { background: #ffc078; } .k-gift { background: #99e9f2; }
+.k-site { background: #c3fae8; } .k-lead { background: #d8f5a2; } .k-call { background: #ffc9c9; } .k-pay { background: #ffe066; }
+.k-ad { background: #f1f3f5; border: 2px dashed #adb5bd; } .k-unknown { background: #fff; border: 2px dashed #ced4da; }
+#list .grp { font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: #8a91a5; margin: 16px 12px 4px; }
+.gap { position: absolute; font-size: 11.5px; font-weight: 800; color: #d9480f; background: #fff; border: 1.5px solid #ffd8a8; border-radius: 10px; padding: 1px 7px; white-space: nowrap; transform: translate(-50%, -50%); }
+.empty { position: absolute; font-size: 14px; color: #8a91a5; font-style: italic; }
+#modal { position: fixed; inset: 0; background: rgba(20,24,46,.45); display: none; z-index: 10; }
+#modal .box { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 560px; max-width: 92vw; max-height: 82vh; overflow: auto; background: #fff; border-radius: 16px; padding: 20px 22px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+#modal .meta { font-size: 12px; color: #8a91a5; margin-bottom: 8px; }
+#modal .txt { font-size: 14.5px; line-height: 1.55; white-space: pre-wrap; }
+#modal .btns span { display: inline-block; background: #e7f0ff; color: #1c4fa0; border-radius: 8px; padding: 3px 10px; margin: 8px 6px 0 0; font-size: 13px; }
+#modal .x { float: right; cursor: pointer; font-size: 20px; color: #8a91a5; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="side">
+    <div class="logo">Доска воронок</div>
+    <div class="upd">Обновлено: %%UPDATED%%<br>Перетаскивайте холст мышкой, колесо — масштаб</div>
+    <div id="list"></div>
+  </div>
+  <div id="main">
+    <div id="top">
+      <div id="title"></div>
+      <div class="seg" id="seg">
+        <button data-v="both" class="on">Обе ветки</button><button data-v="active">Активная</button><button data-v="lazy">Ленивая</button>
+      </div>
+      <div class="seg"><button id="fit">Вписать в экран</button></div>
+    </div>
+    <div id="legend">
+      <div><i style="background:#d0ebff"></i>статья</div><div><i style="background:#ffd8d8"></i>дожим</div>
+      <div><i style="background:#d3f9d8"></i>уроки</div><div><i style="background:#ffe8cc"></i>анкета</div>
+      <div><i style="background:#e5dbff"></i>канал</div><div><i style="background:#ffdeeb"></i>эфир</div>
+      <div><i style="background:#fff3bf"></i>сообщение</div><div><i style="background:#e9ecef"></i>действие человека</div>
+      <div><i style="background:#ffc078"></i>запрос телефона</div><div><i style="background:#99e9f2"></i>бонус / лид-магнит</div>
+      <div style="margin-top:6px;font-weight:700">сайты</div>
+      <div><i style="background:#c3fae8"></i>страница</div><div><i style="background:#d8f5a2"></i>заявка</div>
+      <div><i style="background:#ffc9c9"></i>менеджер</div><div><i style="background:#ffe066"></i>оплата</div>
+      <div><i style="background:#f1f3f5;border:1px dashed #adb5bd"></i>реклама вдогонку</div>
+    </div>
+    <div id="world"><svg id="wires"></svg></div>
+    <div id="sum"></div>
+  </div>
+  <div id="grid">
+    <h2>Дожимы по этапам — все школы</h2>
+    <div class="hint">Строки — школы, столбцы — сколько прошло от «Старта». Нажмите на карточку, чтобы прочитать полный текст. А — активная ветка, Л — ленивая. Дожим — бот пишет сам, когда человек молчит. Поиск ищет по всем типам сразу.</div>
+    <div class="bar" id="gkinds"></div>
+    <div class="bar"><input id="gq" placeholder="Поиск по тексту…"><div class="seg" id="gseg"><button data-v="both" class="on">Обе ветки</button><button data-v="active">Активная</button><button data-v="lazy">Ленивая</button></div></div>
+    <div id="gt"></div>
+  </div>
+</div>
+<div id="modal"><div class="box"><span class="x" id="mx">✕</span><div class="meta" id="mm"></div><div class="txt" id="mt"></div><div class="btns" id="mb"></div></div></div>
+
+<script>
+var DATA = /*DATA*/null;
+var ORDER = /*ORDER*/[];
+var LANES = ['Сайт', 'Бот', 'Личка', 'Группа', 'Telegram', 'Менеджер', 'Реклама'];
+var KN = {act:'действие', push:'дожим', article:'статья', lessons:'уроки', form:'анкета', channel:'канал', event:'эфир', msg:'сообщение',
+  phone:'запрос телефона', gift:'бонус / лид-магнит',
+  site:'сайт', lead:'заявка', call:'менеджер', pay:'оплата', ad:'реклама вдогонку', unknown:'не видно'};
+var LANE_COL = {'Бот':'rgba(28,126,214,.06)', 'Личка':'rgba(240,140,0,.07)', 'Группа':'rgba(43,138,62,.07)',
+  'Сайт':'rgba(12,166,120,.07)', 'Telegram':'rgba(28,126,214,.06)', 'Менеджер':'rgba(224,49,49,.06)', 'Реклама':'rgba(134,142,150,.08)'};
+var CW = 230, CH = 124, STEP = 300, LANE_H = 170, X0 = 170;
+var cur = ORDER[0], mode = 'both', view = {x: 40, y: 80, s: 0.9};
+var world = document.getElementById('world'), wires = document.getElementById('wires'), main = document.getElementById('main');
+
+function esc(s) { return String(s || '').replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function apply() { world.style.transform = 'translate(' + view.x + 'px,' + view.y + 'px) scale(' + view.s + ')'; }
+
+function lanesUsed(items) {
+  var used = {}; for (var i = 0; i < items.length; i++) used[items[i].lane] = 1;
+  var res = []; for (var j = 0; j < LANES.length; j++) if (used[LANES[j]]) res.push(LANES[j]);
+  return res.length ? res : ['Бот'];
+}
+
+function drawBranch(items, top, label, hint, html, paths, extents) {
+  var lanes = lanesUsed(items), width = Math.max(items.length, 1) * STEP + X0 + 60;
+  html.push('<div class="branch" style="left:0;top:' + top + 'px">' + esc(label) + '<small>' + esc(hint) + '</small></div>');
+  var y0 = top + 40;
+  for (var l = 0; l < lanes.length; l++) {
+    html.push('<div class="band" style="left:0;top:' + (y0 + l * LANE_H) + 'px;width:' + width + 'px;height:' + (LANE_H - 16) + 'px;background:' + LANE_COL[lanes[l]] + '"><div class="lbl">' + lanes[l].toUpperCase() + '</div></div>');
+  }
+  if (!items.length) { html.push('<div class="empty" style="left:' + X0 + 'px;top:' + (y0 + 60) + 'px">Пока ничего не пришло</div>'); }
+  var prev = null;
+  for (var i = 0; i < items.length; i++) {
+    var it = items[i], li = lanes.indexOf(it.lane);
+    var x = X0 + i * STEP, y = y0 + li * LANE_H + (LANE_H - 16 - CH) / 2;
+    var btns = '';
+    for (var b = 0; b < it.buttons.length && b < 3; b++) btns += '<span>' + esc(it.buttons[b]) + '</span>';
+    html.push('<div class="card k-' + it.kind + (it.img ? ' hi' : '') + '" style="left:' + x + 'px;top:' + y + 'px" data-b="' + label + '" data-i="' + i + '">' +
+      '<span class="s">' + esc(it.since) + '</span><div class="k">' + (KN[it.kind] || '') + ' · ' + esc(it.lane) + '</div>' +
+      (it.img ? '<img class="im' + (it.avk === 'round' ? ' imr' : '') + '" loading="lazy" src="' + esc(it.img) + '">' : '') +
+      (it.avk === 'video' || it.avk === 'round' ? '<span class="play">▶</span>' : (it.avk === 'audio' ? '<span class="play" style="top:30px">♪</span>' : '')) +
+      '<div class="t">' + esc(it.title) + '</div>' + (btns ? '<div class="bt">' + btns + '</div>' : '') + '</div>');
+    if (prev) {
+      var x1 = prev.x + CW, y1 = prev.y + CH / 2, x2 = x, y2 = y + CH / 2, mx = (x1 + x2) / 2;
+      paths.push('<path d="M' + x1 + ',' + y1 + ' C' + (mx) + ',' + y1 + ' ' + (mx) + ',' + y2 + ' ' + (x2 - 8) + ',' + y2 + '" fill="none" stroke="#9aa3ba" stroke-width="2.2" marker-end="url(#ar)"/>');
+      if (it.gap) html.push('<div class="gap" style="left:' + mx + 'px;top:' + ((y1 + y2) / 2) + 'px">' + esc(it.gap) + '</div>');
+    }
+    prev = {x: x, y: y};
+  }
+  extents.w = Math.max(extents.w, width);
+  return y0 + lanes.length * LANE_H + 40;
+}
+
+function render() {
+  var d = DATA[cur]; if (!d) return;
+  document.getElementById('title').innerHTML = esc(cur);
+  var html = [], paths = [], ext = {w: 0}, top = 0;
+  document.getElementById('seg').style.display = d.site ? 'none' : '';
+  if (d.site) {
+    top = drawBranch(d.active, 0, 'Вход через сайт', 'по коду страниц, 22.10; заявки ещё не отправляли', html, paths, ext);
+  } else {
+  if (mode !== 'lazy') top = drawBranch(d.active, top, 'Активная ветка', 'основной аккаунт: проходит шаги сразу', html, paths, ext);
+  if (mode !== 'active') top = drawBranch(d.lazy, top + (mode === 'both' ? 20 : 0), 'Ленивая ветка', 'второй аккаунт: «Старт» и ничего не делает', html, paths, ext);
+  }
+  var nodes = world.querySelectorAll('.band,.branch,.card,.gap,.empty');
+  for (var n = nodes.length - 1; n >= 0; n--) nodes[n].parentNode.removeChild(nodes[n]);
+  world.insertAdjacentHTML('beforeend', html.join(''));
+  wires.setAttribute('width', ext.w); wires.setAttribute('height', top);
+  wires.innerHTML = '<defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9aa3ba"/></marker></defs>' + paths.join('');
+  world._w = ext.w; world._h = top;
+  document.getElementById('sum').innerHTML = (d.sumA ? '<div><b>' + (d.site ? 'Путь' : 'Активная') + ':</b> ' + esc(d.sumA) + '</div>' : '') + (d.sumL ? '<div><b>Ленивая:</b> ' + esc(d.sumL) + '</div>' : '');
+  var cards = world.querySelectorAll('.card');
+  for (var c = 0; c < cards.length; c++) cards[c].onclick = openCard;
+}
+
+function fit() {
+  var H = main.clientHeight - 150;
+  var s = Math.min(1, Math.max(0.5, H / (world._h + 20)));
+  view = {x: 20, y: 70, s: s}; apply();
+}
+
+function openCard(e) {
+  e.stopPropagation();
+  var b = this.getAttribute('data-b') === 'Ленивая ветка' ? 'lazy' : 'active';
+  var it = DATA[this.getAttribute('data-s') || cur][b][+this.getAttribute('data-i')];
+  document.getElementById('mm').innerHTML = esc((KN[it.kind] || '') + ' · ' + it.lane + (it.since ? ' · ' + it.since + ' от старта' : '') + (it.gap ? ' · ' + it.gap + (it.since ? ' после предыдущего' : '') : ''));
+  var media = '';
+  if (it.avk === 'video' || it.avk === 'round') media = '<video class="pic' + (it.avk === 'round' ? ' round' : '') + '" controls playsinline preload="metadata"' + (it.img ? ' poster="' + esc(it.img) + '"' : '') + ' src="' + esc(it.av) + '"></video>';
+  else if (it.avk === 'audio') media = '<audio controls src="' + esc(it.av) + '"></audio>';
+  else if (it.img) media = '<img class="pic" src="' + esc(it.img) + '">';
+  document.getElementById('mt').innerHTML = media + esc(it.text || it.title);
+  var bb = ''; for (var i = 0; i < it.buttons.length; i++) bb += '<span>' + esc(it.buttons[i]) + '</span>';
+  document.getElementById('mb').innerHTML = bb;
+  document.getElementById('modal').style.display = 'block';
+}
+document.getElementById('mx').onclick = document.getElementById('modal').onclick = function (e) {
+  if (e.target.id === 'modal' || e.target.id === 'mx') { document.getElementById('modal').style.display = 'none'; document.getElementById('mt').innerHTML = ''; }
+};
+
+function buildList() {
+  var h = '<a class="star' + (cur === GRID ? ' on' : '') + '" data-s="' + GRID + '">★ Дожимы по этапам<small>все школы в одной таблице, с фильтрами</small></a>', grp = null;
+  for (var i = 0; i < ORDER.length; i++) {
+    var d = DATA[ORDER[i]], g = d.site ? 'Воронки через сайт' : 'Воронки через ботов';
+    if (g !== grp) { h += '<div class="grp">' + g + '</div>'; grp = g; }
+    h += '<a data-s="' + esc(ORDER[i]) + '"' + (ORDER[i] === cur ? ' class="on"' : '') + '>' + esc(ORDER[i]) +
+      '<small>' + (d.site ? 'шагов: ' + d.active.length : 'активная: ' + d.active.length + ' · ленивая: ' + d.lazy.length + ' сообщ.') + '</small></a>';
+  }
+  var list = document.getElementById('list'); list.innerHTML = h;
+  var as = list.getElementsByTagName('a');
+  for (var j = 0; j < as.length; j++) as[j].onclick = function () {
+    cur = this.getAttribute('data-s'); try { history.replaceState(null, '', '#' + encodeURIComponent(cur)); } catch (e) {}
+    show();
+  };
+}
+
+var segs = document.getElementById('seg').getElementsByTagName('button');
+for (var i = 0; i < segs.length; i++) segs[i].onclick = function () {
+  for (var j = 0; j < segs.length; j++) segs[j].className = '';
+  this.className = 'on'; mode = this.getAttribute('data-v'); render(); fit();
+};
+document.getElementById('fit').onclick = fit;
+
+var drag = null;
+main.onmousedown = function (e) {
+  if (e.target.closest && (e.target.closest('.card') || e.target.closest('#top') || e.target.closest('#sum'))) return;
+  drag = {x: e.clientX, y: e.clientY, vx: view.x, vy: view.y}; main.className = 'drag';
+};
+window.onmousemove = function (e) { if (!drag) return; view.x = drag.vx + e.clientX - drag.x; view.y = drag.vy + e.clientY - drag.y; apply(); };
+window.onmouseup = function () { drag = null; main.className = ''; };
+main.addEventListener('wheel', function (e) {
+  e.preventDefault();
+  var r = main.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  var k = e.deltaY < 0 ? 1.12 : 1 / 1.12, ns = Math.min(2, Math.max(0.15, view.s * k));
+  view.x = mx - (mx - view.x) * (ns / view.s); view.y = my - (my - view.y) * (ns / view.s); view.s = ns; apply();
+}, {passive: false});
+
+// ---- вид «Дожимы по этапам»: все школы в одной таблице ----
+var GRID = 'Дожимы по этапам';
+var BUCKETS = [[0, 3600, 'Первый час'], [3600, 6 * 3600, '1–6 часов'], [6 * 3600, 86400, '6–24 часа'], [86400, 3 * 86400, '1–3 дня'], [3 * 86400, 1e12, '3+ дня']];
+var GK = ['push', 'phone', 'gift', 'article', 'lessons', 'event', 'channel', 'form', 'msg', 'act'];
+var KCOL = {push:'#ffd8d8', phone:'#ffc078', gift:'#99e9f2', article:'#d0ebff', lessons:'#d3f9d8', event:'#ffdeeb', channel:'#e5dbff', form:'#ffe8cc', msg:'#fff3bf', act:'#e9ecef'};
+var gOn = {push: 1}, gMode = 'both', gQ = '';
+
+function show() {
+  var g = cur === GRID;
+  document.getElementById('main').style.display = g ? 'none' : '';
+  document.getElementById('grid').style.display = g ? 'block' : 'none';
+  buildList();
+  if (g) renderGrid(); else { render(); fit(); }
+}
+
+function buildKinds() {
+  var h = '';
+  for (var i = 0; i < GK.length; i++) h += '<button class="chip' + (gOn[GK[i]] ? ' on' : '') + '" data-k="' + GK[i] + '" style="background:' + KCOL[GK[i]] + '">' + KN[GK[i]] + '</button>';
+  var box = document.getElementById('gkinds'); box.innerHTML = h;
+  var bs = box.getElementsByTagName('button');
+  for (var j = 0; j < bs.length; j++) bs[j].onclick = function () {
+    var k = this.getAttribute('data-k'); if (gOn[k]) delete gOn[k]; else gOn[k] = 1; buildKinds(); renderGrid();
+  };
+}
+
+function renderGrid() {
+  var q = gQ.toLowerCase(), rows = [], total = 0;
+  for (var s = 0; s < ORDER.length; s++) {
+    var name = ORDER[s], d = DATA[name]; if (d.site) continue;
+    var cells = [[], [], [], [], []], n = 0;
+    var br = gMode === 'both' ? ['active', 'lazy'] : [gMode];
+    for (var b = 0; b < br.length; b++) {
+      var items = d[br[b]];
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        if ((!q && !gOn[it.kind]) || it.sec === null || it.sec === undefined) continue;  // при поиске — по всем типам
+        if (q && (it.text + ' ' + it.title).toLowerCase().indexOf(q) < 0) continue;
+        for (var k = 0; k < BUCKETS.length; k++) if (it.sec >= BUCKETS[k][0] && it.sec < BUCKETS[k][1]) {
+          cells[k].push('<div class="mc k-' + it.kind + '" data-s="' + esc(name) + '" data-b="' + (br[b] === 'lazy' ? 'Ленивая ветка' : 'Активная ветка') + '" data-i="' + i + '">' +
+            '<div class="w">' + esc(it.since || '0 сек') + ' · ' + esc(it.lane) + '<i>' + (br[b] === 'lazy' ? 'Л' : 'А') + '</i></div>' +
+            (it.img ? '<img loading="lazy" src="' + esc(it.img) + '">' : '') + esc(it.title) + '</div>');
+          n++; break;
+        }
+      }
+    }
+    if (!n) continue;
+    total += n;
+    var tds = '';
+    for (var c = 0; c < cells.length; c++) tds += '<td>' + cells[c].join('') + '</td>';
+    rows.push('<tr><td class="sc">' + esc(name) + '<small>' + n + ' шт.</small></td>' + tds + '</tr>');
+  }
+  var head = '<tr><th>Школа</th>';
+  for (var h = 0; h < BUCKETS.length; h++) head += '<th>' + BUCKETS[h][2] + '</th>';
+  document.getElementById('gt').innerHTML = rows.length ?
+    '<table><thead>' + head + '</tr></thead><tbody>' + rows.join('') + '</tbody></table><div class="hint" style="margin-top:10px">Всего карточек: ' + total + '</div>' :
+    '<div class="hint">Ничего не найдено — включите другие типы или очистите поиск.</div>';
+  var mcs = document.getElementById('gt').querySelectorAll('.mc');
+  for (var m = 0; m < mcs.length; m++) mcs[m].onclick = openCard;
+}
+
+document.getElementById('gq').oninput = function () { gQ = this.value; renderGrid(); };
+var gsegs = document.getElementById('gseg').getElementsByTagName('button');
+for (var gi = 0; gi < gsegs.length; gi++) gsegs[gi].onclick = function () {
+  for (var j = 0; j < gsegs.length; j++) gsegs[j].className = '';
+  this.className = 'on'; gMode = this.getAttribute('data-v'); renderGrid();
+};
+buildKinds();
+
+(function () {  // ссылка вида …доска_воронок.html#Паутов открывает сразу нужную школу
+  var h = ''; try { h = decodeURIComponent(location.hash.slice(1)); } catch (e) {}
+  if (h && (DATA[h] || h === GRID)) cur = h;
+})();
+show();
+</script>
+</body>
+</html>

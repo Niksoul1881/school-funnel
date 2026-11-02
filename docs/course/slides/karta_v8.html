@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><title>v8 витрина</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/devices.css@0.2.0/dist/devices.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#000}
+.s{position:relative;width:1920px;height:1080px;overflow:hidden;font-family:Inter,sans-serif;color:#f5f5f7;
+ background:radial-gradient(1400px 500px at 50% 112%,rgba(255,255,255,.10),transparent 60%),#000}
+.t{position:absolute;top:58px;left:0;right:0;text-align:center}
+.t .e{font-size:22px;font-weight:700;color:#a1a1a6;letter-spacing:.02em}
+.t h1{margin-top:10px;font-size:86px;font-weight:900;letter-spacing:-.05em;line-height:1}
+.t h1 span{background:linear-gradient(90deg,#4ade80,#60a5fa 33%,#c084fc 66%,#f472b6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.row{position:absolute;left:0;right:0;top:250px;height:640px}
+.p{position:absolute;top:0;width:300px}
+.p .glow{position:absolute;left:-60px;right:-60px;top:120px;height:420px;border-radius:50%;filter:blur(70px);opacity:.75}
+.p .dev{position:relative;width:300px;height:608px;-webkit-box-reflect:below 8px linear-gradient(transparent 86%,rgba(255,255,255,.09))}
+.p .device{transform:scale(.7);transform-origin:top left}
+.p .device-screen{object-fit:cover;object-position:top}
+.lab{position:absolute;top:900px;transform:translateX(-50%);text-align:center;width:340px}
+.lab .k{font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.lab b{display:block;margin-top:6px;font-size:28px;font-weight:800;letter-spacing:-.02em}
+.lab span{font-size:17px;color:#a1a1a6;font-weight:600}
+.bar{position:absolute;left:50%;transform:translateX(-50%);bottom:34px;display:flex;gap:10px;font-size:16px;font-weight:700;color:#86868b}
+.bar i{font-style:normal;color:#f5f5f7}
+</style></head><body><div class="s">
+<div class="t"><div class="e">Тест-драйв · 48 часов · 6 уроков</div><h1>За два дня научишься <span>делать такое</span>.</h1></div>
+<div class="row">
+ <div class="p" style="left:170px;top:40px"><div class="glow" style="background:#16a34a"></div><div class="dev"><div class="device device-iphone-14-pro"><div class="device-frame"><img class="device-screen" src="screens/kvasich.png"></div><div class="device-stripe"></div><div class="device-header"></div><div class="device-sensors"></div><div class="device-btns"></div><div class="device-power"></div><div class="device-home"></div></div></div></div>
+ <div class="p" style="left:600px"><div class="glow" style="background:#2563eb"></div><div class="dev"><div class="device device-iphone-14-pro"><div class="device-frame"><img class="device-screen" src="screens/pulse.png"></div><div class="device-stripe"></div><div class="device-header"></div><div class="device-sensors"></div><div class="device-btns"></div><div class="device-power"></div><div class="device-home"></div></div></div></div>
+ <div class="p" style="left:1030px"><div class="glow" style="background:#c026d3"></div><div class="dev"><div class="device device-iphone-14-pro"><div class="device-frame"><img class="device-screen" src="screens/manekken.png"></div><div class="device-stripe"></div><div class="device-header"></div><div class="device-sensors"></div><div class="device-btns"></div><div class="device-power"></div><div class="device-home"></div></div></div></div>
+ <div class="p" style="left:1460px;top:40px"><div class="glow" style="background:#dc2626"></div><div class="dev"><div class="device device-iphone-14-pro"><div class="device-frame"><img class="device-screen" src="screens/gym.png"></div><div class="device-stripe"></div><div class="device-header"></div><div class="device-sensors"></div><div class="device-btns"></div><div class="device-power"></div><div class="device-home"></div></div></div></div>
+</div>
+<div class="lab" style="left:320px"><div class="k" style="color:#4ade80">Урок 2 · Чат-бот</div><b>Профессор Квасич</b><span>репетитор по математике</span></div>
+<div class="lab" style="left:750px"><div class="k" style="color:#60a5fa">Урок 3 · AI-агент</div><b>Пульс мира</b><span>сам пишет новости и видео</span></div>
+<div class="lab" style="left:1180px"><div class="k" style="color:#e879f9">Урок 4 · Mini App</div><b>Манекен</b><span>AI собирает образы → WB</span></div>
+<div class="lab" style="left:1610px"><div class="k" style="color:#f87171">Урок 4 · Mini App</div><b>Школа гимнастики</b><span>тренер, план, прогресс</span></div>
+<div class="bar"><i>0</i> Старт · <i>1</i> Профессия · <i>2</i> Чат-боты · <i>3</i> AI-агенты · <i>4</i> Mini Apps · <i>5</i> Клиенты · <i>★</i> Разбор и личный план</div>
+</div></body></html>

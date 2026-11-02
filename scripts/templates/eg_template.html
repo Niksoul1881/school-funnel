@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Канал Егора: 10 постов</title>
+<style>
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: "Segoe UI", Roboto, Arial, sans-serif; font-size: 15.5px; line-height: 1.55; color: #1d2433; background: #f4f6fb; }
+.wrap { max-width: 1140px; margin: 0 auto; }
+a { color: #3b5bdb; }
+.hero { background: #0b0b0f; background: linear-gradient(135deg, #0b0b0f 0%, #1f2340 60%, #6b2bd9 150%); color: #fff; padding: 54px 24px 90px; }
+.hero .tag { display: inline-block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; background: rgba(255,255,255,.14); padding: 4px 10px; border-radius: 20px; margin-bottom: 14px; }
+.hero h1 { font-size: 40px; line-height: 1.1; margin: 0 0 12px; }
+.hero p { font-size: 18px; margin: 0; opacity: .93; max-width: 820px; }
+.stats { display: flex; flex-wrap: wrap; margin: -58px auto 0; max-width: 1140px; padding: 0 12px; }
+.stat { flex: 1 1 200px; margin: 0 12px 16px; background: #fff; border-radius: 14px; padding: 18px 22px; box-shadow: 0 6px 24px rgba(31,42,90,.10); }
+.stat b { display: block; font-size: 27px; color: #6b2bd9; line-height: 1.15; }
+.stat span { color: #5c6478; font-size: 14px; }
+.nav { position: sticky; top: 0; z-index: 10; background: rgba(244,246,251,.97); border-bottom: 1px solid #e1e5ee; margin-top: 14px; }
+.nav .wrap { display: flex; flex-wrap: wrap; padding: 9px 24px; }
+.nav a { font-size: 14px; color: #3a4257; text-decoration: none; padding: 6px 12px; margin: 2px 4px 2px 0; border-radius: 8px; }
+.nav a:hover { background: #efe6ff; }
+section { padding: 38px 24px 8px; }
+h2 { font-size: 29px; margin: 0 0 6px; color: #14182e; }
+h3 { font-size: 20px; margin: 28px 0 12px; color: #14182e; }
+.lead { font-size: 16.5px; color: #3a4257; margin: 0 0 22px; max-width: 900px; }
+.cards { display: flex; flex-wrap: wrap; margin: 0 -8px; }
+.card { flex: 1 1 300px; margin: 0 8px 16px; background: #fff; border-radius: 14px; padding: 16px 20px; box-shadow: 0 2px 12px rgba(31,42,90,.07); border-top: 4px solid #6b2bd9; }
+.card.gr { border-top-color: #2b8a3e; } .card.rd { border-top-color: #e03131; } .card.or { border-top-color: #f08c00; }
+.card h4 { margin: 0 0 6px; font-size: 16.5px; color: #14182e; }
+.card p, .card ul, .card ol { margin: 4px 0; font-size: 14.5px; }
+.card ul, .card ol { padding-left: 18px; } .card li { margin: 3px 0; }
+.tbl { overflow-x: auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(31,42,90,.06); margin-bottom: 18px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { padding: 9px 12px; border-bottom: 1px solid #edf0f6; text-align: left; vertical-align: top; }
+th { background: #f7f8fc; font-size: 13px; color: #3a4257; }
+td.n { font-weight: 700; color: #14182e; white-space: nowrap; }
+.note { background: #fff8e6; border-left: 4px solid #f59f00; border-radius: 8px; padding: 12px 16px; color: #5c4a14; margin: 6px 0 14px; font-size: 14.5px; }
+.note.red { background: #fff5f5; border-left-color: #e03131; color: #7a1f1f; }
+.note.blue { background: #ede7ff; border-left-color: #6b2bd9; color: #33206b; }
+.big { counter-reset: n; list-style: none; padding: 0; margin: 0; }
+.big li { counter-increment: n; background: #fff; border-radius: 12px; padding: 13px 18px 13px 58px; margin-bottom: 10px; position: relative; box-shadow: 0 2px 10px rgba(31,42,90,.06); }
+.big li:before { content: counter(n); position: absolute; left: 16px; top: 12px; width: 30px; height: 30px; border-radius: 9px; background: #6b2bd9; color: #fff; font-weight: 800; text-align: center; line-height: 30px; }
+
+.posts { display: flex; flex-wrap: wrap; margin: 0 -8px; align-items: flex-start; }
+.tg { flex: 1 1 340px; max-width: 540px; margin: 0 8px 22px; }
+.tg .lbl { font-size: 14px; font-weight: 700; color: #14182e; margin: 0 0 6px 4px; }
+.tg .lbl .no { display: inline-block; background: #14182e; color: #fff; font-size: 12px; padding: 1px 7px; border-radius: 6px; margin-right: 4px; }
+.bubble { background: #fff; border-radius: 4px 16px 16px 16px; box-shadow: 0 1px 2px rgba(0,0,0,.12); padding: 10px 14px 8px; font-size: 15px; line-height: 1.5; }
+.bubble .ch { font-weight: 700; font-size: 14.5px; color: #1c7ed6; margin-bottom: 4px; }
+.bubble p { margin: 0 0 9px; }
+.bubble .img { background: repeating-linear-gradient(45deg,#f1f3f5,#f1f3f5 10px,#e9ecef 10px,#e9ecef 20px); border-radius: 10px; padding: 18px 12px; text-align: center; color: #868e96; font-size: 13px; margin: 0 0 9px; }
+.bubble .ft { text-align: right; font-size: 12px; color: #adb5bd; }
+.bubble .ft a { color: #6b2bd9; }
+.btns { display: flex; flex-wrap: wrap; margin: 4px -3px 6px; }
+.btns span { flex: 1 1 140px; margin: 3px; background: #f8f9fa; border-radius: 10px; text-align: center; font-size: 14px; font-weight: 600; padding: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.12); color: #1c7ed6; }
+.ph { background: #fff3bf; padding: 0 3px; border-radius: 3px; color: #7a5a00; }
+.raw { position: absolute; left: -9999px; width: 10px; height: 10px; }
+.info { font-size: 12.5px; color: #5c6478; margin: 6px 4px 0; }
+.info div { margin: 1px 0; } .info b { color: #3a4257; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #14182e; color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 14.5px; display: none; z-index: 50; }
+footer { text-align: center; color: #8a91a5; font-size: 13px; padding: 36px 24px 50px; }
+@media (max-width: 640px) { .hero h1 { font-size: 28px; } section { padding: 30px 14px 4px; } }
+</style>
+</head>
+<body>
+<div class="hero" style="background:linear-gradient(135deg,#14182e 0%,#2b2f6b 60%,#1c7ed6 150%)"><div class="wrap">
+<div class="tag">Личный канал Егора Чумакова · 10 постов · голос как в статьях</div>
+<h1>10 постов для канала Егора</h1>
+<p>Голос и факты как в утверждённых статьях: Егор, 4 года на фрилансе, история «склад → 4 бизнеса → найм → деньги в соседней комнате». Тон спокойный, тёплый, подходит женщинам. Формат по образцу лучших постов конкурентов, но своими словами. Жёлтое в [скобках] заполнить реальными данными.</p>
+</div></div>
+<section><div class="wrap">
+<div class="note blue"><b>Премиум-эмодзи.</b> Бот вставить их не может: Telegram разрешает кастомные эмодзи только ботам с купленным на Fragment юзернеймом. Поэтому посты выкладывает админ с Telegram Premium, отложенными сообщениями: копирует текст и меняет обычные эмодзи в заголовках (🤝 🥶 💰 📈 🤖 😰 🎁) на премиум из набора канала. Лучше выбрать один набор в одном стиле и использовать его во всех постах.</div>
+<div class="posts">%%BASE%%</div>
+</div></section>
+<div class="toast" id="toast">Текст скопирован</div>
+<footer>Перезапуск @manekken · фундамент и прогрев · 21 октября 2026 · опирается на разбор 9 каналов конкурентов и 285 анкет</footer>
+<script>
+(function () {
+  var links = document.querySelectorAll('a.cp');
+  for (var i = 0; i < links.length; i++) {
+    links[i].onclick = function () {
+      var t = document.getElementById('raw' + this.getAttribute('data-i'));
+      t.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      var el = document.getElementById('toast');
+      el.innerHTML = ok ? 'Текст скопирован' : 'Не удалось скопировать: выделите текст вручную';
+      el.style.display = 'block';
+      setTimeout(function () { el.style.display = 'none'; }, 2000);
+      return false;
+    };
+  }
+})();
+</script>
+</body>
+</html>

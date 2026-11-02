@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: school-agents-mvp
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEMO_PASSWORD
+        sync: false
+      - key: DEMO_USER
+        value: demo
+      - key: AGENT_MODE
+        value: mock
+      - key: DATA_DIR
+        value: /data
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1

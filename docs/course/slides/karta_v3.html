@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Карта тест-драйва v3</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/devices.css@0.2.0/dist/devices.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; background: #07061a; }
+.s { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: Inter, sans-serif; color: #fff;
+  background:
+    radial-gradient(900px 700px at 78% 40%, rgba(124,58,237,.55), transparent 65%),
+    radial-gradient(700px 600px at 98% 95%, rgba(236,72,153,.45), transparent 65%),
+    radial-gradient(800px 600px at 55% 110%, rgba(59,130,246,.35), transparent 65%),
+    radial-gradient(600px 500px at 8% 0%, rgba(56,189,248,.18), transparent 70%),
+    linear-gradient(135deg, #07061a 0%, #0d0b2b 55%, #170a2e 100%); }
+.grain { position: absolute; inset: 0; opacity: .08; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+.orb { position: absolute; border-radius: 50%; filter: blur(60px); }
+
+/* левая колонка */
+.left { position: absolute; left: 110px; top: 150px; width: 760px; }
+.chip { display: inline-flex; align-items: center; gap: 12px; padding: 12px 20px 12px 14px; border-radius: 999px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); backdrop-filter: blur(14px);
+  font-size: 21px; font-weight: 700; letter-spacing: .01em; box-shadow: inset 0 1px 0 rgba(255,255,255,.15); }
+.chip .live { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #f472b6, #8b5cf6); font-size: 14px; box-shadow: 0 0 18px rgba(244,114,182,.7); }
+h1 { margin-top: 34px; font-size: 104px; line-height: .98; font-weight: 900; letter-spacing: -.055em; }
+h1 .l2 { background: linear-gradient(90deg, #a5b4fc, #f0abfc 60%, #fda4af); -webkit-background-clip: text; background-clip: text; color: transparent; }
+h1 .l3 { background: linear-gradient(90deg, #fdba74, #fb7185 45%, #e879f9); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lead { margin-top: 30px; font-size: 27px; line-height: 1.42; color: rgba(255,255,255,.72); font-weight: 500; letter-spacing: -.01em; max-width: 640px; }
+.lead b { color: #fff; font-weight: 700; }
+
+/* маршрут — стеклянная полоса */
+.route { position: absolute; left: 110px; bottom: 92px; display: flex; align-items: center; gap: 0;
+  padding: 10px; border-radius: 26px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.16);
+  backdrop-filter: blur(18px); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 30px 60px -30px rgba(0,0,0,.6); }
+.step { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 18px; font-size: 18px; font-weight: 700; white-space: nowrap; color: rgba(255,255,255,.85); }
+.step i { font-style: normal; width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 800; background: rgba(255,255,255,.12); }
+.arr { color: rgba(255,255,255,.3); font-size: 18px; }
+.step.hl i { background: linear-gradient(135deg, #60a5fa, #a78bfa); }
+.step.hl2 i { background: linear-gradient(135deg, #a78bfa, #f472b6); }
+.step.hl3 i { background: linear-gradient(135deg, #f472b6, #fb923c); }
+.step.fin { background: linear-gradient(135deg, rgba(244,114,182,.95), rgba(139,92,246,.95)); color: #fff; box-shadow: 0 10px 30px rgba(236,72,153,.45); }
+.step.fin i { background: rgba(255,255,255,.25); }
+
+/* сцена с телефонами */
+.stage { position: absolute; left: 930px; top: 0; width: 990px; height: 1080px; perspective: 2200px; }
+.ph { position: absolute; transform-origin: center; filter: drop-shadow(0 60px 60px rgba(0,0,0,.55)); }
+.ph .device { transform: scale(var(--k)); transform-origin: top left; }
+.ph .device-screen { object-fit: cover; object-position: top; background: #f1e8d6; }
+.glare { position: absolute; inset: 0; border-radius: 60px; pointer-events: none;
+  background: linear-gradient(115deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 28%, rgba(255,255,255,0) 70%, rgba(255,255,255,.08) 100%); }
+
+/* экран Пульса (Telegram dark) */
+.tgs { width: 390px; height: 830px; border-radius: 49px; overflow: hidden; background: #0e1621; display: flex; flex-direction: column; font-family: Inter, sans-serif; }
+.tgs .hd { padding: 62px 18px 12px; display: flex; align-items: center; gap: 12px; background: #17212b; color: #fff; }
+.tgs .hd img { width: 44px; height: 44px; border-radius: 50%; }
+.tgs .hd b { display: block; font-size: 18px; }
+.tgs .hd span { font-size: 14px; color: #6c8197; }
+.tgs .bd { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+.post { border-radius: 18px; overflow: hidden; background: #182533; border-bottom-left-radius: 6px; }
+.post img { display: block; width: 100%; }
+.post .tx { padding: 9px 12px 7px; font-size: 15px; line-height: 1.35; color: #e9eef3; }
+.post .tm { font-size: 12px; color: #6c8197; text-align: right; }
+.vid { position: relative; height: 200px; overflow: hidden; }
+.vid img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+.vid .p { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 56px; height: 56px; border-radius: 50%; background: rgba(0,0,0,.45); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.vid .d { position: absolute; left: 10px; top: 10px; font-size: 12px; font-weight: 700; background: rgba(0,0,0,.5); border-radius: 8px; padding: 3px 8px; }
+
+/* парящие стеклянные элементы */
+.glass { position: absolute; border-radius: 22px; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.24);
+  backdrop-filter: blur(20px) saturate(140%); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 24px 50px -18px rgba(0,0,0,.6); color: #fff; }
+.tag { padding: 12px 18px; display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; }
+.tag .ic { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.tag small { display: block; font-size: 14px; font-weight: 600; color: rgba(255,255,255,.7); margin-top: 1px; }
+.bub { padding: 12px 16px; font-size: 18px; font-weight: 600; line-height: 1.3; max-width: 430px; white-space: nowrap; }
+.bub.me { background: linear-gradient(135deg, rgba(139,92,246,.85), rgba(236,72,153,.85)); border-color: rgba(255,255,255,.3); border-bottom-right-radius: 6px; }
+.bub.bot { border-bottom-left-radius: 6px; }
+.kb { display: flex; gap: 8px; margin-top: 10px; }
+.kb span { padding: 7px 12px; border-radius: 12px; font-size: 15px; font-weight: 700; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.22); }
+</style>
+</head>
+<body>
+<div class="s">
+  <div class="orb" style="left:1180px;top:180px;width:420px;height:420px;background:rgba(167,139,250,.35)"></div>
+  <div class="orb" style="left:1500px;top:640px;width:360px;height:360px;background:rgba(244,114,182,.35)"></div>
+  <div class="grain"></div>
+
+  <div class="left">
+    <div class="chip"><span class="live">▶</span>Тест-драйв · 48 часов · 6 уроков</div>
+    <h1>Два дня.<br><span class="l2">Три продукта.</span><br><span class="l3">Один план.</span></h1>
+    <div class="lead">Своими руками соберёшь <b>чат-бота</b>, <b>AI-агента</b> и <b>мини-приложение</b> — как те, что уже работают у нас. В финале — личный план первых заказов.</div>
+  </div>
+
+  <div class="route">
+    <div class="step"><i>0</i>Старт</div><span class="arr">›</span>
+    <div class="step"><i>1</i>Профессия</div><span class="arr">›</span>
+    <div class="step hl"><i>2</i>Чат-боты</div><span class="arr">›</span>
+    <div class="step hl2"><i>3</i>AI-агенты</div><span class="arr">›</span>
+    <div class="step hl3"><i>4</i>Mini Apps</div><span class="arr">›</span>
+    <div class="step"><i>5</i>Клиенты</div><span class="arr">›</span>
+    <div class="step fin"><i>★</i>Разбор</div>
+  </div>
+
+  <div class="stage">
+    <!-- левый задний: Пульс мира (AI-агент) -->
+    <div class="ph" style="--k:.70;left:60px;top:250px;width:300px;height:608px;transform:rotateY(22deg) rotateZ(-4deg) translateZ(-120px)">
+      <div class="device device-iphone-14-pro"><div class="device-frame">
+        <div class="device-screen tgs">
+          <div class="hd"><img src="assets/pulse_avatar.png" alt=""><div><b>Пульс мира</b><span>AI-агент · 498 источников</span></div></div>
+          <div class="bd">
+            <div class="post"><img src="assets/pulse_card.png" alt=""><div class="tx">Собрал, оценил и нарисовал сводку сам.<div class="tm">07:00</div></div></div>
+            <div class="post"><div class="vid"><img src="assets/pulse_video.jpg" alt=""><span class="p">▶</span><span class="d">0:51</span></div></div>
+          </div>
+        </div></div>
+        <div class="device-stripe"></div><div class="device-header"></div><div class="device-sensors"></div><div class="device-btns"></div><div class="device-power"></div><div class="device-home"></div></div>
+      <div class="glare"></div>
+    </div>
+
+    <!-- правый задний: прогресс -->
+    <div class="ph" style="--k:.70;left:600px;top:250px;width:300px;height:608px;transform:rotateY(-22deg) rotateZ(4deg) translateZ(-120px)">
+      <div class="device device-iphone-14-pro"><div class="device-frame"><img class="device-screen" src="assets/ussr_progress.png" alt=""></div>
+        <div class="device-stripe"></div><div class="device-header"></div><div class="device-sensors"></div><div class="device-btns"></div><div class="device-power"></div><div class="device-home"></div></div>
+      <div class="glare"></div>
+    </div>
+
+    <!-- центр: главная спорт-приложения -->
+    <div class="ph" style="--k:.86;left:300px;top:150px;width:368px;height:747px;transform:translateZ(40px)">
+      <div class="device device-iphone-14-pro"><div class="device-frame"><img class="device-screen" src="assets/ussr_home.png" alt=""></div>
+        <div class="device-stripe"></div><div class="device-header"></div><div class="device-sensors"></div><div class="device-btns"></div><div class="device-power"></div><div class="device-home"></div></div>
+      <div class="glare"></div>
+    </div>
+
+    <!-- парящие метки -->
+    <div class="glass tag" style="left:0px;top:150px"><span class="ic" style="background:linear-gradient(135deg,#a78bfa,#f472b6)">✨</span><div>AI-агент<small>сам пишет новости и видео</small></div></div>
+    <div class="glass tag" style="left:640px;top:120px"><span class="ic" style="background:linear-gradient(135deg,#fb923c,#f43f5e)">📱</span><div>Мини-приложение<small>школа гимнастики в Telegram</small></div></div>
+
+    <!-- чат-бот: стеклянный диалог -->
+    <div class="glass bub me" style="left:640px;top:690px">Хочу записаться на маникюр</div>
+    <div class="glass bub bot" style="left:560px;top:762px">Свободно завтра 💅 Выбери время:<div class="kb"><span>12:00</span><span>15:30</span><span>Другой день</span></div></div>
+    <div class="glass tag" style="left:560px;top:902px"><span class="ic" style="background:linear-gradient(135deg,#60a5fa,#a78bfa)">🤖</span><div>Чат-бот<small>запись и заявки 24/7</small></div></div>
+  </div>
+</div>
+</body>
+</html>

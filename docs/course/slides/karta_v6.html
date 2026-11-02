@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><title>v6 уровни</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden}
+.s{position:relative;width:1920px;height:1080px;overflow:hidden;font-family:Nunito,sans-serif;color:#1f2544;
+ background:radial-gradient(900px 500px at 15% 10%,#fff7d6,transparent 60%),radial-gradient(900px 600px at 90% 90%,#ffe0f0,transparent 60%),linear-gradient(160deg,#eaf4ff,#f3ecff)}
+.dots{position:absolute;inset:0;background-image:radial-gradient(rgba(31,37,68,.08) 2px,transparent 2px);background-size:36px 36px}
+h1{position:absolute;left:90px;top:64px;font-size:84px;font-weight:900;letter-spacing:-.02em;line-height:1}
+h1 span{color:#7c4dff}
+.sub{position:absolute;left:94px;top:170px;font-size:28px;font-weight:800;color:#5b6290}
+.xp{position:absolute;right:90px;top:70px;display:flex;gap:14px}
+.xp div{background:#fff;border-radius:22px;padding:14px 22px;font-size:26px;font-weight:900;box-shadow:0 6px 0 #d9def0}
+svg.p{position:absolute;left:0;top:0}
+.lv{position:absolute;width:132px;height:132px;margin:-66px 0 0 -66px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:56px;
+ box-shadow:0 12px 0 var(--d),0 22px 30px rgba(31,37,68,.18);background:var(--c);border:6px solid #fff}
+.lv .no{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);background:#1f2544;color:#fff;font-size:18px;font-weight:900;padding:3px 12px;border-radius:999px}
+.lb{position:absolute;transform:translateX(-50%);text-align:center;width:240px}
+.lb b{display:block;font-size:30px;font-weight:900;letter-spacing:-.01em}
+.lb span{font-size:19px;font-weight:800;color:#6b7299}
+.chest{position:absolute;font-size:16px;font-weight:900;color:#fff;background:#ffb020;box-shadow:0 5px 0 #d98a00;border-radius:14px;padding:6px 12px;transform:translateX(-50%)}
+.mini{position:absolute;width:150px;border-radius:24px;overflow:hidden;border:5px solid #1f2544;box-shadow:0 14px 0 rgba(31,37,68,.18)}
+.mini img{display:block;width:100%}
+.boss{position:absolute;left:1700px;top:600px;width:200px;height:200px;margin:-100px 0 0 -100px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe27a,#ffb020);border:8px solid #fff;
+ box-shadow:0 14px 0 #d98a00,0 0 0 18px rgba(255,176,32,.25),0 30px 50px rgba(217,138,0,.4);display:flex;align-items:center;justify-content:center;font-size:96px}
+.bossl{position:absolute;left:1700px;top:730px;transform:translateX(-50%);text-align:center;width:340px}
+.bossl b{display:block;font-size:36px;font-weight:900}.bossl span{font-size:20px;font-weight:800;color:#6b7299}
+</style></head><body><div class="s"><div class="dots"></div>
+<h1>Тест-драйв: <span>6 уровней</span></h1>
+<div class="sub">Проходи по порядку · собери 4 цифры кода · открой финальный уровень</div>
+<div class="xp"><div>⏱ 48 ч</div><div>🔐 _ _ _ _</div></div>
+<svg class="p" width="1920" height="1080"><path d="M150 640 C 260 640 270 470 400 470 S 540 760 660 760 S 800 470 920 470 S 1060 760 1180 760 S 1320 520 1440 520 S 1600 600 1700 600" fill="none" stroke="#c9cfee" stroke-width="22" stroke-linecap="round" stroke-dasharray="2 34"/></svg>
+
+<div class="lv" style="left:150px;top:640px;--c:#e9edff;--d:#c3c9ee">🚩<span class="no">0</span></div>
+<div class="lb" style="left:150px;top:730px"><b>Старт</b><span>правила игры</span></div>
+
+<div class="lv" style="left:400px;top:470px;--c:#58cc02;--d:#46a302">💼<span class="no">1</span></div>
+<div class="lb" style="left:400px;top:290px"><b>Профессия</b><span>кто платит и сколько</span></div>
+<div class="chest" style="left:400px;top:560px">🔐 цифра 1</div>
+
+<div class="lv" style="left:660px;top:760px;--c:#1cb0f6;--d:#1899d6">🤖<span class="no">2</span></div>
+<div class="lb" style="left:660px;top:850px"><b>Чат-боты</b><span>как Профессор Квасич</span></div>
+<div class="mini" style="left:740px;top:560px;transform:rotate(6deg)"><img src="screens/kvasich.png"></div>
+
+<div class="lv" style="left:920px;top:470px;--c:#ce82ff;--d:#a568cc">✨<span class="no">3</span></div>
+<div class="lb" style="left:920px;top:290px"><b>AI-агенты</b><span>как «Пульс мира»</span></div>
+<div class="mini" style="left:968px;top:540px;width:138px;transform:rotate(-5deg)"><img src="screens/pulse.png"></div>
+
+<div class="lv" style="left:1180px;top:760px;--c:#ff4b4b;--d:#cc3c3c">📱<span class="no">4</span></div>
+<div class="lb" style="left:1180px;top:850px"><b>Mini Apps</b><span>гимнастика · Манекен</span></div>
+<div class="mini" style="left:1230px;top:300px;width:130px;transform:rotate(5deg)"><img src="screens/gym.png"></div>
+<div class="mini" style="left:1100px;top:280px;width:130px;transform:rotate(-6deg)"><img src="screens/manekken.png"></div>
+
+<div class="lv" style="left:1440px;top:520px;--c:#ff9600;--d:#cc7800">🎯<span class="no">5</span></div>
+<div class="lb" style="left:1440px;top:610px"><b>Клиенты</b><span>где искать, сколько просить</span></div>
+
+<div class="boss">🏆</div>
+<div class="bossl"><b>Разбор</b><span>анкета + код → личный план и бонус</span></div>
+</div></body></html>
