@@ -342,14 +342,19 @@ def delete_project(project_id: int, request: Request):
 async def rename_project(project_id: int, request: Request):
     user = require_user(request)
     data = await _body(request)
-    name = str(data.get("name", "")).strip()
-    if not name:
-        raise HTTPException(status_code=400, detail="Название не может быть пустым")
-    if len(name) > 120:
-        raise HTTPException(status_code=413, detail="Слишком длинное название")
-    if not store.rename_project(user["id"], project_id, name, is_admin=user["role"] == "admin"):
-        raise HTTPException(status_code=404, detail="Проект не найден")
-    return {"ok": True, "name": name}
+    if "name" in data:
+        name = str(data.get("name", "")).strip()
+        if not name:
+            raise HTTPException(status_code=400, detail="Название не может быть пустым")
+        if len(name) > 120:
+            raise HTTPException(status_code=413, detail="Слишком длинное название")
+        if not store.rename_project(user["id"], project_id, name, is_admin=user["role"] == "admin"):
+            raise HTTPException(status_code=404, detail="Проект не найден")
+    if "is_shared" in data:
+        shared = bool(data.get("is_shared"))
+        if not store.set_shared(user["id"], project_id, shared, is_admin=user["role"] == "admin"):
+            raise HTTPException(status_code=404, detail="Проект не найден")
+    return {"ok": True, "is_shared": bool(data.get("is_shared", False))}
 
 
 @app.put("/api/projects/{project_id}/files")

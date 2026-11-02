@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS projects (
     name TEXT NOT NULL,
     brief_json TEXT NOT NULL DEFAULT '{}',
     status TEXT NOT NULL DEFAULT 'draft',
+    is_shared INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
@@ -137,6 +138,9 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if "demo" not in usage_cols:
         conn.execute("ALTER TABLE usage ADD COLUMN demo INTEGER NOT NULL DEFAULT 0")
         conn.execute("UPDATE usage SET demo = 1 WHERE kind = 'topup'")
+    project_cols = {row[1] for row in conn.execute("PRAGMA table_info(projects)")}
+    if "is_shared" not in project_cols:
+        conn.execute("ALTER TABLE projects ADD COLUMN is_shared INTEGER NOT NULL DEFAULT 0")
     conn.commit()
 
 

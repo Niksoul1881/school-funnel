@@ -654,3 +654,7 @@ body.theme-light .term-form input{color:#e7e7e7!important}
 #term-run{width:22px;height:20px;border:1px solid #3a3a3a!important;border-radius:5px;background:#252526!important;color:#6fbf9a!important;font-size:9px!important;line-height:18px;padding:0;margin-right:5px;cursor:pointer}
 #term-run:hover{background:#2d2d2d!important;color:#9ee7c2!important}
 #term-run:disabled{opacity:.35;cursor:default;color:#858585!important}
+
+.shared-badge{display:inline-flex;align-items:center;height:15px;padding:0 5px;border-radius:999px;border:1px solid rgba(111,191,154,.35);background:rgba(111,191,154,.1);color:#2f9e7a;font:700 7.5px Manrope,sans-serif;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+body:not(.theme-light) .shared-badge{color:#8fd2b3}
+.vsc-side-title .shared-badge{margin-left:4px;vertical-align:1px}

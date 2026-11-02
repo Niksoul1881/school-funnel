@@ -39,17 +39,19 @@ def _template(template_id: str) -> dict:
 
 
 def list_projects(user_id: int) -> list[dict]:
-    rows = fetch_all("SELECT * FROM projects WHERE user_id = ? ORDER BY updated_at DESC", (user_id,))
+    rows = fetch_all("SELECT * FROM projects WHERE user_id = ? OR is_shared = 1 ORDER BY updated_at DESC", (user_id,))
     out = []
     for row in rows:
         files_count = fetch_one("SELECT COUNT(*) AS c FROM files WHERE project_id = ?", (row["id"],))["c"]
         deploy = fetch_one("SELECT status, bot_username FROM deployments WHERE project_id = ?", (row["id"],))
         out.append({
             "id": row["id"],
+            "user_id": row["user_id"],
             "name": row["name"],
             "template_id": row["template_id"],
             "template": _template(row["template_id"]),
             "status": row["status"],
+            "is_shared": bool(row["is_shared"]) if "is_shared" in row.keys() else False,
             "files_count": files_count,
             "deployment": dict(deploy) if deploy else None,
             "created_at": row["created_at"],
@@ -112,7 +114,7 @@ def get_project(user_id: int, project_id: int, is_admin: bool = False) -> dict |
     row = fetch_one("SELECT * FROM projects WHERE id = ?", (project_id,))
     if not row:
         return None
-    if row["user_id"] != user_id and not is_admin:
+    if row["user_id"] != user_id and not is_admin and not row["is_shared"]:
         return None
     files = fetch_all("SELECT path, content, updated_at FROM files WHERE project_id = ? ORDER BY path", (project_id,))
     folders = fetch_all("SELECT path FROM folders WHERE project_id = ? ORDER BY path", (project_id,))
@@ -136,6 +138,7 @@ def get_project(user_id: int, project_id: int, is_admin: bool = False) -> dict |
         "template_id": row["template_id"],
         "template": _template(row["template_id"]),
         "status": row["status"],
+        "is_shared": bool(row["is_shared"]) if "is_shared" in row.keys() else False,
         "brief": json.loads(row["brief_json"] or "{}"),
         "files": [dict(f) for f in files],
         "folders": [f["path"] for f in folders],
@@ -216,6 +219,14 @@ def rename_project(user_id: int, project_id: int, name: str, is_admin: bool = Fa
     if not row or (row["user_id"] != user_id and not is_admin):
         return False
     execute("UPDATE projects SET name = ?, updated_at = ? WHERE id = ?", (name, now(), project_id))
+    return True
+
+
+def set_shared(user_id: int, project_id: int, shared: bool, is_admin: bool = False) -> bool:
+    row = fetch_one("SELECT user_id FROM projects WHERE id = ?", (project_id,))
+    if not row or (row["user_id"] != user_id and not is_admin):
+        return False
+    execute("UPDATE projects SET is_shared = ?, updated_at = ? WHERE id = ?", (1 if shared else 0, now(), project_id))
     return True
 
 

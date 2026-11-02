@@ -427,7 +427,7 @@ function defaultSidebar(current) {
     <div class="vsc-side-section">
       <div class="vsc-side-title">Проекты <span class="grow">${state.projects.length}</span><button data-go="#/templates" title="Новый проект">+</button></div>
       <button class="tree-row open-folder-row" data-action="open-folder">${svg('folder')}Открыть папку с диска</button>
-      ${state.projects.length ? state.projects.map((p) => `<div class="project-item ${current === '#/project/' + p.id ? 'active' : ''}"><a class="tree-row" data-go="#/project/${p.id}">${svg(p.template?.icon || 'bot')}<span class="tree-name">${esc(p.name)}</span><span class="project-count">${p.files_count || 0}</span></a><button class="tree-more project-more" data-project-menu="${p.id}" title="Действия">⋯</button></div>`).join('') : `<div class="vsc-side-empty">Пока нет проектов. Создай первый из шаблона.</div>`}
+      ${state.projects.length ? state.projects.map((p) => `<div class="project-item ${current === '#/project/' + p.id ? 'active' : ''}"><a class="tree-row" data-go="#/project/${p.id}">${svg(p.template?.icon || 'bot')}<span class="tree-name">${esc(p.name)}</span>${p.is_shared ? '<span class="shared-badge">общий</span>' : ''}<span class="project-count">${p.files_count || 0}</span></a><button class="tree-more project-more" data-project-menu="${p.id}" title="Действия">⋯</button></div>`).join('') : `<div class="vsc-side-empty">Пока нет проектов. Создай первый из шаблона.</div>`}
     </div>
     <div class="vsc-side-section">
       <div class="vsc-side-title">Обучение <span class="grow">${done}/${total}</span></div>
@@ -688,7 +688,7 @@ async function renderProject(projectId) {
     </aside>
     <div class="drop-overlay" id="drop-overlay">${svg('plus')}<b>Отпусти файлы</b><span>Добавлю их в проект</span></div>
   </div>`;
-  const actions = `<button class="btn sm" data-action="open-deploy">${svg('rocket')}Опубликовать</button><button class="btn sm ghost" data-action="delete-project" title="Удалить">${svg('trash')}</button>`;
+  const actions = `<button class="btn sm" data-action="open-deploy">${svg('rocket')}Опубликовать</button>${p.is_shared ? '<span class="shared-badge">общий</span>' : `<button class="btn sm ghost" data-action="delete-project" title="Удалить">${svg('trash')}</button>`}`;
   $('#app').innerHTML = layout(content, {
     title: p.name,
     tabs,
@@ -944,7 +944,7 @@ function projectSidebar(p) {
   <div class="tree-search"><input id="file-search" type="search" placeholder="Поиск по файлам…" value="${esc(state.fileFilter || '')}" autocomplete="off"></div>
   <div class="vsc-side-scroll">
     <div class="vsc-side-section">
-      <div class="vsc-side-title">${esc(p.name)} <span class="grow">${p.files.length}</span></div>
+      <div class="vsc-side-title">${esc(p.name)} ${p.is_shared ? '<span class="shared-badge">общий</span>' : ''}<span class="grow">${p.files.length}</span></div>
       <div class="tree-row tree-folder tree-root" data-dir="">${chevron(true)}${folderIcon(true)}<span class="tree-name">${esc(p.name)}</span></div>
       ${renderTree(buildFileTree(p.files, p.folders || []), 1, '')}
     </div>
@@ -952,7 +952,7 @@ function projectSidebar(p) {
       <div class="vsc-side-title">Проект</div>
       <div class="tree-row" data-action="add-files">${svg('plus')}Добавить файлы</div>
       <div class="tree-row" data-action="open-deploy">${svg('rocket')}Опубликовать</div>
-      <div class="tree-row" data-action="delete-project">${svg('trash')}Удалить проект</div>
+      ${p.is_shared ? '' : `<div class="tree-row" data-action="delete-project">${svg('trash')}Удалить проект</div>`}
     </div>
     ${others.length ? `<div class="vsc-side-section"><div class="vsc-side-title">Другие проекты <span class="grow">${others.length}</span></div>${others.map((x) => `<a class="tree-row" data-go="#/project/${x.id}">${svg(x.template?.icon || 'bot')}<span class="tree-name">${esc(x.name)}</span></a>`).join('')}</div>` : ''}
   </div>`;
@@ -2330,23 +2330,36 @@ function openProjectMenu(btn) {
   const id = Number(btn.dataset.projectMenu);
   const project = state.projects.find((p) => p.id === id);
   if (!project) return;
+  const isOwner = project.user_id === state.user?.id;
+  const toggleShare = ['Сделать ' + (project.is_shared ? 'личным' : 'общим'), async () => {
+    try {
+      await api('/api/projects/' + id, { method: 'PATCH', body: { is_shared: !project.is_shared } });
+      await refreshBase();
+      if (state.project?.id === id) { await refreshProjectView(); }
+      else { render(); }
+      toast(project.is_shared ? 'Проект снова личный' : 'Проект открыт для всех зарегистрированных');
+    } catch (err) { toast(err.message, 'err'); }
+  }];
   const items = [
     ['Открыть', () => { location.hash = '#/project/' + id; }],
-    ['Переименовать', async () => {
-      const name = prompt('Название проекта', project.name);
-      if (!name || name === project.name) return;
-      try { await api('/api/projects/' + id, { method: 'PATCH', body: { name } }); await refreshBase(); render(); } catch (err) { toast(err.message, 'err'); }
-    }],
-    ['Удалить', async () => {
-      if (!confirm(`Удалить проект «${project.name}»?`)) return;
-      try {
-        await api('/api/projects/' + id, { method: 'DELETE' });
-        await refreshBase();
-        if (location.hash === '#/project/' + id) { location.hash = '#/dashboard'; }
-        else { render(); }
-        toast('Проект удалён');
-      } catch (err) { toast(err.message, 'err'); }
-    }, true],
+    ...(isOwner ? [toggleShare] : []),
+    ...(isOwner && !project.is_shared ? [
+      ['Переименовать', async () => {
+        const name = prompt('Название проекта', project.name);
+        if (!name || name === project.name) return;
+        try { await api('/api/projects/' + id, { method: 'PATCH', body: { name } }); await refreshBase(); render(); } catch (err) { toast(err.message, 'err'); }
+      }],
+      ['Удалить', async () => {
+        if (!confirm(`Удалить проект «${project.name}»?`)) return;
+        try {
+          await api('/api/projects/' + id, { method: 'DELETE' });
+          await refreshBase();
+          if (location.hash === '#/project/' + id) { location.hash = '#/dashboard'; }
+          else { render(); }
+          toast('Проект удалён');
+        } catch (err) { toast(err.message, 'err'); }
+      }, true],
+    ] : []),
   ];
   const menu = document.createElement('div');
   menu.className = 'tree-menu project-menu';
