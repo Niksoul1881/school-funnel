@@ -21,7 +21,7 @@ from starlette.concurrency import run_in_threadpool
 
 from . import agent, catalog, config, lessons, security, store, telegram, terminal
 from .db import execute, fetch_all, fetch_one, init_db
-from .security import public_user, require_admin, require_user
+from .security import hash_password, public_user, require_admin, require_user, verify_password
 
 MAX_FILE_BYTES = 1_000_000
 
@@ -234,6 +234,23 @@ async def update_me(request: Request):
         raise HTTPException(status_code=400, detail="Имя должно быть от 2 до 80 символов")
     execute("UPDATE users SET name = ? WHERE id = ?", (name, user["id"]))
     return {"user": _user_payload(require_user(request))}
+
+
+@app.post("/api/me/password")
+async def change_password(request: Request):
+    user = require_user(request)
+    data = await _body(request)
+    current = str(data.get("current_password", ""))
+    new = str(data.get("new_password", ""))
+    row = fetch_one("SELECT password_hash FROM users WHERE id = ?", (user["id"],))
+    if not row or not verify_password(current, row["password_hash"]):
+        raise HTTPException(status_code=403, detail="Текущий пароль неверный")
+    if len(new) < 10:
+        raise HTTPException(status_code=400, detail="Новый пароль должен быть не короче 10 символов")
+    execute("UPDATE users SET password_hash = ? WHERE id = ?", (hash_password(new), user["id"]))
+    execute("DELETE FROM sessions WHERE user_id = ?", (user["id"],))
+    store.log_event(user["id"], "password_change")
+    return {"ok": True}
 
 
 @app.post("/api/events")

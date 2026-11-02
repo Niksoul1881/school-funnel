@@ -669,3 +669,5 @@ body:not(.theme-light) .shared-badge{color:#8fd2b3}
 .live-current b{flex:none;color:var(--vsc-blue);font-weight:700}
 .live-current span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--vsc-muted)}
 body.theme-light .live-current b{color:#d94b63}
+
+.profile-sep{height:1px;background:var(--vsc-border);margin:18px 0 14px}

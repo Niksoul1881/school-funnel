@@ -2232,6 +2232,14 @@ async function renderProfile() {
         <div class="field"><label>Email</label><input value="${esc(u.email)}" disabled></div>
         <button class="btn primary" type="submit">Сохранить имя</button>
       </form>
+      <div class="profile-sep"></div>
+      <h3>Сменить пароль</h3>
+      <form id="password-form" style="margin-top:10px">
+        <div class="field"><label>Текущий пароль</label><input name="current_password" type="password" required autocomplete="current-password"></div>
+        <div class="field"><label>Новый пароль</label><input name="new_password" type="password" required minlength="10" placeholder="Минимум 10 символов" autocomplete="new-password"></div>
+        <div class="field"><label>Повтори новый</label><input name="confirm_password" type="password" required minlength="10" autocomplete="new-password"></div>
+        <button class="btn primary" type="submit">Сменить пароль</button>
+      </form>
     </div>
     <div class="card">
       <div class="between"><h3>Последние действия</h3><span class="small dim">${events.length}</span></div>
@@ -2251,6 +2259,22 @@ async function renderProfile() {
       state.user = data.user;
       toast('Имя сохранено');
       renderProfile();
+    } catch (err) { toast(err.message, 'err'); }
+  };
+  const pwForm = $('#password-form');
+  if (pwForm) pwForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(pwForm);
+    const current = String(fd.get('current_password') || '');
+    const next = String(fd.get('new_password') || '');
+    const confirm = String(fd.get('confirm_password') || '');
+    if (next !== confirm) { toast('Новые пароли не совпадают', 'err'); return; }
+    try {
+      await api('/api/me/password', { method: 'POST', body: { current_password: current, new_password: next } });
+      state.user = null;
+      location.hash = '#/login';
+      renderAuth();
+      toast('Пароль изменён — войди заново');
     } catch (err) { toast(err.message, 'err'); }
   };
 }
