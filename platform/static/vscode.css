@@ -671,3 +671,17 @@ body:not(.theme-light) .shared-badge{color:#8fd2b3}
 body.theme-light .live-current b{color:#d94b63}
 
 .profile-sep{height:1px;background:var(--vsc-border);margin:18px 0 14px}
+
+/* focus mode: editor takes the whole width */
+.vsc-workbench.focus-mode .vsc-sidebar,
+.vsc-workbench.focus-mode .sidebar-resizer,
+.vsc-workbench.focus-mode .ide-resizer,
+.vsc-workbench.focus-mode .ide-aux{display:none!important}
+.vsc-workbench.focus-mode .ide-main{grid-template-columns:minmax(0,1fr)!important;--aux-w:0px!important}
+.vsc-workbench.focus-mode .vsc-editor-area{width:100%}
+
+/* Yandex/Chrome spellcheck sometimes ignores spellcheck=false in textarea */
+#file-content::spelling-error,
+#file-content::grammar-error,
+.vsc-editor textarea::spelling-error,
+.vsc-editor textarea::grammar-error{text-decoration:none!important}

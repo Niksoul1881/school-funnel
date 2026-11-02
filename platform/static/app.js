@@ -21,6 +21,7 @@ const state = {
   auxWidth: Number(localStorage.getItem('school-aux-w')) || 380,
   panelHeight: Number(localStorage.getItem('school-panel-h')) || 210,
   sideWidth: Number(localStorage.getItem('school-side-w')) || 248,
+  focusMode: localStorage.getItem('school-focus') === '1',
   collapsedDirs: new Set(),
   filter: 'all',
   authMode: 'login',
@@ -459,7 +460,7 @@ function layout(content, opts = {}) {
       <div class="vsc-title">${esc(title)}</div>
       <div class="vsc-token-chip" data-go="#/billing" title="Баланс токенов">${svg('wallet')}<b>${tokensShort(state.user?.token_balance || 0)}</b><span>токенов</span></div>
     </div>
-    <div class="vsc-workbench" style="--side-w:${state.sideWidth}px">
+    <div class="vsc-workbench ${state.focusMode ? 'focus-mode' : ''}" style="--side-w:${state.sideWidth}px">
       ${activityBar(current)}
       <aside class="vsc-sidebar">${sidebar}</aside>
       <div class="sidebar-resizer" data-resize="sidebar" title="Потяни, чтобы изменить ширину проводника"></div>
@@ -688,7 +689,7 @@ async function renderProject(projectId) {
     </aside>
     <div class="drop-overlay" id="drop-overlay">${svg('plus')}<b>Отпусти файлы</b><span>Добавлю их в проект</span></div>
   </div>`;
-  const actions = `<button class="btn sm" data-action="open-deploy">${svg('rocket')}Опубликовать</button>${p.is_shared ? '<span class="shared-badge">общий</span>' : `<button class="btn sm ghost" data-action="delete-project" title="Удалить">${svg('trash')}</button>`}`;
+  const actions = `<button class="btn sm ghost" data-action="toggle-focus" title="${state.focusMode ? 'Вернуть панели' : 'Развернуть редактор'}">${svg('external')}</button><button class="btn sm" data-action="open-deploy">${svg('rocket')}Опубликовать</button>${p.is_shared ? '<span class="shared-badge">общий</span>' : `<button class="btn sm ghost" data-action="delete-project" title="Удалить">${svg('trash')}</button>`}`;
   $('#app').innerHTML = layout(content, {
     title: p.name,
     tabs,
@@ -1142,9 +1143,9 @@ function renderMarkdown(text) {
     const body = rows.slice(sep + 1);
     return `<div class="msg-table-wrap"><table class="msg-table"><thead><tr>${head.map((c) => `<th>${c}</th>`).join('')}</tr></thead><tbody>${body.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
   });
-  html = html.replace(/^###\s+(.+)$/gm, '<h4>$1</h4>');
-  html = html.replace(/^##\s+(.+)$/gm, '<h3>$1</h3>');
-  html = html.replace(/^#\s+(.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^\s{0,3}###\s+(.+)$/gm, '<h4>$1</h4>');
+  html = html.replace(/^\s{0,3}##\s+(.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^\s{0,3}#\s+(.+)$/gm, '<h3>$1</h3>');
   html = html.replace(/^\s*[-*]\s+(.+)$/gm, '<li>$1</li>');
   html = html.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>');
   html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
@@ -1315,7 +1316,7 @@ function fileView(p) {
     <div class="code-wrap">
       <div class="gutter" id="gutter">${numbers}</div>
       <div class="code-area">
-        <pre class="code-layer" id="code-layer" aria-hidden="true"><code>${highlightCode(file.content, file.path)}</code></pre>
+        <pre class="code-layer" id="code-layer" aria-hidden="true" spellcheck="false"><code>${highlightCode(file.content, file.path)}</code></pre>
         <textarea id="file-content" spellcheck="false" wrap="off">${esc(file.content)}</textarea>
       </div>
       <div class="minimap" id="minimap" title="Миникарта: клик — перейти">
@@ -2469,6 +2470,10 @@ document.addEventListener('click', async (e) => {
       await refreshProjectView();
       toast('Проект переименован');
     } catch (err) { toast(err.message, 'err'); }
+  } else if (a === 'toggle-focus') {
+    state.focusMode = !state.focusMode;
+    localStorage.setItem('school-focus', state.focusMode ? '1' : '0');
+    if (state.project) renderProject(state.project.id);
   } else if (a === 'toggle-theme') {
     document.body.classList.toggle('theme-light');
     localStorage.setItem('school-theme', document.body.classList.contains('theme-light') ? 'light' : 'dark');
@@ -2521,6 +2526,14 @@ async function render() {
     renderDashboard();
   }
 }
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && state.focusMode && state.project) {
+    state.focusMode = false;
+    localStorage.setItem('school-focus', '0');
+    renderProject(state.project.id);
+  }
+});
 
 async function boot() {
   const savedTheme = localStorage.getItem('school-theme');
