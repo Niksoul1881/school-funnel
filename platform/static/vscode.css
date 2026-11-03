@@ -708,3 +708,7 @@ body.theme-light .live-current b{color:#d94b63}
 .local-term-form{flex:none;display:flex;align-items:center;gap:7px;padding:6px 12px;border-top:1px solid #333;background:#181818}
 .local-term-form input{flex:1;background:transparent;border:0;outline:0;color:#e7e7e7;font:12px Consolas,monospace;padding:4px 0}
 .local-term-form button{width:26px;height:24px;border:1px solid #3a3a3a;border-radius:5px;background:#252526;color:#d4d4d4;cursor:pointer}
+
+.pair-advanced{margin-top:8px}
+.pair-advanced summary{cursor:pointer;font-size:10px;color:var(--vsc-muted)}
+.pair-box .row{display:flex;gap:6px;flex-wrap:wrap}

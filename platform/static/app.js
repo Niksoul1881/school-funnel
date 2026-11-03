@@ -2220,6 +2220,35 @@ function openLocalTerminal(device) {
   });
 }
 
+function downloadRunnerCmd(code) {
+  const server = location.origin;
+  const lines = [
+    '@echo off',
+    'chcp 65001 >nul',
+    'setlocal',
+    `set "SERVER=${server}"`,
+    `set "CODE=${code}"`,
+    'where node >nul 2>nul',
+    'if errorlevel 1 (echo Node.js не найден. Установи Node.js 22+ и запусти файл снова. & pause & exit /b 1)',
+    'set "SCRIPT=%TEMP%\\school-runner.mjs"',
+    'echo Скачиваю runner...',
+    'powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -UseBasicParsing \'%SERVER%/static/runner.mjs\' -OutFile \'%SCRIPT%\'"',
+    'if errorlevel 1 (echo Не удалось скачать runner. & pause & exit /b 1)',
+    'set "DIR=%USERPROFILE%\\Desktop\\Proj\\school-funnel"',
+    'if not exist "%DIR%" set "DIR="',
+    'if "%DIR%"=="" set /p "DIR=Введи путь к папке: "',
+    'echo Подключаю компьютер...',
+    'node "%SCRIPT%" --server "%SERVER%" --code "%CODE%" --dir "%DIR%"',
+    'pause',
+  ];
+  const blob = new Blob([lines.join('\r\n')], { type: 'application/x-bat' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'connect-school-pc.cmd';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
 async function bindDevices() {
   const btn = $('#pair-device');
   const list = $('#devices-list');
@@ -2235,18 +2264,34 @@ async function bindDevices() {
       try { await api('/api/devices/' + b.dataset.deviceDel, { method: 'DELETE' }); await load(); } catch (err) { toast(err.message, 'err'); }
     });
   };
+  let pairingActive = false;
   const load = async () => {
-    try { render((await api('/api/devices')).devices || []); } catch (_) {}
+    try {
+      const devices = (await api('/api/devices')).devices || [];
+      render(devices);
+      if (pairingActive) {
+        const online = devices.find((d) => d.online);
+        if (online) {
+          pairingActive = false;
+          openLocalTerminal(online);
+        }
+      }
+    } catch (_) {}
   };
   btn.onclick = async () => {
     btn.disabled = true;
     try {
       const data = await api('/api/devices/pair', { method: 'POST', body: {} });
       const cmd = `node local-runner/runner.mjs --server ${location.origin} --code ${data.code} --dir "C:\\путь\\к\\твоей\\папке"`;
-      $('#pair-result').innerHTML = `<div class="pair-box"><div class="eyebrow">Код сопряжения</div><b>${data.code}</b><p>Запусти в папке проекта:</p><pre>${esc(cmd)}</pre><button class="btn sm" id="pair-refresh">Проверить подключение</button></div>`;
+      pairingActive = true;
+      $('#pair-result').innerHTML = `<div class="pair-box"><div class="eyebrow">Код сопряжения</div><b>${data.code}</b><p>Скачай файл и запусти двойным кликом — runner подключится сам. Нужен Node.js.</p><div class="row"><button class="btn primary" id="download-runner">Скачать подключение</button><button class="btn sm ghost" id="pair-refresh">Проверить</button></div><details class="pair-advanced"><summary>Показать команду для терминала</summary><pre>${esc(cmd)}</pre></details></div>`;
+      $('#download-runner').onclick = () => downloadRunnerCmd(data.code);
       $('#pair-refresh').onclick = load;
       await load();
-      const timer = setInterval(async () => { await load(); if (list.querySelector('.device-status.online')) clearInterval(timer); }, 3000);
+      const timer = setInterval(async () => {
+        await load();
+        if (list.querySelector('.device-status.online') || !pairingActive) clearInterval(timer);
+      }, 3000);
     } catch (err) { toast(err.message, 'err'); }
     btn.disabled = false;
   };

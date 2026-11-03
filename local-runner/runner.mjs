@@ -27,6 +27,19 @@ let server = (arg('server') || process.env.SCHOOL_SERVER || 'https://school.91-1
 let code = arg('code');
 let root = arg('dir');
 let name = arg('name') || 'Мой компьютер';
+const forcePair = argv.includes('--force-pair');
+
+if (code && !forcePair && existsSync(configPath)) {
+  try {
+    const saved = JSON.parse(readFileSync(configPath, 'utf8'));
+    if (saved.token) {
+      console.log('[runner] Использую сохранённый токен; для новой пары добавь --force-pair');
+      code = '';
+      server = saved.server || server;
+      root = root || saved.root;
+    }
+  } catch {}
+}
 
 if (!code && existsSync(configPath)) {
   try {
@@ -137,10 +150,14 @@ function connect() {
       sessions.delete(session);
     }
   });
-  socket.addEventListener('close', () => {
+  socket.addEventListener('close', (event) => {
     console.log('[runner] Соединение закрыто. Переподключаюсь через 5 секунд…');
     for (const child of sessions.values()) { try { child.kill(); } catch {} }
     sessions.clear();
+    if (event.code === 1008) {
+      console.error('[runner] Токен отклонён. Удали .device.json и запусти pairing заново.');
+      process.exit(1);
+    }
     if (!closedByUser) setTimeout(connect, 5000);
   });
   socket.addEventListener('error', () => {});
