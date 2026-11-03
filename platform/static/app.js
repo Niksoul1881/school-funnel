@@ -2284,7 +2284,7 @@ async function bindDevices() {
       const data = await api('/api/devices/pair', { method: 'POST', body: {} });
       const cmd = `node local-runner/runner.mjs --server ${location.origin} --code ${data.code} --dir "C:\\путь\\к\\твоей\\папке"`;
       pairingActive = true;
-      $('#pair-result').innerHTML = `<div class="pair-box"><div class="eyebrow">Код сопряжения</div><b>${data.code}</b><p>Скачай файл и запусти двойным кликом — runner подключится сам. Нужен Node.js.</p><div class="row"><button class="btn primary" id="download-runner">Скачать подключение</button><button class="btn sm ghost" id="pair-refresh">Проверить</button></div><details class="pair-advanced"><summary>Показать команду для терминала</summary><pre>${esc(cmd)}</pre></details></div>`;
+      $('#pair-result').innerHTML = `<div class="pair-box"><div class="eyebrow">Код сопряжения</div><b>${data.code}</b><p>Скачай файл и запусти двойным кликом — runner подключится сам. Нужен Node.js.</p><div class="row"><button class="btn primary" id="download-runner">Скачать подключение</button><button class="btn sm ghost" id="pair-refresh">Проверить</button></div><div class="small dim" style="margin-top:8px">Windows может показать «Неизвестный издатель» — это SmartScreen для неподписанного .cmd. Запускай только файл, скачанный с этой страницы.</div><details class="pair-advanced"><summary>Показать команду для терминала</summary><pre>${esc(cmd)}</pre></details></div>`;
       $('#download-runner').onclick = () => downloadRunnerCmd(data.code);
       $('#pair-refresh').onclick = load;
       await load();
