@@ -2191,6 +2191,68 @@ async function renderBilling() {
 }
 
 /* ---------- profile ---------- */
+function openLocalTerminal(device) {
+  document.querySelector('.local-term-modal')?.remove();
+  const modal = document.createElement('div');
+  modal.className = 'local-term-modal';
+  modal.innerHTML = `<div class="local-term-box"><div class="local-term-head"><b>${esc(device.name)}</b><span class="term-status" id="local-term-status">подключаюсь…</span><span class="grow"></span><button type="button" id="local-term-close">×</button></div><pre class="local-term-output" id="local-term-output"></pre><form class="local-term-form" id="local-term-form"><span class="term-prompt">$</span><input id="local-term-input" placeholder="Команда на твоём компьютере…" autocomplete="off" spellcheck="false"><button type="submit">↵</button></form></div>`;
+  document.body.appendChild(modal);
+  const out = modal.querySelector('#local-term-output');
+  const input = modal.querySelector('#local-term-input');
+  const status = modal.querySelector('#local-term-status');
+  const close = () => { try { ws.close(); } catch (_) {} modal.remove(); };
+  modal.querySelector('#local-term-close').onclick = close;
+  const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+  const ws = new WebSocket(proto + location.host + `/api/devices/${device.id}/terminal`);
+  ws.onopen = () => { status.textContent = 'на связи'; status.className = 'term-status online'; input.focus(); };
+  ws.onmessage = (e) => { out.textContent += stripAnsi(e.data); out.scrollTop = out.scrollHeight; };
+  ws.onclose = () => { status.textContent = 'отключено'; status.className = 'term-status offline'; };
+  ws.onerror = () => { status.textContent = 'ошибка'; status.className = 'term-status offline'; };
+  modal.querySelector('#local-term-form').onsubmit = (e) => {
+    e.preventDefault();
+    if (ws.readyState !== WebSocket.OPEN) return;
+    const command = input.value;
+    ws.send(JSON.stringify({ type: 'input', data: command + '\r' }));
+    input.value = '';
+  };
+  modal.querySelector('#local-term-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close();
+  });
+}
+
+async function bindDevices() {
+  const btn = $('#pair-device');
+  const list = $('#devices-list');
+  if (!btn || !list) return;
+  const render = (devices) => {
+    list.innerHTML = devices.length ? devices.map((d) => `<div class="device-row"><div class="device-info"><b>${esc(d.name)}</b><span>${esc(d.root || 'папка не указана')}</span></div><i class="device-status ${d.online ? 'online' : ''}">${d.online ? 'online' : 'offline'}</i><button class="btn sm" data-device-term="${d.id}" ${d.online ? '' : 'disabled'}>Терминал</button><button class="tree-more" data-device-del="${d.id}" title="Удалить">×</button></div>`).join('') : '<div class="small dim" style="margin-top:10px">Пока нет подключённых компьютеров.</div>';
+    list.querySelectorAll('[data-device-term]').forEach((b) => b.onclick = () => {
+      const device = devices.find((d) => d.id === Number(b.dataset.deviceTerm));
+      if (device) openLocalTerminal(device);
+    });
+    list.querySelectorAll('[data-device-del]').forEach((b) => b.onclick = async () => {
+      if (!confirm('Отключить этот компьютер?')) return;
+      try { await api('/api/devices/' + b.dataset.deviceDel, { method: 'DELETE' }); await load(); } catch (err) { toast(err.message, 'err'); }
+    });
+  };
+  const load = async () => {
+    try { render((await api('/api/devices')).devices || []); } catch (_) {}
+  };
+  btn.onclick = async () => {
+    btn.disabled = true;
+    try {
+      const data = await api('/api/devices/pair', { method: 'POST', body: {} });
+      const cmd = `node local-runner/runner.mjs --server ${location.origin} --code ${data.code} --dir "C:\\путь\\к\\твоей\\папке"`;
+      $('#pair-result').innerHTML = `<div class="pair-box"><div class="eyebrow">Код сопряжения</div><b>${data.code}</b><p>Запусти в папке проекта:</p><pre>${esc(cmd)}</pre><button class="btn sm" id="pair-refresh">Проверить подключение</button></div>`;
+      $('#pair-refresh').onclick = load;
+      await load();
+      const timer = setInterval(async () => { await load(); if (list.querySelector('.device-status.online')) clearInterval(timer); }, 3000);
+    } catch (err) { toast(err.message, 'err'); }
+    btn.disabled = false;
+  };
+  await load();
+}
+
 async function renderProfile() {
   const target = location.hash;
   let events = [];
@@ -2243,6 +2305,13 @@ async function renderProfile() {
       </form>
     </div>
     <div class="card">
+      <div class="between"><h3>Мой компьютер</h3><span class="badge">local runner</span></div>
+      <div class="small dim" style="margin:8px 0 10px">Подключи свой ПК, чтобы выполнять команды и работать с файлами локально. Пока это терминал; файлы и DSH — следующий шаг.</div>
+      <button class="btn primary" id="pair-device">Подключить компьютер</button>
+      <div id="pair-result"></div>
+      <div id="devices-list" class="devices-list"></div>
+    </div>
+    <div class="card">
       <div class="between"><h3>Последние действия</h3><span class="small dim">${events.length}</span></div>
       <div class="activity-list">
         ${events.length ? events.slice(0, 14).map((e) => `<div class="activity-row"><span class="activity-dot"></span><div><b>${esc(labels[e.kind] || e.kind)}</b><span>${ago(e.created_at)}</span></div></div>`).join('') : '<div class="vsc-side-empty">Пока нет событий</div>'}
@@ -2278,6 +2347,7 @@ async function renderProfile() {
       toast('Пароль изменён — войди заново');
     } catch (err) { toast(err.message, 'err'); }
   };
+  await bindDevices();
 }
 
 /* ---------- admin ---------- */

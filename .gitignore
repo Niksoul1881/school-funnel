@@ -5,6 +5,8 @@ private/
 *.token
 token.txt
 .bot_token.txt
+**/.device.json
+local-runner/.device.json
 *.pem
 id_rsa*
 id_ed25519*

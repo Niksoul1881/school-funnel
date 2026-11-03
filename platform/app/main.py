@@ -7,9 +7,12 @@ import hmac
 import json
 import queue
 import re
+import secrets
 import subprocess
 import tempfile
 import threading
+import time
+import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -33,6 +36,11 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title=config.APP_NAME, version="0.1.0", lifespan=lifespan)
+
+# Local runner registry: pairing codes, connected runners and browser terminals.
+PAIR_CODES: dict[str, dict] = {}
+RUNNERS: dict[int, WebSocket] = {}
+BROWSER_TERMS: dict[str, WebSocket] = {}
 
 
 @app.middleware("http")
@@ -507,6 +515,138 @@ async def terminal_socket(websocket: WebSocket, project_id: int):
     await websocket.accept()
     await run_in_threadpool(terminal.sync_workspace, project)
     await terminal.run_shell(websocket, project)
+
+
+@app.post("/api/devices/pair")
+def pair_device(request: Request):
+    user = require_user(request)
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    PAIR_CODES[code] = {"user_id": user["id"], "expires": time.time() + 600}
+    return {"code": code, "expires_in": 600}
+
+
+@app.post("/api/devices/claim")
+async def claim_device(request: Request):
+    data = await _body(request)
+    code = str(data.get("code", "")).strip()
+    info = PAIR_CODES.get(code)
+    if not info or info["expires"] < time.time():
+        PAIR_CODES.pop(code, None)
+        raise HTTPException(status_code=404, detail="Код неверный или истёк")
+    name = str(data.get("name", "")).strip()[:80] or "Мой компьютер"
+    root = str(data.get("root", "")).strip()[:500]
+    token = secrets.token_urlsafe(32)
+    device_id = store.create_device(info["user_id"], name, security.token_hash(token), root)
+    PAIR_CODES.pop(code, None)
+    return {"device_id": device_id, "token": token}
+
+
+@app.get("/api/devices")
+def devices(request: Request):
+    user = require_user(request)
+    items = store.list_devices(user["id"])
+    return {"devices": [{**d, "online": d["id"] in RUNNERS} for d in items]}
+
+
+@app.delete("/api/devices/{device_id}")
+async def remove_device(device_id: int, request: Request):
+    user = require_user(request)
+    ws = RUNNERS.pop(device_id, None)
+    if ws:
+        try:
+            await ws.close(code=1008)
+        except Exception:
+            pass
+    if not store.delete_device(device_id, user["id"]):
+        raise HTTPException(status_code=404, detail="Устройство не найдено")
+    return {"ok": True}
+
+
+@app.websocket("/api/devices/ws")
+async def device_socket(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        first = await asyncio.wait_for(websocket.receive_json(), timeout=10)
+    except Exception:
+        await websocket.close(code=1008)
+        return
+    if first.get("type") != "auth":
+        await websocket.close(code=1008)
+        return
+    device = store.device_by_token(security.token_hash(str(first.get("token", ""))))
+    if not device:
+        await websocket.close(code=1008)
+        return
+    device_id = device["id"]
+    old = RUNNERS.get(device_id)
+    if old and old is not websocket:
+        try:
+            await old.close(code=1000)
+        except Exception:
+            pass
+    RUNNERS[device_id] = websocket
+    store.touch_device(device_id)
+    try:
+        while True:
+            message = await websocket.receive_json()
+            kind = message.get("type")
+            session = str(message.get("session", ""))
+            browser = BROWSER_TERMS.get(session)
+            if kind == "output" and browser:
+                await browser.send_text(str(message.get("data", "")))
+            elif kind == "exit" and browser:
+                await browser.send_text("\r\n[процесс завершён]\r\n")
+            elif kind == "pong":
+                store.touch_device(device_id)
+    except WebSocketDisconnect:
+        pass
+    except Exception:
+        pass
+    finally:
+        if RUNNERS.get(device_id) is websocket:
+            RUNNERS.pop(device_id, None)
+
+
+@app.websocket("/api/devices/{device_id}/terminal")
+async def device_terminal(websocket: WebSocket, device_id: int):
+    user = terminal.user_from_websocket(websocket)
+    if not user:
+        await websocket.close(code=1008)
+        return
+    device = store.get_device(device_id, user["id"])
+    if not device:
+        await websocket.close(code=1008)
+        return
+    await websocket.accept()
+    runner = RUNNERS.get(device_id)
+    if not runner:
+        await websocket.send_text("Локальный runner не в сети. Запусти его на компьютере.\r\n")
+        await websocket.close()
+        return
+    session = uuid.uuid4().hex
+    BROWSER_TERMS[session] = websocket
+    try:
+        await runner.send_json({"type": "open", "session": session})
+        while True:
+            raw = await websocket.receive_text()
+            try:
+                message = json.loads(raw)
+            except Exception:
+                continue
+            if message.get("type") == "input":
+                await runner.send_json({"type": "input", "session": session, "data": str(message.get("data", ""))})
+            elif message.get("type") == "resize":
+                await runner.send_json({"type": "resize", "session": session, "cols": message.get("cols", 120), "rows": message.get("rows", 30)})
+    except WebSocketDisconnect:
+        pass
+    except Exception:
+        pass
+    finally:
+        BROWSER_TERMS.pop(session, None)
+        try:
+            await runner.send_json({"type": "close", "session": session})
+        except Exception:
+            pass
 
 
 @app.post("/api/projects/{project_id}/chat")

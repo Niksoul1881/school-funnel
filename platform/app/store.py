@@ -31,6 +31,40 @@ def demo_tokens_for(user_id: int) -> int:
     return int(row["t"]) if row else 0
 
 
+def create_device(user_id: int, name: str, token_hash: str, root: str) -> int:
+    return execute(
+        "INSERT INTO devices(user_id, name, token_hash, root, last_seen, created_at) VALUES (?,?,?,?,?,?)",
+        (user_id, name, token_hash, root, now(), now()),
+    )
+
+
+def list_devices(user_id: int) -> list[dict]:
+    rows = fetch_all("SELECT id, name, root, last_seen, created_at FROM devices WHERE user_id = ? ORDER BY id DESC", (user_id,))
+    return [dict(r) for r in rows]
+
+
+def get_device(device_id: int, user_id: int) -> dict | None:
+    row = fetch_one("SELECT * FROM devices WHERE id = ? AND user_id = ?", (device_id, user_id))
+    return dict(row) if row else None
+
+
+def device_by_token(token_hash: str) -> dict | None:
+    row = fetch_one("SELECT * FROM devices WHERE token_hash = ?", (token_hash,))
+    return dict(row) if row else None
+
+
+def touch_device(device_id: int) -> None:
+    execute("UPDATE devices SET last_seen = ? WHERE id = ?", (now(), device_id))
+
+
+def delete_device(device_id: int, user_id: int) -> bool:
+    row = fetch_one("SELECT id FROM devices WHERE id = ? AND user_id = ?", (device_id, user_id))
+    if not row:
+        return False
+    execute("DELETE FROM devices WHERE id = ?", (device_id,))
+    return True
+
+
 def _template(template_id: str) -> dict:
     t = catalog.TEMPLATES_BY_ID.get(template_id)
     if not t:
