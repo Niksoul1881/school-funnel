@@ -1,4 +1,4 @@
-﻿# MVP платформы
+# MVP платформы
 
 Рабочий вертикальный срез: вход → шаблон → бриф → проект → чат с агентом → превью → деплой.
 
@@ -62,6 +62,10 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 | Обложки шаблонов | [`71_templates_editorial.png`](screenshots/71_templates_editorial.png) |
 | Бот-витрина в превью | [`68_shop_bot_preview.png`](screenshots/68_shop_bot_preview.png) |
 | AI-консультант отвечает | [`69_ai_consultant_preview.png`](screenshots/69_ai_consultant_preview.png) |
+| Локальный стенд практики | [`72_local_practice.png`](screenshots/72_local_practice.png) |
+| Локальный AI-бот | [`73_local_ai.png`](screenshots/73_local_ai.png) |
+| Локальная витрина | [`74_local_shop.png`](screenshots/74_local_shop.png) |
+| Бриф в конструкторе | [`75_local_brief.png`](screenshots/75_local_brief.png) |
 
 ## Что дальше
 
