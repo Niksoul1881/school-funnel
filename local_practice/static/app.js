@@ -1,10 +1,11 @@
-const $ = (s) => document.querySelector(s);
+﻿const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const BASE = location.pathname.replace(/\/$/, '');
 const state = { templates: [], bots: [], current: null, selected: null, history: {}, busy: false };
 
 async function api(url, opts) {
-  const r = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+  const r = await fetch(BASE + url, { headers: { 'Content-Type': 'application/json' }, ...opts });
   if (!r.ok) {
     const data = await r.json().catch(() => ({}));
     throw new Error(data.detail || 'Ошибка');
@@ -206,3 +207,4 @@ async function main() {
 }
 
 main().catch((err) => toast(err.message));
+
