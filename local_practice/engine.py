@@ -312,6 +312,15 @@ def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
             [("✅ Подтвердить", "confirm"), ("✏️ Изменить", "reset")],
         )]
 
+    if stage == "confirm" and text:
+        lowered = text.lower()
+        if any(word in lowered for word in ("подтвер", "да", "ок", "верно")):
+            action = "confirm"
+        elif any(word in lowered for word in ("измен", "отмен", "заново")):
+            return _start(bot)
+        else:
+            return [_msg("Подтвердите кнопкой ниже или напишите «да».", [("✅ Подтвердить", "confirm"), ("✏️ Изменить", "reset")])]
+
     if action == "confirm":
         session["stage"] = "done"
         return [
@@ -380,6 +389,9 @@ def _shop(bot: dict, session: dict, text: str, action: str) -> list[dict]:
                 lines = [f"{by_id[int(pid)]['title']} × {qty} — {by_id[int(pid)]['price']}" for pid, qty in cart.items()]
                 return [_msg("🛒 Корзина:\n\n" + "\n".join(lines) + f"\n\nИтого: {_total(by_id, cart)} ₽", [("Оформить", "checkout"), ("Очистить", "clear")])]
             return [_msg("🛒 Корзина пока пустая. Напишите, что ищете.", [("Каталог", "cat:Все")])]
+        if "оформ" in lowered and cart:
+            session["stage"] = "name"
+            return [_msg("Оформляем. 👤 Как вас зовут?")]
         for product in products:
             if product["title"].lower() in lowered:
                 return [_msg(
