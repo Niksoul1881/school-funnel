@@ -17,6 +17,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import httpx
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -315,6 +316,26 @@ async def tg_create_project(request: Request):
         "project_url": f"{base}/#/project/{project_id}",
         "magic_url": _magic_url(user["id"]),
     }
+
+
+@app.post("/api/tg/notify_owner")
+async def tg_notify_owner(request: Request):
+    """Уведомление владельцу от главного бота, а не от бота-клиента."""
+    _require_service(request)
+    data = await _body(request)
+    text = str(data.get("text", "")).strip()[:4000]
+    if not text:
+        raise HTTPException(status_code=400, detail="Нет текста")
+    if not config.TELEGRAM_BOT_TOKEN or not config.OWNER_TG_ID:
+        raise HTTPException(status_code=503, detail="Не настроен бот или владелец")
+    async with httpx.AsyncClient(timeout=20) as client:
+        response = await client.post(
+            f"{config.TELEGRAM_API}/bot{config.TELEGRAM_BOT_TOKEN}/sendMessage",
+            json={"chat_id": config.OWNER_TG_ID, "text": text, "disable_web_page_preview": True},
+        )
+    if response.status_code >= 400:
+        raise HTTPException(status_code=502, detail=f"Telegram: {response.text[:200]}")
+    return {"ok": True}
 
 
 @app.get("/api/me")

@@ -106,10 +106,28 @@ def reply_markup(message):
     return kb([(b["label"], b["action"]) for b in buttons]) if buttons else None
 
 
+async def notify_owner(text: str) -> bool:
+    if not SERVICE_TOKEN:
+        return False
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            response = await client.post(
+                f"{PLATFORM_API}/api/tg/notify_owner",
+                headers={"X-Service-Token": SERVICE_TOKEN},
+                json={"text": text},
+            )
+            return response.status_code == 200
+    except Exception as exc:
+        print(f"owner notify api error: {exc}")
+        return False
+
+
 async def emit(bot: Bot, chat_id: int, replies: list[dict]) -> None:
     for reply in replies:
         text = reply.get("text", "")
         if reply.get("admin"):
+            if await notify_owner(text):
+                continue
             if OWNER_ID:
                 try:
                     await bot.send_message(int(OWNER_ID), text)
@@ -126,11 +144,20 @@ async def emit(bot: Bot, chat_id: int, replies: list[dict]) -> None:
         await bot.send_message(chat_id, text, reply_markup=markup)
 
 
-def tenant_dispatcher(bot_id: str):
+def tenant_dispatcher(bot_id: str, template: str):
     tenant_dp = Dispatcher()
 
     @tenant_dp.message(CommandStart())
     async def start(message: Message):
+        meta = engine.TEMPLATES[template]
+        try:
+            await message.answer_photo(
+                FSInputFile(COVER_FILES[template]),
+                caption=f"{meta['icon']} <b>{html.escape(meta['name'])}</b>",
+                parse_mode="HTML",
+            )
+        except Exception:
+            pass
         await emit(message.bot, message.chat.id, engine.message(bot_id, action="start"))
 
     @tenant_dp.callback_query()
@@ -149,7 +176,7 @@ async def start_tenant(token: str, template: str, brief: dict, tg_id: int = 0) -
     me = await Bot(token).get_me()
     bot = Bot(token)
     bot_id = engine.create_bot(template, brief)["id"]
-    task = asyncio.create_task(tenant_dispatcher(bot_id).start_polling(bot))
+    task = asyncio.create_task(tenant_dispatcher(bot_id, template).start_polling(bot))
     TENANTS[bot_id] = {"id": bot_id, "token": token, "username": me.username, "task": task, "template": template}
     project = await save_project(tg_id, template, brief, me.username) if tg_id else None
     return {"id": bot_id, "username": me.username, "template": template, "project": project}
