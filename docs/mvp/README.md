@@ -1,4 +1,4 @@
-﻿# MVP платформы
+# MVP платформы
 
 Рабочий вертикальный срез: вход → шаблон → бриф → проект → чат с агентом → превью → деплой.
 
@@ -56,6 +56,8 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 | Чистый блок проектов | [`54_projects_sidebar.png`](screenshots/54_projects_sidebar.png) |
 | Живой терминал проекта | [`55_terminal.png`](screenshots/55_terminal.png) |
 | Запуск проекта одной кнопкой | [`56_terminal_run.png`](screenshots/56_terminal_run.png) |
+| Три шаблона | [`63_templates_three.png`](screenshots/63_templates_three.png) |
+| Витрина товаров | [`64_shop_preview.png`](screenshots/64_shop_preview.png) |
 
 ## Что дальше
 

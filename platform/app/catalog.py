@@ -10,6 +10,11 @@ import json
 import re
 from typing import Any
 
+from .template_ai import AI_CONSULTANT_BOT_PY
+from .template_booking import BOOKING_BOT_PY
+from .template_manifest import TEMPLATES
+from .template_shop import SHOP_BOT_PY, SHOP_CSS, SHOP_HTML, SHOP_JS
+
 DIRECTIONS = {
     "bot": "Чат-бот",
     "agent": "AI-агент",
@@ -52,7 +57,7 @@ def _common_fields(direction: str) -> list[dict]:
     return fields
 
 
-TEMPLATES: list[dict[str, Any]] = [
+LEGACY_TEMPLATES: list[dict[str, Any]] = [
     {
         "id": "bot-vizitka",
         "name": "Бот-визитка с AI",
@@ -245,7 +250,7 @@ TEMPLATES: list[dict[str, Any]] = [
     },
 ]
 
-TEMPLATES_BY_ID = {t["id"]: t for t in TEMPLATES}
+TEMPLATES_BY_ID = {t["id"]: t for t in [*LEGACY_TEMPLATES, *TEMPLATES]}
 
 # Служебный шаблон для проектов, загруженных папкой. В каталог не попадает.
 IMPORTED_TEMPLATE = {
@@ -304,6 +309,43 @@ def _parse_faq(raw: str) -> list[dict]:
     ]
 
 
+def _parse_services(raw: str) -> list[dict]:
+    items: list[dict] = []
+    for line in (raw or "").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        parts = [p.strip() for p in line.split("—")]
+        if len(parts) < 2:
+            parts = [p.strip() for p in line.split("|")]
+        title = parts[0] if parts else line
+        price = parts[1] if len(parts) > 1 else "по запросу"
+        duration = parts[2] if len(parts) > 2 else "60 мин"
+        items.append({"title": title, "price": price, "duration": duration})
+    return items or [{"title": "Консультация", "price": "по запросу", "duration": "60 мин"}]
+
+
+def _parse_products(raw: str) -> list[dict]:
+    items: list[dict] = []
+    for index, line in enumerate((raw or "").splitlines()):
+        line = line.strip()
+        if not line:
+            continue
+        parts = [p.strip() for p in line.split("|")]
+        items.append({
+            "id": index + 1,
+            "title": parts[0] if parts else line,
+            "price": parts[1] if len(parts) > 1 else "по запросу",
+            "description": parts[2] if len(parts) > 2 else "",
+            "category": parts[3] if len(parts) > 3 else "Другое",
+            "emoji": parts[4] if len(parts) > 4 else "🛍️",
+        })
+    return items or [
+        {"id": 1, "title": "Товар 1", "price": "1 000 ₽", "description": "Описание", "category": "Другое", "emoji": "🛍️"},
+        {"id": 2, "title": "Товар 2", "price": "2 000 ₽", "description": "Описание", "category": "Другое", "emoji": "🛍️"},
+    ]
+
+
 def _menu_for(template_id: str) -> list[dict]:
     if template_id == "bot-funnel":
         return [
@@ -333,6 +375,49 @@ def build_content(template_id: str, brief: dict) -> dict:
     accent = _text(brief.get("accent"), "#ff4f8b")
     if not re.match(r"^#[0-9a-fA-F]{6}$", accent):
         accent = "#ff4f8b"
+    base = {
+        "template": template_id,
+        "business": {"name": name, "niche": niche, "tone": tone, "accent": accent},
+        "tone": tone,
+        "contact": _text(brief.get("contact"), "@manager"),
+        "faq": _parse_faq(_text(brief.get("faq"), "")),
+    }
+    if template_id == "booking":
+        slots = [s.strip() for s in re.split(r"[,;\n]", _text(brief.get("slots"), "")) if s.strip()]
+        return {
+            **base,
+            "greeting": f"Здравствуйте! Это {name}. Запишу вас к мастеру за пару шагов.",
+            "master_name": _text(brief.get("master_name"), "Мастер"),
+            "services": _parse_services(_text(brief.get("services"), "")),
+            "slots": slots or ["10:00", "12:00", "14:00", "16:00", "18:00"],
+            "address": _text(brief.get("address"), ""),
+            "admin_chat_id": _text(brief.get("admin_chat_id"), ""),
+        }
+    if template_id == "ai-consultant":
+        knowledge = _text(brief.get("knowledge"), "")
+        if not knowledge:
+            knowledge = f"{name} — {niche}. Контакт: {base['contact']}."
+        return {
+            **base,
+            "greeting": f"Здравствуйте! Я консультант {name}. Спросите что угодно — отвечу по делу.",
+            "knowledge": knowledge,
+            "model": _text(brief.get("model"), "deepseek-chat"),
+            "fallback": f"Не хочу выдумывать. Лучше уточню у человека: {base['contact']}.",
+        }
+    if template_id == "shop":
+        products = _parse_products(_text(brief.get("products"), ""))
+        categories = []
+        for product in products:
+            if product["category"] not in categories:
+                categories.append(product["category"])
+        return {
+            **base,
+            "faq": [],
+            "greeting": f"Здравствуйте! Это {name}. Выбирайте — заказ придёт нам в Telegram.",
+            "products": products,
+            "categories": categories,
+            "delivery": [line.strip() for line in _text(brief.get("delivery"), "").splitlines() if line.strip()],
+        }
     sections = [s.strip() for s in _text(brief.get("sections"), "Главная, Услуги, Записаться, Контакты").split(",") if s.strip()]
     greeting = {
         "bot-funnel": f"Привет! Это {name}. Помогу разобраться с курсом и забрать подарок.",
@@ -589,6 +674,104 @@ MINIAPP_JS = '''(function(){
 
 def _readme(template: dict, content: dict) -> str:
     name = content["business"]["name"]
+    if template["id"] == "booking":
+        return f"""# Запись к мастеру — {name}
+
+Telegram-бот записи: услуга → дата → время → имя → телефон → заявка администратору.
+
+## Что внутри
+
+- `bot.py` — пошаговая запись, SQLite, уведомление администратору.
+- `content.json` — услуги, окна, адрес, контакты; код менять не нужно.
+- `.env.example` — токен бота и Telegram ID администратора.
+- `requirements.txt`, `Dockerfile` — запуск.
+
+## Запуск
+
+```bash
+cp .env.example .env
+# BOT_TOKEN — из @BotFather
+# ADMIN_CHAT_ID — ваш Telegram ID (узнать у @userinfobot)
+pip install -r requirements.txt
+python bot.py
+```
+
+## Проверка
+
+1. `/start` — бот покажет услуги.
+2. Выберите услугу, дату `12.11`, время, имя и телефон.
+3. Подтвердите — администратору придёт заявка, в `bookings.db` появится запись.
+
+## Важно
+
+Свободные окна в `content.json` — статические. Для календаря с занятостью нужен следующий уровень: интеграция с Google Calendar / CRM.
+"""
+    if template["id"] == "ai-consultant":
+        return f"""# Умный консультант — {name}
+
+AI-бот, который отвечает свободным текстом по базе знаний, а не кнопками.
+
+## Что внутри
+
+- `bot.py` — aiogram + LLM, история диалога, fallback на человека.
+- `knowledge.md` — всё, что бот имеет право знать. Главный файл для настройки.
+- `content.json` — бренд, тон, контакт, модель.
+- `.env.example` — токен бота и LLM-ключ.
+
+## Запуск
+
+```bash
+cp .env.example .env
+# BOT_TOKEN
+# LLM_API_KEY
+# LLM_BASE_URL=https://api.deepseek.com/v1
+# LLM_MODEL=deepseek-chat
+pip install -r requirements.txt
+python bot.py
+```
+
+Можно использовать OpenAI-совместимый endpoint: DeepSeek, OpenRouter, локальный Ollama.
+
+## Как настраивать
+
+1. Замените `knowledge.md` реальными правилами, ценами и адресами.
+2. Проверьте 10 нестандартных вопросов.
+3. Если бот не знает — он должен дать контакт человека, а не выдумывать.
+
+## Ограничение
+
+Без `LLM_API_KEY` бот работает в безопасном fallback-режиме и зовёт человека.
+"""
+    if template["id"] == "shop":
+        return f"""# Витрина товаров — {name}
+
+Telegram Mini App: каталог, карточки, корзина, доставка/самовывоз и заказ.
+
+## Что внутри
+
+- `index.html`, `styles.css`, `app.js` — витрина.
+- `bot.py` — открывает Mini App и принимает `web_app_data` с заказом.
+- `content.json` — товары, категории, доставка, контакт.
+- `.env.example` — токен, URL витрины и ID администратора.
+- `README.md` — этот файл.
+
+## Как открыть
+
+1. Задеплойте папку как статический сайт (или откройте `index.html` локально).
+2. В @BotFather создайте бота и добавьте Mini App URL.
+3. Запустите `bot.py` — он покажет кнопку «Открыть витрину».
+4. Заказ приходит в чат `ADMIN_CHAT_ID`.
+
+## Товары
+
+Каждый товар в `content.json`:
+
+```json
+{{"id": 1, "title": "Медовик", "price": "3 200", "description": "...", "category": "Торты", "emoji": "🍰"}}
+```
+
+Меняйте тексты и цены в `content.json`, код не трогайте.
+"""
     lines = [
         f"# {template['name']} — {name}",
         "",
@@ -672,6 +855,24 @@ def _bot_files(template: dict, content: dict) -> dict[str, str]:
             "steps": ["Получить подарок", "Ответить на 3 вопроса", "Прогрев 5 дней", "Предложение курса"],
             "payment": content["payment"],
         }, ensure_ascii=False, indent=2)
+    if template["id"] == "booking":
+        files["bot.py"] = BOOKING_BOT_PY
+        files["requirements.txt"] = "aiogram==3.22.0\npython-dotenv==1.2.1\n"
+        files[".env.example"] = "BOT_TOKEN=\nADMIN_CHAT_ID=\n"
+        files["prompts/system.md"] = (
+            f"Ты — бот записи «{content['business']['name']}». Веди клиента по шагам: "
+            "услуга → дата → время → имя → телефон → подтверждение. "
+            "Не придумывай свободные окна: бери их из content.json."
+        )
+    if template["id"] == "ai-consultant":
+        files["bot.py"] = AI_CONSULTANT_BOT_PY
+        files["knowledge.md"] = content["knowledge"]
+        files["requirements.txt"] = "aiogram==3.22.0\nhttpx>=0.28\npython-dotenv==1.2.1\n"
+        files[".env.example"] = "BOT_TOKEN=\nLLM_API_KEY=\nLLM_BASE_URL=https://api.deepseek.com/v1\nLLM_MODEL=deepseek-chat\n"
+        files["prompts/system.md"] = (
+            f"Ты — консультант «{content['business']['name']}». Отвечай только по knowledge.md. "
+            "Если ответа нет — дай контакт человека. Не выдумывай цены и сроки."
+        )
     return files
 
 
@@ -707,6 +908,20 @@ def _agent_files(template: dict, content: dict) -> dict[str, str]:
 
 def _miniapp_files(template: dict, content: dict) -> dict[str, str]:
     title = html.escape(content["business"]["name"])
+    if template["id"] == "shop":
+        encoded = json.dumps(content, ensure_ascii=False).replace("</", "<\\/")
+        html_file = SHOP_HTML.replace("__TITLE__", title).replace("__CONTENT_JSON__", encoded)
+        return {
+            "index.html": html_file,
+            "styles.css": SHOP_CSS,
+            "app.js": SHOP_JS,
+            "bot.py": SHOP_BOT_PY,
+            "requirements.txt": "aiogram==3.22.0\npython-dotenv==1.2.1\n",
+            ".env.example": "BOT_TOKEN=\nWEBAPP_URL=\nADMIN_CHAT_ID=\n",
+            "content.json": json.dumps(content, ensure_ascii=False, indent=2),
+            "README.md": _readme(template, content),
+            ".gitignore": ".env\n__pycache__/\n*.pyc\n",
+        }
     encoded = json.dumps(content, ensure_ascii=False).replace("</", "<\\/")
     html_file = MINIAPP_HTML.replace("__TITLE__", title).replace("__CONTENT_JSON__", encoded)
     css = MINIAPP_CSS.replace("__ACCENT__", content["business"]["accent"])

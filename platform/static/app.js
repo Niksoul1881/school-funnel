@@ -45,6 +45,7 @@ const ICONS = {
   folder: '<path d="M3 6a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Z"/>',
   file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z"/><path d="M14 2v6h6"/>',
   bot: '<rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M8 13h.01M16 13h.01M9 17h6"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/>',
   agent: '<circle cx="12" cy="12" r="3"/><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M6.5 6.5 9.5 9.5M17.5 6.5 14.5 9.5M6.5 17.5 9.5 14.5M17.5 17.5 14.5 14.5"/>',
   app: '<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 5h4M11 19h2"/>',
   arrow: '<path d="M4 12h16M14 6l6 6-6 6"/>',
@@ -526,7 +527,7 @@ function renderDashboard() {
     <div>
       <div class="between" style="margin-bottom:10px"><h2>Проекты</h2><a class="small dim" href="#/templates">+ добавить</a></div>
       ${projects.length ? `<div class="grid g2">${projects.map(projectCard).join('')}</div>` : `
-        <div class="empty"><b>Пока пусто</b>Начни с шаблона «Бот-визитка с AI» — это 2 минуты.<br><br><button class="btn primary" data-go="#/templates">Выбрать шаблон</button></div>`}
+        <div class="empty"><b>Пока пусто</b>Начни с шаблона «Запись к мастеру» — это 2 минуты.<br><br><button class="btn primary" data-go="#/templates">Выбрать шаблон</button></div>`}
     </div>
     <div class="stack">
       <div class="card">
@@ -536,7 +537,7 @@ function renderDashboard() {
         <button class="btn" style="width:100%;margin-top:12px" data-go="#/lesson/${next.id}">${svg('play')}Продолжить</button>` : ''}
       </div>
       <div class="card">
-        <div class="row">${ic('spark','sm')}<div><b style="font-size:13px">Быстрый старт</b><div class="small dim">Бот-визитка, AI-ассистент или витрина</div></div></div>
+        <div class="row">${ic('spark','sm')}<div><b style="font-size:13px">Быстрый старт</b><div class="small dim">Запись к мастеру, AI-консультант или витрина</div></div></div>
         <button class="btn" style="width:100%;margin-top:12px" data-go="#/templates">Открыть шаблоны ${svg('arrow')}</button>
       </div>
     </div>
@@ -566,7 +567,7 @@ function renderTemplates() {
     <div><div class="eyebrow">Каталог</div><h1>Шаблоны</h1><div class="sub">Выбери продукт — платформа развернёт файлы, превью и деплой. Тексты меняются в чате с агентом.</div></div>
   </div>
   <div class="filters">
-    ${[['all','Все'],['bot','Чат-боты'],['agent','AI-агенты'],['miniapp','Мини-аппы']].map(([k,l]) => `<button class="${state.filter===k?'on':''}" data-filter="${k}">${l}</button>`).join('')}
+    ${[['all','Все'], ...['bot','agent','miniapp'].filter((d) => state.templates.some((t) => t.direction === d)).map((d) => [d, directionLabel(d)])].map(([k,l]) => `<button class="${state.filter===k?'on':''}" data-filter="${k}">${l}</button>`).join('')}
   </div>
   <div class="grid g3">
     ${list.map((t) => `<div class="card template-card">
