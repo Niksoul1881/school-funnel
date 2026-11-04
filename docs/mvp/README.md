@@ -1,4 +1,4 @@
-# MVP платформы
+﻿# MVP платформы
 
 Рабочий вертикальный срез: вход → шаблон → бриф → проект → чат с агентом → превью → деплой.
 
@@ -65,13 +65,14 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 | Локальный стенд практики | [`72_local_practice.png`](screenshots/72_local_practice.png) |
 | Локальный AI-бот | [`73_local_ai.png`](screenshots/73_local_ai.png) |
 | Локальная витрина | [`74_local_shop.png`](screenshots/74_local_shop.png) |
-| Бриф в конструкторе | [`75_local_brief.png`](screenshots/75_local_brief.png) |
+| Бриф в конструкторе | [`75_local_brief.png`](screenshots/75_local_brief.png) |`n| Публичный стенд | [`76_public_practice.png`](screenshots/76_public_practice.png) |
 
 ## Что дальше
 
 1. DSH-агент включён: создаёт/меняет файлы, списывает фактический usage.
 2. Реальный деплой бота: нужен тестовый токен из @BotFather (сервер уже есть).
 3. Платежи и пакеты токенов.
+
 
 
 

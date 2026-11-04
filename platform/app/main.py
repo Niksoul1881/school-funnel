@@ -25,6 +25,7 @@ from starlette.concurrency import run_in_threadpool
 from . import agent, catalog, config, lessons, security, store, telegram, terminal
 from .db import execute, fetch_all, fetch_one, init_db
 from .security import hash_password, public_user, require_admin, require_user, verify_password
+from practice_bench.app import app as practice_app
 
 MAX_FILE_BYTES = 1_000_000
 
@@ -856,6 +857,7 @@ def admin_user(user_id: int, request: Request):
 
 # --- Статика и SPA ---------------------------------------------------------
 app.mount("/static", StaticFiles(directory=str(config.STATIC_DIR)), name="static")
+app.mount("/practice", practice_app, name="practice")
 
 
 @app.get("/")

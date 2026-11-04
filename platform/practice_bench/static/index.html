@@ -1,0 +1,64 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Платформа практики · локальный стенд</title>
+<link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">AI</div><div><b>Платформа практики</b><span>локальный стенд</span></div></div>
+    <div class="side-title">Мои боты <button id="new-bot" class="plus" title="Собрать бота">+</button></div>
+    <div id="bots" class="bots"></div>
+    <div class="side-note">Это симулятор Telegram.<br>Бриф → бот → тест без токенов.</div>
+  </aside>
+
+  <main class="main">
+    <div id="empty" class="empty">
+      <div class="empty-mark">AI</div>
+      <h1>Собери первого бота</h1>
+      <p>Выбери шаблон, ответь на 4–5 вопросов — и сразу проверь сценарий в чате.</p>
+      <button class="btn primary" id="empty-create">Собрать бота</button>
+    </div>
+    <div id="chat" class="chat hidden">
+      <header class="chat-head">
+        <div class="avatar" id="chat-avatar">Б</div>
+        <div><b id="chat-name">Бот</b><span id="chat-sub">бот · онлайн</span></div>
+        <button class="ghost" id="reset-chat" title="Сбросить">↺</button>
+      </header>
+      <div class="messages" id="messages"></div>
+      <div class="quick" id="quick"></div>
+      <form class="composer" id="composer">
+        <input id="text" autocomplete="off" placeholder="Напишите сообщение…">
+        <button class="send" type="submit">→</button>
+      </form>
+    </div>
+  </main>
+
+  <aside class="brief">
+    <div class="side-title">Бриф</div>
+    <div id="brief-body"><div class="muted">Выбери бота слева — покажу, из каких ответов он собран.</div></div>
+  </aside>
+</div>
+
+<div class="modal hidden" id="modal">
+  <div class="modal-box">
+    <button class="modal-close" id="modal-close">×</button>
+    <div class="eyebrow">Конструктор</div>
+    <h2>Собрать бота</h2>
+    <p class="muted">Выбери шаблон и заполни бриф. Это те же вопросы, что будет задавать бот-платформа в Telegram.</p>
+    <div class="templates" id="templates"></div>
+    <form id="brief-form">
+      <div id="brief-fields"></div>
+      <button class="btn primary full" type="submit">Собрать бота</button>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="static/app.js"></script>
+</body>
+</html>
+
