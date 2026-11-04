@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import html
+import json
 import os
 import sys
 from pathlib import Path
@@ -38,6 +39,26 @@ dp = Dispatcher()
 MENU_START = "🚀 Старт"
 MENU_BUILD = "🛠 Собрать бота"
 MENU_MY = "📦 Мои боты"
+TENANTS_FILE = ROOT / "private" / "tenants.json"
+
+
+def load_tenants() -> list[dict]:
+    try:
+        return json.loads(TENANTS_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+
+
+def save_tenants(items: list[dict]) -> None:
+    TENANTS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    TENANTS_FILE.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def remember_tenant(record: dict) -> None:
+    items = load_tenants()
+    items = [item for item in items if item.get("username") != record.get("username")]
+    items.append(record)
+    save_tenants(items)
 
 
 def main_menu() -> ReplyKeyboardMarkup:
@@ -197,14 +218,25 @@ def tenant_dispatcher(bot_id: str, template: str):
     return tenant_dp
 
 
-async def start_tenant(token: str, template: str, brief: dict, tg_id: int = 0) -> dict:
-    me = await Bot(token).get_me()
+async def start_tenant(token: str, template: str, brief: dict, tg_id: int = 0, project: dict | None = None, persist: bool = True) -> dict:
     bot = Bot(token)
+    me = await bot.get_me()
     bot_id = engine.create_bot(template, brief)["id"]
     task = asyncio.create_task(tenant_dispatcher(bot_id, template).start_polling(bot))
     TENANTS[bot_id] = {"id": bot_id, "token": token, "username": me.username, "task": task, "template": template}
-    project = await save_project(tg_id, template, brief, me.username) if tg_id else None
-    return {"id": bot_id, "username": me.username, "template": template, "project": project}
+    if project is None and tg_id:
+        project = await save_project(tg_id, template, brief, me.username)
+    info = {"id": bot_id, "username": me.username, "template": template, "project": project}
+    if persist:
+        remember_tenant({
+            "username": me.username,
+            "template": template,
+            "brief": brief,
+            "token": token,
+            "owner_tg_id": tg_id,
+            "project": project,
+        })
+    return info
 
 
 async def validate(token: str) -> tuple[bool, str]:
@@ -460,6 +492,23 @@ async def mybots_command(message: Message):
     ), parse_mode="HTML")
 
 
+async def restore_tenants() -> None:
+    for record in load_tenants():
+        try:
+            info = await start_tenant(
+                record["token"],
+                record["template"],
+                record.get("brief", {}),
+                tg_id=0,
+                project=record.get("project"),
+                persist=False,
+            )
+            MY_BOTS.append(info)
+            print(f"restored @{info['username']} ({info['template']})")
+        except Exception as exc:
+            print(f"restore failed {record.get('username')}: {exc}")
+
+
 async def main() -> None:
     if not PLATFORM_TOKEN:
         raise SystemExit("PLATFORM_BOT_TOKEN не задан")
@@ -468,6 +517,7 @@ async def main() -> None:
         BotCommand(command="start", description="Главное меню"),
         BotCommand(command="mybots", description="Мои боты"),
     ])
+    await restore_tenants()
     await dp.start_polling(bot)
 
 
