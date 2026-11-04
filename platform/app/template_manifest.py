@@ -1,4 +1,4 @@
-"""Visible template catalog: three products we are developing."""
+﻿"""Visible template catalog: three products we are developing."""
 from __future__ import annotations
 
 from typing import Any
@@ -14,7 +14,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "stack": ["Python", "aiogram", "SQLite"],
         "preview": "bot",
         "icon": "calendar",
-        "cover": "/static/covers/booking.jpg",
+        "cover": "/static/covers/booking.png",
         "badge": "ХИТ",
         "brief_fields": [
             {"key": "business_name", "label": "Название студии", "type": "text", "placeholder": "Студия «Марина»", "required": True},
@@ -51,7 +51,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "stack": ["Python", "aiogram", "LLM"],
         "preview": "bot",
         "icon": "spark",
-        "cover": "/static/covers/ai.jpg",
+        "cover": "/static/covers/ai.png",
         "badge": "AI",
         "brief_fields": [
             {"key": "business_name", "label": "Название бизнеса", "type": "text", "placeholder": "Студия «Марина»", "required": True},
@@ -84,7 +84,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "stack": ["Python", "aiogram", "Фото"],
         "preview": "bot",
         "icon": "app",
-        "cover": "/static/covers/shop.jpg",
+        "cover": "/static/covers/shop.png",
         "badge": "ХИТ",
         "brief_fields": [
             {"key": "business_name", "label": "Название магазина", "type": "text", "placeholder": "Кондитерская «Медовый дом»", "required": True},
@@ -106,3 +106,4 @@ TEMPLATES: list[dict[str, Any]] = [
 ]
 
 TEMPLATES_BY_ID = {t["id"]: t for t in TEMPLATES}
+

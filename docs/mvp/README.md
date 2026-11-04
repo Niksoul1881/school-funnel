@@ -1,4 +1,4 @@
-# MVP платформы
+﻿# MVP платформы
 
 Рабочий вертикальный срез: вход → шаблон → бриф → проект → чат с агентом → превью → деплой.
 
@@ -59,7 +59,7 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 | Три шаблона | [`63_templates_three.png`](screenshots/63_templates_three.png) |
 | Витрина товаров | [`64_shop_preview.png`](screenshots/64_shop_preview.png) |
 | Витрина с фото | [`65_shop_images.png`](screenshots/65_shop_images.png) |
-| Обложки шаблонов | [`66_templates_covers.png`](screenshots/66_templates_covers.png) |
+| Обложки шаблонов | [`71_templates_editorial.png`](screenshots/71_templates_editorial.png) |
 | Бот-витрина в превью | [`68_shop_bot_preview.png`](screenshots/68_shop_bot_preview.png) |
 | AI-консультант отвечает | [`69_ai_consultant_preview.png`](screenshots/69_ai_consultant_preview.png) |
 
@@ -68,5 +68,6 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 1. DSH-агент включён: создаёт/меняет файлы, списывает фактический usage.
 2. Реальный деплой бота: нужен тестовый токен из @BotFather (сервер уже есть).
 3. Платежи и пакеты токенов.
+
 
 
