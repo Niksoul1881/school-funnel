@@ -297,6 +297,8 @@ async def tg_create_project(request: Request):
     data = await _body(request)
     tg_id = str(data.get("tg_id", "")).strip()
     template_id = str(data.get("template_id", "")).strip()
+    if template_id == "ai":
+        template_id = "ai-consultant"
     template = catalog.TEMPLATES_BY_ID.get(template_id)
     if not template:
         raise HTTPException(status_code=400, detail="Неизвестный шаблон")
