@@ -1,0 +1,43 @@
+[
+  {
+    "username": "booking_test_example_bot",
+    "template": "booking",
+    "brief": {
+      "business_name": "Студия «Марина»",
+      "services": "Стрижка — 3 500 ₽ — 60 мин\nОкрашивание — от 7 000 ₽ — 120 мин",
+      "slots": "10:00, 12:00, 14:00, 16:00, 18:00",
+      "address": "Москва, ул. Примерная, 10",
+      "contact": "@marina_studio"
+    },
+    "token": "REPLACE_WITH_BOOKING_TOKEN",
+    "owner_tg_id": 0,
+    "project": null
+  },
+  {
+    "username": "ai_test_example_bot",
+    "template": "ai",
+    "brief": {
+      "business_name": "Труба у Палыча",
+      "niche": "сантехника",
+      "knowledge": "Магазин сантехники. Адрес, режим работы, ассортимент, доставка.",
+      "contact": "@soulnik",
+      "faq": "Есть ли доставка?|Да, по городу."
+    },
+    "token": "REPLACE_WITH_AI_TOKEN",
+    "owner_tg_id": 0,
+    "project": null
+  },
+  {
+    "username": "shop_test_example_bot",
+    "template": "shop",
+    "brief": {
+      "business_name": "Кекс",
+      "products": "Кекс «Ваниль» | 250 | ванильный | Кексы | 🧁 | https://...",
+      "delivery": "Самовывоз: Москва",
+      "contact": "@soulnik"
+    },
+    "token": "REPLACE_WITH_SHOP_TOKEN",
+    "owner_tg_id": 0,
+    "project": null
+  }
+]

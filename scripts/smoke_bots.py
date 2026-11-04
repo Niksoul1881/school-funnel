@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -117,12 +118,15 @@ def test_shop():
 def test_live_tokens():
     print("\n[4] Живые Telegram-токены")
     tokens = {
-        "platform": "REDACTED_TELEGRAM_TOKEN",
-        "booking": "REDACTED_TELEGRAM_TOKEN",
-        "ai": "REDACTED_TELEGRAM_TOKEN",
-        "shop": "REDACTED_TELEGRAM_TOKEN",
+        "platform": os.getenv("PLATFORM_BOT_TOKEN", "").strip(),
+        "booking": os.getenv("BOOKING_BOT_TOKEN", "").strip(),
+        "ai": os.getenv("AI_BOT_TOKEN", "").strip(),
+        "shop": os.getenv("SHOP_BOT_TOKEN", "").strip(),
     }
     for name, token in tokens.items():
+        if not token:
+            check(f"telegram: @{name} токен задан", False, "пусто в private/telegram-test.env")
+            continue
         try:
             r = httpx.get(f"https://api.telegram.org/bot{token}/getMe", timeout=20).json()
             check(f"telegram: @{name} жив", r.get("ok") is True, str(r.get("description")))
