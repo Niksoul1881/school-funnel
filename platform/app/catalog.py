@@ -723,25 +723,25 @@ AI-бот, который отвечает свободным текстом п�
 
 ```bash
 cp .env.example .env
-# BOT_TOKEN
-# LLM_API_KEY
-# LLM_BASE_URL=https://api.deepseek.com/v1
-# LLM_MODEL=deepseek-chat
+# BOT_TOKEN — из @BotFather
+# ADMIN_CHAT_ID — куда присылать вопросы без ответа
+# LLM_API_KEY — ключ DeepSeek/OpenAI-совместимого API
 pip install -r requirements.txt
 python bot.py
 ```
 
-Можно использовать OpenAI-совместимый endpoint: DeepSeek, OpenRouter, локальный Ollama.
+Можно использовать DeepSeek, OpenRouter, локальный Ollama — любой OpenAI-совместимый endpoint.
 
 ## Как настраивать
 
 1. Замените `knowledge.md` реальными правилами, ценами и адресами.
-2. Проверьте 10 нестандартных вопросов.
-3. Если бот не знает — он должен дать контакт человека, а не выдумывать.
+2. Прогоните `test_questions.md` — 10 вопросов.
+3. Проверьте 5 нестандартных формулировок.
+4. Если бот не знает — он даёт контакт человека и отправляет вопрос администратору.
 
-## Ограничение
+## Без ключа
 
-Без `LLM_API_KEY` бот работает в безопасном fallback-режиме и зовёт человека.
+Бот не молчит: он ищет ответ в `faq` из `content.json`. Если совпадения нет — зовёт человека. Это демо-режим, а не полноценный AI.
 """
     if template["id"] == "shop":
         return f"""# Витрина товаров — {name}
@@ -874,8 +874,23 @@ def _bot_files(template: dict, content: dict) -> dict[str, str]:
     if template["id"] == "ai-consultant":
         files["bot.py"] = AI_CONSULTANT_BOT_PY
         files["knowledge.md"] = content["knowledge"]
+        files["test_questions.md"] = (
+            "# Проверка консультанта\n\n"
+            "Прогоните эти вопросы в Telegram и сверьте ответы с knowledge.md.\n\n"
+            "1. Сколько стоит стрижка?\n"
+            "2. Где вы находитесь?\n"
+            "3. Что если я опоздаю на 15 минут?\n"
+            "4. Можно перенести запись?\n"
+            "5. Есть ли парковка?\n"
+            "6. Работаете ли вы в воскресенье?\n"
+            "7. Можно ли оплатить картой?\n"
+            "8. Сколько идёт окрашивание?\n"
+            "9. Делаете ли вы детские стрижки?\n"
+            "10. Что будет, если я не приду?\n\n"
+            "Правило: если ответа нет в базе — бот должен позвать человека, а не выдумывать.\n"
+        )
         files["requirements.txt"] = "aiogram==3.22.0\nhttpx>=0.28\npython-dotenv==1.2.1\n"
-        files[".env.example"] = "BOT_TOKEN=\nLLM_API_KEY=\nLLM_BASE_URL=https://api.deepseek.com/v1\nLLM_MODEL=deepseek-chat\n"
+        files[".env.example"] = "BOT_TOKEN=\nADMIN_CHAT_ID=\nLLM_API_KEY=\nLLM_BASE_URL=https://api.deepseek.com/v1\nLLM_MODEL=deepseek-chat\n"
         files["prompts/system.md"] = (
             f"Ты — консультант «{content['business']['name']}». Отвечай только по knowledge.md. "
             "Если ответа нет — дай контакт человека. Не выдумывай цены и сроки."

@@ -1371,7 +1371,8 @@ function telegramPreview(p) {
     buttons += (content.services || []).slice(0, 4).map((s, i) => `<button data-tg-action="svc:${i}">${esc(s.title)} · ${esc(s.price)}</button>`).join('');
     buttons += `<button data-tg-action="contact">Связаться</button>`;
   } else {
-    buttons += `<button data-tg-action="faq">Частые вопросы</button><button data-tg-action="contact">Связаться</button>`;
+    buttons += (content.faq || []).slice(0, 3).map((f, i) => `<button data-tg-action="qa:${i}">${esc(f.q)}</button>`).join('');
+    buttons += `<button data-tg-action="contact">Связаться</button>`;
   }
   return `<div class="phone" style="--acc:${esc(content.business.accent || '#ff4f8b')}">
     <div class="ph-top"><div class="ph-av">${esc((content.business.name || 'Б').slice(0,1))}</div><div><div class="ph-name">${esc(content.business.name)}</div><div class="ph-sub">бот · онлайн</div></div></div>
@@ -1392,7 +1393,11 @@ function tgAction(action) {
   const products = content.products || [];
   let label = (content.menu || []).find((x) => x.id === action)?.title || (action === 'faq' ? 'Частые вопросы' : action);
   let reply = '';
-  if (String(action).startsWith('svc:')) {
+  if (String(action).startsWith('qa:')) {
+    const item = (content.faq || [])[Number(action.split(':')[1])];
+    label = item?.q || 'Вопрос';
+    reply = item?.a || 'Уточню у человека.';
+  } else if (String(action).startsWith('svc:')) {
     const service = (content.services || [])[Number(action.split(':')[1])];
     label = service ? `${service.title} · ${service.price}` : 'Услуга';
     reply = service ? `Вы выбрали: ${service.title} (${service.price}). Напишите дату в формате ДД.ММ.` : 'Выберите услугу.';

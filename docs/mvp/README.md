@@ -61,6 +61,7 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 | Витрина с фото | [`65_shop_images.png`](screenshots/65_shop_images.png) |
 | Обложки шаблонов | [`66_templates_covers.png`](screenshots/66_templates_covers.png) |
 | Бот-витрина в превью | [`68_shop_bot_preview.png`](screenshots/68_shop_bot_preview.png) |
+| AI-консультант отвечает | [`69_ai_consultant_preview.png`](screenshots/69_ai_consultant_preview.png) |
 
 ## Что дальше
 
