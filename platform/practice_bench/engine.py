@@ -151,12 +151,14 @@ def _buttons(items: list[tuple[str, str]]) -> list[dict]:
     return [{"label": label, "action": action} for label, action in items]
 
 
-def _msg(text: str, buttons: list[tuple[str, str]] | None = None, image: str = "") -> dict:
+def _msg(text: str, buttons: list[tuple[str, str]] | None = None, image: str = "", admin: bool = False) -> dict:
     out: dict[str, Any] = {"text": text}
     if buttons:
         out["buttons"] = _buttons(buttons)
     if image:
         out["image"] = image
+    if admin:
+        out["admin"] = True
     return out
 
 
@@ -221,7 +223,7 @@ def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
         session["stage"] = "done"
         return [
             _msg(f"Готово, {data['name']}! Заявка принята.\nМастер подтвердит запись по телефону {data['phone']}.\n\nСвязаться: {brief.get('contact')}"),
-            _msg(f"🔔 Уведомление мастеру:\nНовая запись: {data['service']['title']}, {data['date']} в {data['time']}.\nКлиент: {data['name']}, {data['phone']}"),
+            _msg(f"🔔 Уведомление мастеру:\nНовая запись: {data['service']['title']}, {data['date']} в {data['time']}.\nКлиент: {data['name']}, {data['phone']}", admin=True),
         ]
     return [_msg("Нажмите /start или выберите услугу заново.")]
 
@@ -299,7 +301,7 @@ def _shop(bot: dict, session: dict, text: str, action: str) -> list[dict]:
         session["stage"] = "done"
         return [
             _msg(f"Заказ принят, {data['name']}! Мы свяжемся с вами.", [("Сделать ещё заказ", "reset")]),
-            _msg("🔔 Уведомление магазину:\n" + "\n".join(lines) + f"\nИтого: {_total(by_id, cart)} ₽\nИмя: {data['name']}\nТелефон: {data['phone']}"),
+            _msg("🔔 Уведомление магазину:\n" + "\n".join(lines) + f"\nИтого: {_total(by_id, cart)} ₽\nИмя: {data['name']}\nТелефон: {data['phone']}", admin=True),
         ]
     if not text:
         return [_msg("Выберите категорию или товар.", [("Каталог", "cat:Все"), ("Корзина", "cart")])]
