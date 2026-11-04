@@ -12,7 +12,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from aiogram.types import CallbackQuery, FSInputFile, InlineKeyboardButton, InlineKeyboardMarkup, Message
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,6 +33,24 @@ COVERS = {
     "booking": f"{PUBLIC}/static/covers/booking.png",
     "ai": f"{PUBLIC}/static/covers/ai.png",
     "shop": f"{PUBLIC}/static/covers/shop.png",
+}
+COVER_FILES = {
+    "booking": ROOT / "platform" / "static" / "covers" / "booking.png",
+    "ai": ROOT / "platform" / "static" / "covers" / "ai.png",
+    "shop": ROOT / "platform" / "static" / "covers" / "shop.png",
+}
+LESSON_COVER = ROOT / "platform" / "static" / "covers" / "lesson2.png"
+EXAMPLES = {
+    "business_name": "Студия «Марина»",
+    "services": "Стрижка — 3 500 ₽ — 60 мин\nОкрашивание — от 7 000 ₽ — 120 мин",
+    "slots": "10:00, 12:00, 14:00, 16:00, 18:00",
+    "address": "Москва, ул. Примерная, 10",
+    "contact": "@marina_studio",
+    "knowledge": "Салон красоты. Адрес, цены, правила, что можно и нельзя.",
+    "faq": "Сколько стоит стрижка?|3 500 ₽",
+    "products": "Медовик | 3 200 | крем | Торты | 🍰 | https://...",
+    "delivery": "Самовывоз: Москва, ул. Примерная, 10",
+    "niche": "салон красоты",
 }
 FIELD_EMOJI = {
     "business_name": "🏷",
@@ -59,11 +77,13 @@ def field_prompt(template: str, index: int) -> str:
     field = fields[index]
     icon = FIELD_EMOJI.get(field["key"], "✏️")
     hint = f"\n\n<i>{html.escape(field.get('hint', ''))}</i>" if field.get("hint") else ""
+    example = EXAMPLES.get(field["key"])
+    example_html = f"\n\n<i>Пример:</i>\n<pre>{html.escape(example[:300])}</pre>" if example else ""
     skip = "\n\n<i>Можно написать /skip, если не хочешь заполнять.</i>" if not field.get("required") else ""
     return (
         f"{icon} <b>Шаг {index + 1} из {len(fields)}</b>\n"
         f"<code>{progress(index, len(fields))}</code>\n\n"
-        f"<b>{html.escape(field['label'])}</b>{hint}{skip}"
+        f"<b>{html.escape(field['label'])}</b>{hint}{example_html}{skip}"
     )
 
 
@@ -167,15 +187,18 @@ async def start(message: Message, state: FSMContext):
     if OWNER_ID and str(message.from_user.id) != OWNER_ID:
         await message.answer("Это тестовый конструктор. Доступ только у владельца.")
         return
-    await message.answer(
+    text = (
         "✨ <b>Платформа практики</b>\n\n"
         "Урок 2 · <b>Чат-боты</b>\n\n"
         "Собери своего первого бота за 5 минут:\n"
         "шаблон → бриф → токен → запуск.\n\n"
-        "Без кода. Всё кнопками.",
-        parse_mode="HTML",
-        reply_markup=kb([("🚀 Собрать бота", "build"), ("📦 Мои боты", "mybots")]),
+        "Без кода. Всё кнопками."
     )
+    markup = kb([("🚀 Собрать бота", "build"), ("📦 Мои боты", "mybots")])
+    try:
+        await message.answer_photo(FSInputFile(LESSON_COVER), caption=text, parse_mode="HTML", reply_markup=markup)
+    except Exception:
+        await message.answer(text, parse_mode="HTML", reply_markup=markup)
 
 
 @dp.callback_query(F.data == "build")
@@ -184,10 +207,24 @@ async def build(call: CallbackQuery, state: FSMContext):
     await state.set_state(Build.template)
     await call.message.answer(
         "🎨 <b>Выбери шаблон</b>\n\n"
-        "Три готовых сценария. Внутри — бриф и запуск.",
+        "Три готовых сценария. Внутри — бриф, запуск и проект в кабинете.",
         parse_mode="HTML",
-        reply_markup=templates_kb(),
     )
+    for key, meta in engine.TEMPLATES.items():
+        caption = (
+            f"{meta['icon']} <b>{html.escape(meta['name'])}</b>\n"
+            f"<i>{html.escape(meta['tagline'])}</i>\n\n"
+            "• 4–5 вопросов\n• запуск за 5 минут\n• проект сразу в кабинете"
+        )
+        try:
+            await call.message.answer_photo(
+                FSInputFile(COVER_FILES[key]),
+                caption=caption,
+                parse_mode="HTML",
+                reply_markup=kb([("Выбрать этот шаблон", f"tpl:{key}")]),
+            )
+        except Exception:
+            await call.message.answer(caption, parse_mode="HTML", reply_markup=kb([("Выбрать этот шаблон", f"tpl:{key}")]))
     await call.answer()
 
 
@@ -210,11 +247,10 @@ async def choose_template(call: CallbackQuery, state: FSMContext):
     await state.update_data(template=template, index=0, brief={})
     await state.set_state(Build.fields)
     meta = engine.TEMPLATES[template]
-    caption = f"{meta['icon']} <b>{html.escape(meta['name'])}</b>\n\n{html.escape(meta['tagline'])}"
-    try:
-        await call.message.answer_photo(COVERS[template], caption=caption, parse_mode="HTML")
-    except Exception:
-        await call.message.answer(caption, parse_mode="HTML")
+    await call.message.answer(
+        f"{meta['icon']} <b>{html.escape(meta['name'])}</b>\n\nЗаполним бриф.",
+        parse_mode="HTML",
+    )
     await call.message.answer(field_prompt(template, 0), parse_mode="HTML")
     await call.answer()
 
@@ -274,14 +310,21 @@ async def reuse_booking(call: CallbackQuery, state: FSMContext):
     buttons = [[InlineKeyboardButton(text="🚀 Открыть бота", url=f"https://t.me/{bot['username']}")]]
     if project:
         buttons.append([InlineKeyboardButton(text="🌐 Открыть в кабинете", url=project["magic_url"])])
-    await call.message.answer(
+    text = (
         "🎉 <b>Бот пересобран!</b>\n\n"
         f"🤖 <b>@{html.escape(bot['username'])}</b>\n\n"
         + ("📁 Проект обновлён в твоём кабинете.\n\n" if project else "")
-        + "Открой его и нажми /start.",
-        parse_mode="HTML",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons),
+        + "Открой его и нажми /start."
     )
+    try:
+        await call.message.answer_photo(
+            FSInputFile(COVER_FILES["booking"]),
+            caption=text,
+            parse_mode="HTML",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons),
+        )
+    except Exception:
+        await call.message.answer(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons))
     await call.answer()
 
 
@@ -312,15 +355,22 @@ async def receive_token(message: Message, state: FSMContext):
     buttons = [[InlineKeyboardButton(text="🚀 Открыть бота", url=f"https://t.me/{bot['username']}")]]
     if project:
         buttons.append([InlineKeyboardButton(text="🌐 Открыть в кабинете", url=project["magic_url"])])
-    await message.answer(
+    text = (
         "🎉 <b>Бот собран!</b>\n\n"
         f"🤖 <b>@{html.escape(bot['username'])}</b>\n"
         f"🧩 {html.escape(engine.TEMPLATES[bot['template']]['name'])}\n\n"
         + ("📁 Проект уже сохранён в твоём кабинете на платформе.\n\n" if project else "")
-        + "Нажми /start в своём боте и проверь сценарий.",
-        parse_mode="HTML",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons),
+        + "Нажми /start в своём боте и проверь сценарий."
     )
+    try:
+        await message.answer_photo(
+            FSInputFile(COVER_FILES[bot["template"]]),
+            caption=text,
+            parse_mode="HTML",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons),
+        )
+    except Exception:
+        await message.answer(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons))
 
 
 @dp.message(Command("mybots"))
