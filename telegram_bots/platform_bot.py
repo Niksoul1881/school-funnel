@@ -26,6 +26,44 @@ TENANTS: dict[str, dict] = {}
 MY_BOTS: list[dict] = []
 dp = Dispatcher()
 
+PUBLIC = "https://school.91-184-242-178.sslip.io:8443"
+COVERS = {
+    "booking": f"{PUBLIC}/static/covers/booking.png",
+    "ai": f"{PUBLIC}/static/covers/ai.png",
+    "shop": f"{PUBLIC}/static/covers/shop.png",
+}
+FIELD_EMOJI = {
+    "business_name": "🏷",
+    "niche": "🎯",
+    "services": "💅",
+    "slots": "🕐",
+    "address": "📍",
+    "contact": "📞",
+    "knowledge": "📚",
+    "faq": "💬",
+    "products": "🛍",
+    "delivery": "🚚",
+}
+
+
+def progress(index: int, total: int) -> str:
+    filled = "▰" * (index + 1)
+    empty = "▱" * max(0, total - index - 1)
+    return filled + empty
+
+
+def field_prompt(template: str, index: int) -> str:
+    fields = engine.TEMPLATES[template]["fields"]
+    field = fields[index]
+    icon = FIELD_EMOJI.get(field["key"], "✏️")
+    hint = f"\n\n<i>{html.escape(field.get('hint', ''))}</i>" if field.get("hint") else ""
+    skip = "\n\n<i>Можно написать /skip, если не хочешь заполнять.</i>" if not field.get("required") else ""
+    return (
+        f"{icon} <b>Шаг {index + 1} из {len(fields)}</b>\n"
+        f"<code>{progress(index, len(fields))}</code>\n\n"
+        f"<b>{html.escape(field['label'])}</b>{hint}{skip}"
+    )
+
 
 class Build(StatesGroup):
     template = State()
@@ -110,9 +148,12 @@ async def start(message: Message, state: FSMContext):
         await message.answer("Это тестовый конструктор. Доступ только у владельца.")
         return
     await message.answer(
-        "Привет! Это платформа практики.\n\n"
-        "Урок 2: собери своего первого Telegram-бота.\n"
-        "Выбери шаблон, ответь на 4–5 вопросов и пришли токен бота из BotFather.",
+        "✨ <b>Платформа практики</b>\n\n"
+        "Урок 2 · <b>Чат-боты</b>\n\n"
+        "Собери своего первого бота за 5 минут:\n"
+        "шаблон → бриф → токен → запуск.\n\n"
+        "Без кода. Всё кнопками.",
+        parse_mode="HTML",
         reply_markup=kb([("🚀 Собрать бота", "build"), ("📦 Мои боты", "mybots")]),
     )
 
@@ -121,17 +162,22 @@ async def start(message: Message, state: FSMContext):
 async def build(call: CallbackQuery, state: FSMContext):
     await state.clear()
     await state.set_state(Build.template)
-    await call.message.answer("Какого бота собираем?", reply_markup=templates_kb())
+    await call.message.answer(
+        "🎨 <b>Выбери шаблон</b>\n\n"
+        "Три готовых сценария. Внутри — бриф и запуск.",
+        parse_mode="HTML",
+        reply_markup=templates_kb(),
+    )
     await call.answer()
 
 
 @dp.callback_query(F.data == "mybots")
 async def mybots(call: CallbackQuery):
     if not MY_BOTS:
-        await call.message.answer("Пока нет ботов. Нажми /start → «Собрать бота».")
+        await call.message.answer("📦 Пока нет ботов.\n\nНажми /start → «Собрать бота».", parse_mode="HTML")
     else:
-        lines = [f"@{b['username']} · {engine.TEMPLATES[b['template']]['name']}" for b in MY_BOTS]
-        await call.message.answer("Мои боты:\n\n" + "\n".join(lines))
+        lines = [f"• <b>@{html.escape(b['username'])}</b> — {html.escape(engine.TEMPLATES[b['template']]['name'])}" for b in MY_BOTS]
+        await call.message.answer("📦 <b>Мои боты</b>\n\n" + "\n".join(lines), parse_mode="HTML")
     await call.answer()
 
 
@@ -143,8 +189,13 @@ async def choose_template(call: CallbackQuery, state: FSMContext):
         return
     await state.update_data(template=template, index=0, brief={})
     await state.set_state(Build.fields)
-    field = engine.TEMPLATES[template]["fields"][0]
-    await call.message.answer(f"Шаблон: {engine.TEMPLATES[template]['name']}\n\n{field['label']}:")
+    meta = engine.TEMPLATES[template]
+    caption = f"{meta['icon']} <b>{html.escape(meta['name'])}</b>\n\n{html.escape(meta['tagline'])}"
+    try:
+        await call.message.answer_photo(COVERS[template], caption=caption, parse_mode="HTML")
+    except Exception:
+        await call.message.answer(caption, parse_mode="HTML")
+    await call.message.answer(field_prompt(template, 0), parse_mode="HTML")
     await call.answer()
 
 
@@ -162,52 +213,98 @@ async def fill_field(message: Message, state: FSMContext):
     index += 1
     if index < len(fields):
         await state.update_data(index=index, brief=brief)
-        field = fields[index]
-        hint = f"\n\n{hint}" if (hint := field.get("hint")) else ""
-        await message.answer(f"{field['label']}:{hint}")
+        await message.answer(field_prompt(template, index), parse_mode="HTML")
         return
     await state.update_data(brief=brief)
     await state.set_state(Build.token)
+    reuse = InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text="🔁 Взять готового booking-бота", callback_data="reuse:booking")
+    ]]) if template == "booking" else None
     await message.answer(
-        "Бриф готов. Теперь пришли токен нового бота из @BotFather.\n\n"
-        "Он выглядит так: 123456789:AA...\n"
-        "Это ключ от бота — не публикуй его."
+        "🔑 <b>Последний шаг</b>\n\n"
+        "Пришли токен <b>нового</b> бота из @BotFather.\n\n"
+        "Он выглядит так:\n"
+        "<code>123456789:AA...</code>\n\n"
+        "<i>Это ключ от бота — не публикуй его.</i>",
+        parse_mode="HTML",
+        reply_markup=reuse,
     )
+
+
+@dp.callback_query(F.data == "reuse:booking")
+async def reuse_booking(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    if not data or data.get("template") != "booking":
+        await call.answer("Этот вариант доступен для шаблона записи", show_alert=True)
+        return
+    token = os.getenv("BOOKING_BOT_TOKEN", "").strip()
+    if not token:
+        await call.answer("Нет тестового booking-токена", show_alert=True)
+        return
+    await call.message.answer("⏳ <b>Беру готового бота…</b>\n\nПересобираю его под твой бриф.", parse_mode="HTML")
+    try:
+        bot = await start_tenant(token, "booking", data.get("brief", {}))
+    except Exception as exc:
+        await call.message.answer(f"⚠️ Не получилось: <i>{html.escape(str(exc))}</i>", parse_mode="HTML")
+        await call.answer()
+        return
+    MY_BOTS.append(bot)
+    await state.clear()
+    await call.message.answer(
+        "🎉 <b>Бот пересобран!</b>\n\n"
+        f"🤖 <b>@{html.escape(bot['username'])}</b>\n\n"
+        "Открой его и нажми /start.",
+        parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="🚀 Открыть бота", url=f"https://t.me/{bot['username']}")
+        ]]),
+    )
+    await call.answer()
 
 
 @dp.message(Build.token)
 async def receive_token(message: Message, state: FSMContext):
     token = (message.text or "").strip()
     if ":" not in token:
-        await message.answer("Это не похоже на токен. Скопируй строку из BotFather целиком.")
+        await message.answer("⚠️ Это не похоже на токен.\nСкопируй строку из BotFather целиком.", parse_mode="HTML")
         return
     ok, username = await validate(token)
     if not ok:
-        await message.answer(f"Telegram не принял токен: {username}\nПроверь и пришли ещё раз.")
+        await message.answer(f"⚠️ Telegram не принял токен:\n<i>{html.escape(username)}</i>\n\nПроверь и пришли ещё раз.", parse_mode="HTML")
         return
     data = await state.get_data()
-    await message.answer("Собираю бота… ⏳")
+    await message.answer("⏳ <b>Собираю бота…</b>\n\nЗапускаю сценарий и проверяю токен.", parse_mode="HTML")
     try:
         bot = await start_tenant(token, data["template"], data["brief"])
     except Exception as exc:
-        await message.answer(f"Не получилось запустить: {exc}")
+        await message.answer(
+            f"⚠️ Не получилось запустить:\n<i>{html.escape(str(exc))}</i>\n\n"
+            "Скорее всего, этот токен уже используется другим запущенным ботом.",
+            parse_mode="HTML",
+        )
         return
     MY_BOTS.append(bot)
     await state.clear()
     await message.answer(
-        f"Готово! 🎉\n\nТвой бот: @{bot['username']}\n"
-        f"Шаблон: {engine.TEMPLATES[bot['template']]['name']}\n\n"
-        f"Открой: https://t.me/{bot['username']}\n"
-        "Нажми /start — и проверяй сценарий."
+        "🎉 <b>Бот собран!</b>\n\n"
+        f"🤖 <b>@{html.escape(bot['username'])}</b>\n"
+        f"🧩 {html.escape(engine.TEMPLATES[bot['template']]['name'])}\n\n"
+        "Нажми /start в своём боте и проверь сценарий.",
+        parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="🚀 Открыть бота", url=f"https://t.me/{bot['username']}")
+        ]]),
     )
 
 
 @dp.message(Command("mybots"))
 async def mybots_command(message: Message):
     if not MY_BOTS:
-        await message.answer("Пока нет ботов.")
+        await message.answer("📦 Пока нет ботов.")
         return
-    await message.answer("\n".join(f"@{b['username']} · {engine.TEMPLATES[b['template']]['name']}" for b in MY_BOTS))
+    await message.answer("📦 <b>Мои боты</b>\n\n" + "\n".join(
+        f"• <b>@{html.escape(b['username'])}</b> — {html.escape(engine.TEMPLATES[b['template']]['name'])}" for b in MY_BOTS
+    ), parse_mode="HTML")
 
 
 async def main() -> None:
