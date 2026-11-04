@@ -12,7 +12,16 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery, FSInputFile, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from aiogram.types import (
+    BotCommand,
+    CallbackQuery,
+    FSInputFile,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    Message,
+    ReplyKeyboardMarkup,
+)
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +34,22 @@ OWNER_ID = os.getenv("OWNER_TG_ID", "").strip()
 TENANTS: dict[str, dict] = {}
 MY_BOTS: list[dict] = []
 dp = Dispatcher()
+
+MENU_START = "🚀 Старт"
+MENU_BUILD = "🛠 Собрать бота"
+MENU_MY = "📦 Мои боты"
+
+
+def main_menu() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text=MENU_START), KeyboardButton(text=MENU_BUILD)],
+            [KeyboardButton(text=MENU_MY)],
+        ],
+        resize_keyboard=True,
+        is_persistent=True,
+        input_field_placeholder="Выбери действие…",
+    )
 
 PUBLIC = "https://school.91-184-242-178.sslip.io:8443"
 PLATFORM_API = os.getenv("PLATFORM_API_URL", PUBLIC).rstrip("/")
@@ -221,18 +246,15 @@ async def start(message: Message, state: FSMContext):
         "шаблон → бриф → токен → запуск.\n\n"
         "Без кода. Всё кнопками."
     )
-    markup = kb([("🚀 Собрать бота", "build"), ("📦 Мои боты", "mybots")])
+    markup = main_menu()
     try:
         await message.answer_photo(FSInputFile(LESSON_COVER), caption=text, parse_mode="HTML", reply_markup=markup)
     except Exception:
         await message.answer(text, parse_mode="HTML", reply_markup=markup)
 
 
-@dp.callback_query(F.data == "build")
-async def build(call: CallbackQuery, state: FSMContext):
-    await state.clear()
-    await state.set_state(Build.template)
-    await call.message.answer(
+async def show_templates(message: Message) -> None:
+    await message.answer(
         "🎨 <b>Выбери шаблон</b>\n\n"
         "Три готовых сценария. Внутри — бриф, запуск и проект в кабинете.",
         parse_mode="HTML",
@@ -244,24 +266,35 @@ async def build(call: CallbackQuery, state: FSMContext):
             "• 4–5 вопросов\n• запуск за 5 минут\n• проект сразу в кабинете"
         )
         try:
-            await call.message.answer_photo(
+            await message.answer_photo(
                 FSInputFile(COVER_FILES[key]),
                 caption=caption,
                 parse_mode="HTML",
                 reply_markup=kb([("Выбрать этот шаблон", f"tpl:{key}")]),
             )
         except Exception:
-            await call.message.answer(caption, parse_mode="HTML", reply_markup=kb([("Выбрать этот шаблон", f"tpl:{key}")]))
+            await message.answer(caption, parse_mode="HTML", reply_markup=kb([("Выбрать этот шаблон", f"tpl:{key}")]))
+
+
+async def show_my_bots(message: Message) -> None:
+    if not MY_BOTS:
+        await message.answer("📦 Пока нет ботов.\n\nНажми «🛠 Собрать бота» внизу.", parse_mode="HTML", reply_markup=main_menu())
+        return
+    lines = [f"• <b>@{html.escape(b['username'])}</b> — {html.escape(engine.TEMPLATES[b['template']]['name'])}" for b in MY_BOTS]
+    await message.answer("📦 <b>Мои боты</b>\n\n" + "\n".join(lines), parse_mode="HTML", reply_markup=main_menu())
+
+
+@dp.callback_query(F.data == "build")
+async def build(call: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await state.set_state(Build.template)
+    await show_templates(call.message)
     await call.answer()
 
 
 @dp.callback_query(F.data == "mybots")
 async def mybots(call: CallbackQuery):
-    if not MY_BOTS:
-        await call.message.answer("📦 Пока нет ботов.\n\nНажми /start → «Собрать бота».", parse_mode="HTML")
-    else:
-        lines = [f"• <b>@{html.escape(b['username'])}</b> — {html.escape(engine.TEMPLATES[b['template']]['name'])}" for b in MY_BOTS]
-        await call.message.answer("📦 <b>Мои боты</b>\n\n" + "\n".join(lines), parse_mode="HTML")
+    await show_my_bots(call.message)
     await call.answer()
 
 
@@ -280,6 +313,23 @@ async def choose_template(call: CallbackQuery, state: FSMContext):
     )
     await call.message.answer(field_prompt(template, 0), parse_mode="HTML")
     await call.answer()
+
+
+@dp.message(F.text == MENU_START)
+async def menu_start(message: Message, state: FSMContext):
+    await start(message, state)
+
+
+@dp.message(F.text == MENU_BUILD)
+async def menu_build(message: Message, state: FSMContext):
+    await state.clear()
+    await state.set_state(Build.template)
+    await show_templates(message)
+
+
+@dp.message(F.text == MENU_MY)
+async def menu_my(message: Message):
+    await show_my_bots(message)
 
 
 @dp.message(Build.fields)
@@ -413,7 +463,12 @@ async def mybots_command(message: Message):
 async def main() -> None:
     if not PLATFORM_TOKEN:
         raise SystemExit("PLATFORM_BOT_TOKEN не задан")
-    await dp.start_polling(Bot(token=PLATFORM_TOKEN))
+    bot = Bot(token=PLATFORM_TOKEN)
+    await bot.set_my_commands([
+        BotCommand(command="start", description="Главное меню"),
+        BotCommand(command="mybots", description="Мои боты"),
+    ])
+    await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
