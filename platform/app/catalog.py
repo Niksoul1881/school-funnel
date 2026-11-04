@@ -13,7 +13,7 @@ from typing import Any
 from .template_ai import AI_CONSULTANT_BOT_PY
 from .template_booking import BOOKING_BOT_PY
 from .template_manifest import TEMPLATES
-from .template_shop import SHOP_BOT_PY, SHOP_CSS, SHOP_HTML, SHOP_JS
+from .template_shop import SHOP_BOT_PY, SHOP_CATALOG_BOT_PY, SHOP_CSS, SHOP_HTML, SHOP_JS
 
 DIRECTIONS = {
     "bot": "Чат-бот",
@@ -339,6 +339,7 @@ def _parse_products(raw: str) -> list[dict]:
             "description": parts[2] if len(parts) > 2 else "",
             "category": parts[3] if len(parts) > 3 else "Другое",
             "emoji": parts[4] if len(parts) > 4 else "🛍️",
+            "image": parts[5] if len(parts) > 5 else "",
         })
     return items or [
         {"id": 1, "title": "Товар 1", "price": "1 000 ₽", "description": "Описание", "category": "Другое", "emoji": "🛍️"},
@@ -745,32 +746,38 @@ python bot.py
     if template["id"] == "shop":
         return f"""# Витрина товаров — {name}
 
-Telegram Mini App: каталог, карточки, корзина, доставка/самовывоз и заказ.
+Чат-бот витрины: фото товаров, категории, корзина и заказ администратору.
 
 ## Что внутри
 
-- `index.html`, `styles.css`, `app.js` — витрина.
-- `bot.py` — открывает Mini App и принимает `web_app_data` с заказом.
+- `bot.py` — каталог с фото, корзина, оформление заказа.
 - `content.json` — товары, категории, доставка, контакт.
-- `.env.example` — токен, URL витрины и ID администратора.
-- `README.md` — этот файл.
+- `miniapp/` — та же витрина как Mini App; пригодится на следующем этапе.
+- `.env.example` — токен бота и ID администратора.
 
-## Как открыть
+## Запуск
 
-1. Задеплойте папку как статический сайт (или откройте `index.html` локально).
-2. В @BotFather создайте бота и добавьте Mini App URL.
-3. Запустите `bot.py` — он покажет кнопку «Открыть витрину».
-4. Заказ приходит в чат `ADMIN_CHAT_ID`.
-
-## Товары
-
-Каждый товар в `content.json`:
-
-```json
-{{"id": 1, "title": "Медовик", "price": "3 200", "description": "...", "category": "Торты", "emoji": "🍰"}}
+```bash
+cp .env.example .env
+# BOT_TOKEN — из @BotFather
+# ADMIN_CHAT_ID — ваш Telegram ID
+pip install -r requirements.txt
+python bot.py
 ```
 
-Меняйте тексты и цены в `content.json`, код не трогайте.
+## Как добавить товар
+
+В `content.json`:
+
+```json
+{{"id": 1, "title": "Медовик", "price": "3 200", "description": "...", "category": "Торты", "emoji": "🍰", "image": "https://..."}}
+```
+
+`image` — прямая ссылка на фото. Если её нет или фото не открывается, бот пришлёт карточку текстом.
+
+## Mini App
+
+В `miniapp/` уже лежит веб-витрина. Когда будете готовы — задеплойте её и переключите кнопку бота на WebApp.
 """
     lines = [
         f"# {template['name']} — {name}",
@@ -873,6 +880,16 @@ def _bot_files(template: dict, content: dict) -> dict[str, str]:
             f"Ты — консультант «{content['business']['name']}». Отвечай только по knowledge.md. "
             "Если ответа нет — дай контакт человека. Не выдумывай цены и сроки."
         )
+    if template["id"] == "shop":
+        files["bot.py"] = SHOP_CATALOG_BOT_PY
+        files["requirements.txt"] = "aiogram==3.22.0\npython-dotenv==1.2.1\n"
+        files[".env.example"] = "BOT_TOKEN=\nADMIN_CHAT_ID=\n"
+        files["README.md"] = _readme(template, content)
+        encoded = json.dumps(content, ensure_ascii=False).replace("</", "<\\/")
+        title = html.escape(content["business"]["name"])
+        files["miniapp/index.html"] = SHOP_HTML.replace("__TITLE__", title).replace("__CONTENT_JSON__", encoded)
+        files["miniapp/styles.css"] = SHOP_CSS
+        files["miniapp/app.js"] = SHOP_JS
     return files
 
 
@@ -950,6 +967,13 @@ def generate_files(template_id: str, brief: dict) -> dict[str, str]:
 def preview_html(project: dict, files: dict[str, str]) -> str:
     """HTML для iframe-превью мини-аппа; для бота/агента возвращает заглушку."""
     template = TEMPLATES_BY_ID.get(project["template_id"], {})
+    if project.get("template_id") == "shop" and files.get("miniapp/index.html"):
+        index = files["miniapp/index.html"]
+        css = files.get("miniapp/styles.css", "")
+        js = files.get("miniapp/app.js", "")
+        index = index.replace('<link rel="stylesheet" href="styles.css">', f"<style>{css}</style>")
+        index = index.replace('<script src="app.js"></script>', f"<script>{js}</script>")
+        return index
     if template.get("direction") != "miniapp":
         return "<!doctype html><meta charset='utf-8'><body style='font-family:sans-serif;padding:24px'>Превью доступно во вкладке проекта.</body>"
     index = files.get("index.html", "")

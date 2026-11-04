@@ -571,6 +571,7 @@ function renderTemplates() {
   </div>
   <div class="grid g3">
     ${list.map((t) => `<div class="card template-card">
+      <div class="template-cover"><img src="${esc(t.cover || '')}" alt="" loading="lazy"></div>
       <div class="between"><div class="row">${ic(t.icon)}<div><span class="badge ${t.direction==='bot'?'pink':t.direction==='agent'?'violet':'blue'}">${directionLabel(t.direction)}</span></div></div>${t.badge ? `<span class="badge gold">${t.badge}</span>` : ''}</div>
       <h3>${esc(t.name)}</h3>
       <div class="tagline">${esc(t.tagline)}</div>
@@ -1350,14 +1351,28 @@ function telegramPreview(p) {
   let content = null;
   try { content = JSON.parse(contentFile?.content || '{}'); } catch (_) {}
   if (!content || !content.business) return '<div class="empty">Нет content.json</div>';
+  const isShop = content.template === 'shop';
+  const isBooking = content.template === 'booking';
   if (!state.preview || state.preview.projectId !== p.id) {
+    const first = isShop ? (content.products || [])[0] : null;
     state.preview = {
       projectId: p.id,
-      messages: [{ role: 'bot', text: content.greeting || 'Здравствуйте!' }],
+      messages: [
+        { role: 'bot', text: content.greeting || 'Здравствуйте!' },
+        ...(first ? [{ role: 'bot', text: `${first.title} — ${first.price}\n${first.description || ''}`, image: first.image }] : []),
+      ],
     };
   }
-  const msg = state.preview.messages.map((m) => `<div class="tg-b ${m.role === 'user' ? 'me' : ''}">${esc(m.text)}</div>`).join('');
-  const buttons = (content.menu || []).map((b) => `<button data-tg-action="${esc(b.id)}">${esc(b.title)}</button>`).join('') + `<button data-tg-action="faq">Частые вопросы</button>`;
+  const msg = state.preview.messages.map((m) => `<div class="tg-b ${m.role === 'user' ? 'me' : ''}">${m.image ? `<img class="tg-img" src="${esc(m.image)}" alt="">` : ''}${esc(m.text)}</div>`).join('');
+  let buttons = (content.menu || []).map((b) => `<button data-tg-action="${esc(b.id)}">${esc(b.title)}</button>`).join('');
+  if (isShop) {
+    buttons += `<button data-tg-action="catalog">Каталог</button><button data-tg-action="cart">Корзина</button>`;
+  } else if (isBooking) {
+    buttons += (content.services || []).slice(0, 4).map((s, i) => `<button data-tg-action="svc:${i}">${esc(s.title)} · ${esc(s.price)}</button>`).join('');
+    buttons += `<button data-tg-action="contact">Связаться</button>`;
+  } else {
+    buttons += `<button data-tg-action="faq">Частые вопросы</button><button data-tg-action="contact">Связаться</button>`;
+  }
   return `<div class="phone" style="--acc:${esc(content.business.accent || '#ff4f8b')}">
     <div class="ph-top"><div class="ph-av">${esc((content.business.name || 'Б').slice(0,1))}</div><div><div class="ph-name">${esc(content.business.name)}</div><div class="ph-sub">бот · онлайн</div></div></div>
     <div class="ph-body" id="tg-body">${msg}<div class="tg-kb">${buttons}</div></div>
@@ -1370,24 +1385,37 @@ function tgAction(action) {
   let content = {};
   try { content = JSON.parse(contentFile?.content || '{}'); } catch (_) {}
   if (!state.preview) state.preview = { projectId: p.id, messages: [] };
-  const known = { 'услуги': 'services', 'записаться': 'book', 'запись': 'book', 'цены': 'prices', 'прайс': 'prices', 'связаться': 'contact', 'контакты': 'contact', 'вопросы': 'faq', 'частые вопросы': 'faq', 'программа': 'program', 'подарок': 'gift', 'уроки': 'lessons' };
+  const known = { 'услуги': 'services', 'записаться': 'book', 'запись': 'book', 'цены': 'prices', 'прайс': 'prices', 'связаться': 'contact', 'контакты': 'contact', 'вопросы': 'faq', 'частые вопросы': 'faq', 'программа': 'program', 'подарок': 'gift', 'уроки': 'lessons', 'каталог': 'catalog', 'корзина': 'cart' };
   action = known[String(action).toLowerCase()] || action;
   const prices = (content.prices || []).map((x) => `${x.title} — ${x.price}`).join('\n');
   const faq = (content.faq || []).map((x) => `${x.q}\n${x.a}`).join('\n\n');
-  const map = {
-    services: prices || 'Услуги скоро появятся.',
-    prices: prices || 'Цены скоро появятся.',
-    program: prices || 'Программа скоро появится.',
-    book: `Запись: ${content.contact || 'напишите администратору'}`,
-    contact: `Связаться: ${content.contact || 'напишите администратору'}`,
-    gift: 'Подарок уже ждёт: напишите «гайд» — пришлю.',
-    lessons: 'Уроки открываются в личном кабинете. Ссылка — в закрепе.',
-    faq: faq || 'Вопросы скоро появятся.',
-    back: content.greeting || 'Здравствуйте!',
-  };
-  const label = (content.menu || []).find((x) => x.id === action)?.title || (action === 'faq' ? 'Частые вопросы' : action);
+  const products = content.products || [];
+  let label = (content.menu || []).find((x) => x.id === action)?.title || (action === 'faq' ? 'Частые вопросы' : action);
+  let reply = '';
+  if (String(action).startsWith('svc:')) {
+    const service = (content.services || [])[Number(action.split(':')[1])];
+    label = service ? `${service.title} · ${service.price}` : 'Услуга';
+    reply = service ? `Вы выбрали: ${service.title} (${service.price}). Напишите дату в формате ДД.ММ.` : 'Выберите услугу.';
+  } else if (content.template === 'shop' && action === 'catalog') {
+    reply = products.length ? 'Каталог:\n' + products.map((x) => `• ${x.title} — ${x.price}`).join('\n') : 'Каталог пока пустой.';
+  } else if (content.template === 'shop' && action === 'cart') {
+    reply = 'Корзина пока пустая — добавьте товар из каталога.';
+  } else {
+    const map = {
+      services: prices || 'Услуги скоро появятся.',
+      prices: prices || 'Цены скоро появятся.',
+      program: prices || 'Программа скоро появится.',
+      book: `Запись: ${content.contact || 'напишите администратору'}`,
+      contact: `Связаться: ${content.contact || 'напишите администратору'}`,
+      gift: 'Подарок уже ждёт: напишите «гайд» — пришлю.',
+      lessons: 'Уроки открываются в личном кабинете. Ссылка — в закрепе.',
+      faq: faq || 'Вопросы скоро появятся.',
+      back: content.greeting || 'Здравствуйте!',
+    };
+    reply = map[action] || content.greeting || 'Здравствуйте!';
+  }
   state.preview.messages.push({ role: 'user', text: label });
-  state.preview.messages.push({ role: 'bot', text: map[action] || content.greeting || 'Здравствуйте!' });
+  state.preview.messages.push({ role: 'bot', text: reply });
   renderProject(p.id);
 }
 

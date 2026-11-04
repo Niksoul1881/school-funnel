@@ -58,6 +58,9 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 | Запуск проекта одной кнопкой | [`56_terminal_run.png`](screenshots/56_terminal_run.png) |
 | Три шаблона | [`63_templates_three.png`](screenshots/63_templates_three.png) |
 | Витрина товаров | [`64_shop_preview.png`](screenshots/64_shop_preview.png) |
+| Витрина с фото | [`65_shop_images.png`](screenshots/65_shop_images.png) |
+| Обложки шаблонов | [`66_templates_covers.png`](screenshots/66_templates_covers.png) |
+| Бот-витрина в превью | [`68_shop_bot_preview.png`](screenshots/68_shop_bot_preview.png) |
 
 ## Что дальше
 

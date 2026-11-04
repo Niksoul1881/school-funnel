@@ -33,7 +33,8 @@ body{margin:0;background:var(--soft);color:var(--ink);font-family:Manrope,-apple
 .cats button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 14px 20px}
 .product{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer;position:relative}
-.product .art{height:118px;display:grid;place-items:center;font-size:44px;background:linear-gradient(135deg,#f1dfcc,#e7cdb6)}
+.product .art{height:118px;display:grid;place-items:center;font-size:44px;background:linear-gradient(135deg,#f1dfcc,#e7cdb6);overflow:hidden}
+.art img,.detail-art img{width:100%;height:100%;object-fit:cover;display:block}
 .product .art.c1{background:linear-gradient(135deg,#f6d9c6,#e7b89b)}
 .product .art.c2{background:linear-gradient(135deg,#e8d8c4,#cdb69d)}
 .product .art.c3{background:linear-gradient(135deg,#e6d6e0,#cdb4c6)}
@@ -54,7 +55,7 @@ body{margin:0;background:var(--soft);color:var(--ink);font-family:Manrope,-apple
 .sheet .grab{width:38px;height:4px;border-radius:99px;background:#d9c9b9;margin:4px auto 12px}
 .sheet h2{font-size:22px;letter-spacing:-.04em;margin:0 0 5px}
 .sheet .close{float:right;border:0;background:#fff;width:30px;height:30px;border-radius:50%;font-size:17px;color:var(--muted)}
-.detail-art{height:190px;border-radius:18px;display:grid;place-items:center;font-size:82px;background:linear-gradient(135deg,#f1dfcc,#e7cdb6);margin:6px 0 12px}
+.detail-art{height:190px;border-radius:18px;display:grid;place-items:center;font-size:82px;background:linear-gradient(135deg,#f1dfcc,#e7cdb6);margin:6px 0 12px;overflow:hidden}
 .detail p{font-size:12px;line-height:1.6;color:var(--muted)}
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .qty{display:flex;align-items:center;gap:12px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px}
@@ -114,7 +115,9 @@ SHOP_JS = r'''(function(){
   }
 
   function art(p, big){
-    return `<div class="${big ? 'detail-art' : 'art c' + (Number(p.id) % 3 + 1)}">${esc(p.emoji || '🛍️')}</div>`;
+    const cls = big ? 'detail-art' : 'art c' + (Number(p.id) % 3 + 1);
+    const inner = p.image ? `<img src="${esc(p.image)}" alt="">` : esc(p.emoji || '🛍️');
+    return `<div class="${cls}">${inner}</div>`;
   }
 
   function home(){
@@ -244,6 +247,212 @@ async def order(message: Message) -> None:
 async def main() -> None:
     if not BOT_TOKEN:
         raise SystemExit("BOT_TOKEN не задан")
+    bot = Bot(token=BOT_TOKEN)
+    await dp.start_polling(bot)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+'''
+SHOP_CATALOG_BOT_PY = r'''"""Витрина в чате: фото товаров, корзина и заказ администратору."""
+import asyncio
+import html
+import json
+import os
+from pathlib import Path
+
+from aiogram import Bot, Dispatcher, F
+from aiogram.filters import CommandStart
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from dotenv import load_dotenv
+
+load_dotenv()
+CONTENT = json.loads(Path(__file__).with_name("content.json").read_text(encoding="utf-8"))
+BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID", "").strip()
+PRODUCTS = {int(p["id"]): p for p in CONTENT["products"]}
+dp = Dispatcher()
+bot = None
+
+
+class Checkout(StatesGroup):
+    name = State()
+    phone = State()
+    confirm = State()
+
+
+def categories_kb():
+    rows = []
+    cats = ["Все"] + list(CONTENT.get("categories", []))
+    for index in range(0, len(cats), 2):
+        rows.append([InlineKeyboardButton(text=cats[i], callback_data="cat:" + cats[i]) for i in range(index, min(index + 2, len(cats)))])
+    rows.append([InlineKeyboardButton(text="Корзина", callback_data="cart")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def product_kb(product_id):
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="В корзину", callback_data=f"add:{product_id}")],
+        [InlineKeyboardButton(text="← Каталог", callback_data="catalog"), InlineKeyboardButton(text="Корзина", callback_data="cart")],
+    ])
+
+
+def cart_kb():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Оформить заказ", callback_data="checkout")],
+        [InlineKeyboardButton(text="Очистить", callback_data="clear"), InlineKeyboardButton(text="← Каталог", callback_data="catalog")],
+    ])
+
+
+def caption(product):
+    return f"<b>{html.escape(product['title'])}</b>\n{html.escape(product['price'])}\n\n{html.escape(product.get('description', ''))}"
+
+
+async def send_product(chat_id, product):
+    keyboard = product_kb(product["id"])
+    if product.get("image"):
+        try:
+            await bot.send_photo(chat_id, product["image"], caption=caption(product), parse_mode="HTML", reply_markup=keyboard)
+            return
+        except Exception as exc:
+            print(f"photo error: {exc}")
+    await bot.send_message(chat_id, caption(product), parse_mode="HTML", reply_markup=keyboard)
+
+
+async def show_catalog(message, category="Все"):
+    items = list(PRODUCTS.values()) if category == "Все" else [p for p in PRODUCTS.values() if p["category"] == category]
+    await message.answer(f"Каталог: {category}. Выберите товар — покажу фото и цену.", reply_markup=categories_kb())
+    for product in items[:12]:
+        await send_product(message.chat.id, product)
+
+
+def cart_total(cart):
+    return sum(int("".join(ch for ch in PRODUCTS[int(pid)]["price"] if ch.isdigit()) or 0) * qty for pid, qty in cart.items())
+
+
+@dp.message(CommandStart())
+async def start(message: Message, state: FSMContext) -> None:
+    await state.clear()
+    await message.answer(CONTENT["greeting"])
+    await message.answer("Выберите категорию:", reply_markup=categories_kb())
+    for product in list(PRODUCTS.values())[:3]:
+        await send_product(message.chat.id, product)
+
+
+@dp.callback_query(F.data.startswith("cat:"))
+async def choose_category(call: CallbackQuery) -> None:
+    await show_catalog(call.message, call.data.split(":", 1)[1])
+    await call.answer()
+
+
+@dp.callback_query(F.data == "catalog")
+async def catalog(call: CallbackQuery) -> None:
+    await show_catalog(call.message, "Все")
+    await call.answer()
+
+
+@dp.callback_query(F.data.startswith("prod:"))
+async def product_card(call: CallbackQuery) -> None:
+    product = PRODUCTS.get(int(call.data.split(":", 1)[1]))
+    if product:
+        await send_product(call.message.chat.id, product)
+    await call.answer()
+
+
+@dp.callback_query(F.data.startswith("add:"))
+async def add_to_cart(call: CallbackQuery, state: FSMContext) -> None:
+    product_id = call.data.split(":", 1)[1]
+    data = await state.get_data()
+    cart = dict(data.get("cart", {}))
+    cart[product_id] = cart.get(product_id, 0) + 1
+    await state.update_data(cart=cart)
+    await call.answer("Добавлено в корзину")
+
+
+@dp.callback_query(F.data == "cart")
+async def show_cart(call: CallbackQuery, state: FSMContext) -> None:
+    cart = (await state.get_data()).get("cart", {})
+    if not cart:
+        await call.message.answer("Корзина пустая. Выберите товар в каталоге.", reply_markup=categories_kb())
+        await call.answer()
+        return
+    lines = []
+    for pid, qty in cart.items():
+        product = PRODUCTS[int(pid)]
+        lines.append(f"• {product['title']} × {qty} — {product['price']}")
+    await call.message.answer("Корзина:\n\n" + "\n".join(lines) + f"\n\nИтого: {cart_total(cart)} ₽", reply_markup=cart_kb())
+    await call.answer()
+
+
+@dp.callback_query(F.data == "clear")
+async def clear_cart(call: CallbackQuery, state: FSMContext) -> None:
+    await state.update_data(cart={})
+    await call.message.answer("Корзина очищена.", reply_markup=categories_kb())
+    await call.answer()
+
+
+@dp.callback_query(F.data == "checkout")
+async def checkout(call: CallbackQuery, state: FSMContext) -> None:
+    cart = (await state.get_data()).get("cart", {})
+    if not cart:
+        await call.answer("Сначала добавьте товар", show_alert=True)
+        return
+    await state.set_state(Checkout.name)
+    await call.message.answer("Как вас зовут?")
+    await call.answer()
+
+
+@dp.message(Checkout.name)
+async def checkout_name(message: Message, state: FSMContext) -> None:
+    name = (message.text or "").strip()
+    if len(name) < 2:
+        await message.answer("Напишите имя.")
+        return
+    await state.update_data(name=name)
+    await state.set_state(Checkout.phone)
+    await message.answer("Телефон для связи:")
+
+
+@dp.message(Checkout.phone)
+async def checkout_phone(message: Message, state: FSMContext) -> None:
+    phone = (message.text or "").strip()
+    if sum(ch.isdigit() for ch in phone) < 10:
+        await message.answer("Проверьте номер и напишите ещё раз.")
+        return
+    data = await state.get_data()
+    data["phone"] = phone
+    await state.update_data(phone=phone)
+    cart = data.get("cart", {})
+    lines = [f"• {PRODUCTS[int(pid)]['title']} × {qty} — {PRODUCTS[int(pid)]['price']}" for pid, qty in cart.items()]
+    await state.set_state(Checkout.confirm)
+    await message.answer(
+        f"Имя: {data.get('name')}\nТелефон: {phone}\n\n" + "\n".join(lines) + f"\n\nИтого: {cart_total(cart)} ₽",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Подтвердить", callback_data="order")], [InlineKeyboardButton(text="Отменить", callback_data="clear")]]),
+    )
+
+
+@dp.callback_query(F.data == "order")
+async def place_order(call: CallbackQuery, state: FSMContext) -> None:
+    data = await state.get_data()
+    cart = data.get("cart", {})
+    lines = [f"• {PRODUCTS[int(pid)]['title']} × {qty} — {PRODUCTS[int(pid)]['price']}" for pid, qty in cart.items()]
+    text = f"Новый заказ\n\n" + "\n".join(lines) + f"\n\nИтого: {cart_total(cart)} ₽\nИмя: {data.get('name')}\nТелефон: {data.get('phone')}\nTelegram: @{call.from_user.username or '—'}"
+    if ADMIN_CHAT_ID:
+        try:
+            await bot.send_message(int(ADMIN_CHAT_ID), text)
+        except Exception as exc:
+            print(f"admin error: {exc}")
+    await state.clear()
+    await call.message.answer(f"Заказ принят, {data.get('name')}! Мы свяжемся с вами.")
+    await call.answer("Готово")
+
+
+async def main() -> None:
+    if not BOT_TOKEN:
+        raise SystemExit("BOT_TOKEN не задан. Скопируйте .env.example в .env и вставьте токен.")
+    global bot
     bot = Bot(token=BOT_TOKEN)
     await dp.start_polling(bot)
 
