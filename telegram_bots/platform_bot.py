@@ -27,6 +27,8 @@ MY_BOTS: list[dict] = []
 dp = Dispatcher()
 
 PUBLIC = "https://school.91-184-242-178.sslip.io:8443"
+PLATFORM_API = os.getenv("PLATFORM_API_URL", PUBLIC).rstrip("/")
+SERVICE_TOKEN = os.getenv("PLATFORM_SERVICE_TOKEN", "").strip()
 COVERS = {
     "booking": f"{PUBLIC}/static/covers/booking.png",
     "ai": f"{PUBLIC}/static/covers/ai.png",
@@ -123,13 +125,14 @@ def tenant_dispatcher(bot_id: str):
     return tenant_dp
 
 
-async def start_tenant(token: str, template: str, brief: dict) -> dict:
+async def start_tenant(token: str, template: str, brief: dict, tg_id: int = 0) -> dict:
     me = await Bot(token).get_me()
     bot = Bot(token)
     bot_id = engine.create_bot(template, brief)["id"]
     task = asyncio.create_task(tenant_dispatcher(bot_id).start_polling(bot))
     TENANTS[bot_id] = {"id": bot_id, "token": token, "username": me.username, "task": task, "template": template}
-    return {"id": bot_id, "username": me.username, "template": template}
+    project = await save_project(tg_id, template, brief, me.username) if tg_id else None
+    return {"id": bot_id, "username": me.username, "template": template, "project": project}
 
 
 async def validate(token: str) -> tuple[bool, str]:
@@ -139,6 +142,23 @@ async def validate(token: str) -> tuple[bool, str]:
         return (True, data["result"]["username"]) if data.get("ok") else (False, data.get("description", "ошибка"))
     except Exception as exc:
         return False, str(exc)
+
+
+async def save_project(tg_id: int, template: str, brief: dict, username: str) -> dict | None:
+    if not SERVICE_TOKEN:
+        return None
+    try:
+        async with httpx.AsyncClient(timeout=25) as client:
+            response = await client.post(
+                f"{PLATFORM_API}/api/tg/create_project",
+                headers={"X-Service-Token": SERVICE_TOKEN},
+                json={"tg_id": str(tg_id), "template_id": template, "brief": brief, "username": username},
+            )
+            response.raise_for_status()
+            return response.json()
+    except Exception as exc:
+        print(f"project sync error: {exc}")
+        return None
 
 
 @dp.message(CommandStart())
@@ -243,21 +263,24 @@ async def reuse_booking(call: CallbackQuery, state: FSMContext):
         return
     await call.message.answer("⏳ <b>Беру готового бота…</b>\n\nПересобираю его под твой бриф.", parse_mode="HTML")
     try:
-        bot = await start_tenant(token, "booking", data.get("brief", {}))
+        bot = await start_tenant(token, "booking", data.get("brief", {}), call.from_user.id)
     except Exception as exc:
         await call.message.answer(f"⚠️ Не получилось: <i>{html.escape(str(exc))}</i>", parse_mode="HTML")
         await call.answer()
         return
     MY_BOTS.append(bot)
     await state.clear()
+    project = bot.get("project")
+    buttons = [[InlineKeyboardButton(text="🚀 Открыть бота", url=f"https://t.me/{bot['username']}")]]
+    if project:
+        buttons.append([InlineKeyboardButton(text="🌐 Открыть в кабинете", url=project["magic_url"])])
     await call.message.answer(
         "🎉 <b>Бот пересобран!</b>\n\n"
         f"🤖 <b>@{html.escape(bot['username'])}</b>\n\n"
-        "Открой его и нажми /start.",
+        + ("📁 Проект обновлён в твоём кабинете.\n\n" if project else "")
+        + "Открой его и нажми /start.",
         parse_mode="HTML",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="🚀 Открыть бота", url=f"https://t.me/{bot['username']}")
-        ]]),
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons),
     )
     await call.answer()
 
@@ -275,7 +298,7 @@ async def receive_token(message: Message, state: FSMContext):
     data = await state.get_data()
     await message.answer("⏳ <b>Собираю бота…</b>\n\nЗапускаю сценарий и проверяю токен.", parse_mode="HTML")
     try:
-        bot = await start_tenant(token, data["template"], data["brief"])
+        bot = await start_tenant(token, data["template"], data["brief"], message.from_user.id)
     except Exception as exc:
         await message.answer(
             f"⚠️ Не получилось запустить:\n<i>{html.escape(str(exc))}</i>\n\n"
@@ -285,15 +308,18 @@ async def receive_token(message: Message, state: FSMContext):
         return
     MY_BOTS.append(bot)
     await state.clear()
+    project = bot.get("project")
+    buttons = [[InlineKeyboardButton(text="🚀 Открыть бота", url=f"https://t.me/{bot['username']}")]]
+    if project:
+        buttons.append([InlineKeyboardButton(text="🌐 Открыть в кабинете", url=project["magic_url"])])
     await message.answer(
         "🎉 <b>Бот собран!</b>\n\n"
         f"🤖 <b>@{html.escape(bot['username'])}</b>\n"
         f"🧩 {html.escape(engine.TEMPLATES[bot['template']]['name'])}\n\n"
-        "Нажми /start в своём боте и проверь сценарий.",
+        + ("📁 Проект уже сохранён в твоём кабинете на платформе.\n\n" if project else "")
+        + "Нажми /start в своём боте и проверь сценарий.",
         parse_mode="HTML",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="🚀 Открыть бота", url=f"https://t.me/{bot['username']}")
-        ]]),
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons),
     )
 
 

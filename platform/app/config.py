@@ -45,6 +45,7 @@ DEMO_USER = os.environ.get("DEMO_USER", "demo")
 DEMO_PASSWORD = os.environ.get("DEMO_PASSWORD", "").strip()
 AGENT_MODE = os.environ.get("AGENT_MODE", "mock").strip().lower()
 DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "").strip()
+TELEGRAM_SERVICE_TOKEN = os.environ.get("TELEGRAM_SERVICE_TOKEN", "").strip()
 DSH_BIN = os.environ.get("DSH_BIN", "dsh")
 TELEGRAM_API = "https://api.telegram.org"
 

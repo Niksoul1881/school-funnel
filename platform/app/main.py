@@ -18,7 +18,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
@@ -99,6 +99,49 @@ def _clear_session(request: Request, response: Response) -> None:
     if token:
         execute("DELETE FROM sessions WHERE token_hash = ?", (security.token_hash(token),))
     response.delete_cookie(config.COOKIE_NAME, path="/")
+
+
+def _require_service(request: Request) -> None:
+    expected = config.TELEGRAM_SERVICE_TOKEN
+    supplied = request.headers.get("X-Service-Token", "")
+    if not expected or not supplied or not secrets.compare_digest(expected, supplied):
+        raise HTTPException(status_code=401, detail="Нет доступа к сервисному API")
+
+
+def _tg_user(tg_id: str, name: str, username: str = "") -> dict:
+    tg_id = str(tg_id).strip()
+    if not tg_id.isdigit():
+        raise HTTPException(status_code=400, detail="Некорректный Telegram ID")
+    link = fetch_one("SELECT user_id FROM telegram_links WHERE tg_id = ?", (tg_id,))
+    if link:
+        user = fetch_one("SELECT * FROM users WHERE id = ?", (link["user_id"],))
+        if user:
+            execute("UPDATE telegram_links SET username = ? WHERE tg_id = ?", (username, tg_id))
+            return user
+    email = f"tg{tg_id}@school.local"
+    user = fetch_one("SELECT * FROM users WHERE email = ?", (email,))
+    if not user:
+        user_id = execute(
+            "INSERT INTO users(email, password_hash, name, role, balance_rub, token_balance, tokens_spent, last_seen_at, created_at) VALUES (?,?,?,?,?,?,?,?,?)",
+            (email, security.hash_password(secrets.token_urlsafe(32)), (name or f"Telegram {tg_id}")[:80], "student", 0, config.START_TOKENS, 0, security.now(), security.now()),
+        )
+        user = fetch_one("SELECT * FROM users WHERE id = ?", (user_id,))
+    execute(
+        "INSERT INTO telegram_links(tg_id, user_id, username, created_at) VALUES (?,?,?,?) "
+        "ON CONFLICT(tg_id) DO UPDATE SET user_id = excluded.user_id, username = excluded.username",
+        (tg_id, user["id"], username[:64], security.now()),
+    )
+    return user
+
+
+def _magic_url(user_id: int) -> str:
+    raw = secrets.token_urlsafe(32)
+    expires = (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat(timespec="seconds")
+    execute(
+        "INSERT INTO magic_tokens(token_hash, user_id, expires_at, created_at) VALUES (?,?,?,?)",
+        (security.token_hash(raw), user_id, expires, security.now()),
+    )
+    return f"{config.PUBLIC_URL}/api/auth/magic?token={raw}"
 
 
 async def _body(request: Request) -> dict:
@@ -228,6 +271,50 @@ async def logout(request: Request):
     response = JSONResponse({"ok": True})
     _clear_session(request, response)
     return response
+
+
+@app.get("/api/auth/magic")
+def magic_login(token: str = ""):
+    raw = (token or "").strip()
+    row = fetch_one(
+        "SELECT * FROM magic_tokens WHERE token_hash = ? AND expires_at > ?",
+        (security.token_hash(raw), security.now()),
+    ) if raw else None
+    if not row:
+        return RedirectResponse(url="/?magic=invalid", status_code=302)
+    execute("DELETE FROM magic_tokens WHERE token_hash = ?", (security.token_hash(raw),))
+    response = RedirectResponse(url="/#/dashboard", status_code=302)
+    _set_session(response, row["user_id"])
+    store.touch_user(row["user_id"])
+    return response
+
+
+@app.post("/api/tg/create_project")
+async def tg_create_project(request: Request):
+    """Сервисный endpoint: бот-платформа создаёт проект в кабинете ученика."""
+    _require_service(request)
+    data = await _body(request)
+    tg_id = str(data.get("tg_id", "")).strip()
+    template_id = str(data.get("template_id", "")).strip()
+    template = catalog.TEMPLATES_BY_ID.get(template_id)
+    if not template:
+        raise HTTPException(status_code=400, detail="Неизвестный шаблон")
+    brief = data.get("brief") or {}
+    if not isinstance(brief, dict):
+        raise HTTPException(status_code=400, detail="Бриф должен быть объектом")
+    name = str(data.get("name") or brief.get("business_name") or template["name"]).strip()[:120]
+    username = str(data.get("username", "")).strip()
+    user = _tg_user(tg_id, name, username)
+    project_id = store.create_project(user["id"], template_id, name, brief)
+    store.log_event(user["id"], "telegram_project", project_id, {"template": template_id})
+    base = config.PUBLIC_URL.rstrip("/")
+    return {
+        "ok": True,
+        "user_id": user["id"],
+        "project_id": project_id,
+        "project_url": f"{base}/#/project/{project_id}",
+        "magic_url": _magic_url(user["id"]),
+    }
 
 
 @app.get("/api/me")
