@@ -41,6 +41,7 @@ MENU_START = "🚀 Старт"
 MENU_BUILD = "🛠 Собрать бота"
 MENU_MY = "📦 Мои боты"
 TENANTS_FILE = ROOT / "private" / "tenants.json"
+STATE_FILE = ROOT / "private" / "tenant_state.json"
 
 
 def load_tenants() -> list[dict]:
@@ -60,6 +61,27 @@ def remember_tenant(record: dict) -> None:
     items = [item for item in items if item.get("username") != record.get("username")]
     items.append(record)
     save_tenants(items)
+
+
+def save_engine_state() -> None:
+    try:
+        STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        STATE_FILE.write_text(json.dumps(engine.export_state(), ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception as exc:
+        print(f"state save failed: {exc}")
+
+
+def load_engine_state() -> None:
+    try:
+        data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return
+    usernames = {
+        bot.get("username"): bot_id
+        for bot_id, bot in engine.BOTS.items()
+        if bot.get("username")
+    }
+    engine.import_state(data, usernames)
 
 
 def main_menu() -> ReplyKeyboardMarkup:
@@ -250,6 +272,7 @@ async def emit(bot: Bot, chat_id: int, replies: list[dict]) -> None:
             except Exception as exc:
                 print(f"photo error: {exc}")
         await bot.send_message(chat_id, text, reply_markup=markup)
+    save_engine_state()
 
 
 def tenant_dispatcher(bot_id: str, template: str):
@@ -334,6 +357,7 @@ async def start_tenant(token: str, template: str, brief: dict, tg_id: int = 0, p
     bot = Bot(token)
     me = await bot.get_me()
     bot_id = engine.create_bot(template, brief)["id"]
+    engine.BOTS[bot_id]["username"] = me.username
     task = asyncio.create_task(tenant_dispatcher(bot_id, template).start_polling(bot))
     TENANTS[bot_id] = {"id": bot_id, "token": token, "username": me.username, "task": task, "template": template}
     if project is None and tg_id:
@@ -682,6 +706,7 @@ async def main() -> None:
         BotCommand(command="mybots", description="Мои боты"),
     ])
     await restore_tenants()
+    load_engine_state()
     await dp.start_polling(bot)
 
 

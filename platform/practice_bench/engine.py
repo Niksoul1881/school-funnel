@@ -210,6 +210,28 @@ def _remember(bot_id: str, record: dict[str, Any]) -> None:
     ORDERS.setdefault(bot_id, []).append(record)
 
 
+def export_state() -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for bot_id, bot in BOTS.items():
+        key = bot.get("username") or bot_id
+        out[key] = {
+            "booked": sorted(BOOKED.get(bot_id, set())),
+            "stats": dict(STATS.get(bot_id, {})),
+            "orders": list(ORDERS.get(bot_id, [])),
+        }
+    return out
+
+
+def import_state(data: dict[str, Any], usernames: dict[str, str]) -> None:
+    for username, row in (data or {}).items():
+        bot_id = usernames.get(username)
+        if not bot_id:
+            continue
+        BOOKED[bot_id] = set(row.get("booked") or [])
+        STATS[bot_id] = dict(row.get("stats") or {})
+        ORDERS[bot_id] = list(row.get("orders") or [])
+
+
 def _bump(bot_id: str, key: str) -> None:
     row = STATS.setdefault(bot_id, {})
     row[key] = row.get(key, 0) + 1
