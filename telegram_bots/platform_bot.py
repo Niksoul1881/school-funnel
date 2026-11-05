@@ -275,6 +275,21 @@ async def emit(bot: Bot, chat_id: int, replies: list[dict]) -> None:
     save_engine_state()
 
 
+def tenant_menu(template: str) -> ReplyKeyboardMarkup:
+    if template == "shop":
+        rows = [[KeyboardButton(text="🛍 Каталог"), KeyboardButton(text="🛒 Корзина")], [KeyboardButton(text="🚀 Старт"), KeyboardButton(text="📞 Связаться")]]
+    elif template == "gift":
+        rows = [[KeyboardButton(text="🚀 Старт"), KeyboardButton(text="🎁 Подарок")], [KeyboardButton(text="📣 Канал"), KeyboardButton(text="📞 Связаться")]]
+    else:
+        rows = [[KeyboardButton(text="🚀 Старт"), KeyboardButton(text="💅 Записаться")], [KeyboardButton(text="📞 Связаться")]]
+    return ReplyKeyboardMarkup(
+        keyboard=rows,
+        resize_keyboard=True,
+        is_persistent=True,
+        input_field_placeholder="Выбери действие…",
+    )
+
+
 def tenant_dispatcher(bot_id: str, template: str):
     tenant_dp = Dispatcher()
 
@@ -290,6 +305,7 @@ def tenant_dispatcher(bot_id: str, template: str):
         except Exception:
             pass
         await emit(message.bot, message.chat.id, engine.message(bot_id, action="start"))
+        await message.answer("Меню бота 👇", reply_markup=tenant_menu(template))
 
     @tenant_dp.callback_query()
     async def callback(call: CallbackQuery):
@@ -345,6 +361,25 @@ def tenant_dispatcher(bot_id: str, template: str):
             else:
                 lines.append(f"🎁 {row.get('gift', '')[:60]}")
         await message.answer("🧾 <b>Последние заявки</b>\n\n" + "\n".join(lines), parse_mode="HTML")
+
+    @tenant_dp.message(F.text.in_({"🚀 Старт", "💅 Записаться", "🎁 Подарок", "🛍 Каталог", "🛒 Корзина", "📣 Канал", "📞 Связаться"}))
+    async def menu_action(message: Message):
+        brief = engine.BOTS.get(bot_id, {}).get("config", {}).get("brief", {})
+        label = message.text
+        if label in ("🚀 Старт", "💅 Записаться", "🎁 Подарок"):
+            await emit(message.bot, message.chat.id, engine.message(bot_id, action="start"))
+        elif label == "🛍 Каталог":
+            await emit(message.bot, message.chat.id, engine.message(bot_id, action="cat:Все"))
+        elif label == "🛒 Корзина":
+            await emit(message.bot, message.chat.id, engine.message(bot_id, action="cart"))
+        elif label == "📣 Канал":
+            channel = brief.get("channel", "")
+            link = channel if str(channel).startswith("http") else f"https://t.me/{str(channel).lstrip('@')}"
+            await message.answer("Канал для подписки:", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="📣 Подписаться", url=link)]]))
+        elif label == "📞 Связаться":
+            contact = brief.get("contact", "владелец свяжется с вами")
+            await message.answer(f"📞 {contact}")
+        await message.answer("Меню бота 👇", reply_markup=tenant_menu(template))
 
     @tenant_dp.message(F.text)
     async def text(message: Message):
