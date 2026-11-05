@@ -6,6 +6,7 @@ import html
 import json
 import os
 import sys
+import uuid
 from pathlib import Path
 
 import httpx
@@ -133,10 +134,56 @@ def field_prompt(template: str, index: int) -> str:
     )
 
 
+async def ask_token(message: Message, state: FSMContext, template: str) -> None:
+    await state.set_state(Build.token)
+    reuse = InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text="🔁 Взять готового booking-бота", callback_data="reuse:booking")
+    ]]) if template == "booking" else None
+    await message.answer(
+        "🔑 <b>Последний шаг</b>\n\n"
+        "Пришли токен <b>нового</b> бота из @BotFather.\n\n"
+        "Он выглядит так:\n"
+        "<code>123456789:AA...</code>\n\n"
+        "<i>Это ключ от бота — не публикуй его.</i>",
+        parse_mode="HTML",
+        reply_markup=reuse,
+    )
+
+
+async def ask_next_field(message: Message, state: FSMContext) -> None:
+    data = await state.get_data()
+    template = data["template"]
+    index = data["index"]
+    fields = engine.TEMPLATES[template]["fields"]
+    if index >= len(fields):
+        await ask_token(message, state, template)
+        return
+    field = fields[index]
+    if template == "shop" and field["key"] == "products":
+        await state.update_data(shop_products=[])
+        await state.set_state(Build.product_photo)
+        await message.answer(
+            "📸 <b>Фото товаров</b>\n\n"
+            "Пришли фото товара — я сохраню его в веб-формате.\n"
+            "Можно несколько. После каждого фото спрошу название, цену и описание.\n\n"
+            "Когда закончишь — напиши «Готово».",
+            parse_mode="HTML",
+        )
+        return
+    await state.set_state(Build.fields)
+    await message.answer(field_prompt(template, index), parse_mode="HTML")
+
+
 class Build(StatesGroup):
     template = State()
     fields = State()
+    product_photo = State()
+    product_info = State()
     token = State()
+
+
+UPLOADS = ROOT / "platform" / "static" / "uploads"
+UPLOADS.mkdir(parents=True, exist_ok=True)
 
 
 def kb(items):
@@ -182,8 +229,10 @@ async def emit(bot: Bot, chat_id: int, replies: list[dict]) -> None:
             continue
         markup = reply_markup(reply)
         if reply.get("image"):
+            image = reply["image"]
+            photo = FSInputFile(ROOT / "platform" / image.lstrip("/")) if image.startswith("/static/") else image
             try:
-                await bot.send_photo(chat_id, reply["image"], caption=text, reply_markup=markup)
+                await bot.send_photo(chat_id, photo, caption=text, reply_markup=markup)
                 continue
             except Exception as exc:
                 print(f"photo error: {exc}")
@@ -288,10 +337,12 @@ async def start(message: Message, state: FSMContext):
 async def show_templates(message: Message) -> None:
     await message.answer(
         "🎨 <b>Выбери шаблон</b>\n\n"
-        "Три готовых сценария. Внутри — бриф, запуск и проект в кабинете.",
+        "Готовые сценарии. Внутри — бриф, запуск и проект в кабинете.",
         parse_mode="HTML",
     )
     for key, meta in engine.TEMPLATES.items():
+        if key == "ai":
+            continue
         caption = (
             f"{meta['icon']} <b>{html.escape(meta['name'])}</b>\n"
             f"<i>{html.escape(meta['tagline'])}</i>\n\n"
@@ -376,23 +427,73 @@ async def fill_field(message: Message, state: FSMContext):
         value = engine.TEMPLATES[template]["defaults"].get(fields[index]["key"], "")
     brief[fields[index]["key"]] = value
     index += 1
-    if index < len(fields):
-        await state.update_data(index=index, brief=brief)
-        await message.answer(field_prompt(template, index), parse_mode="HTML")
+    await state.update_data(index=index, brief=brief)
+    await ask_next_field(message, state)
+
+
+@dp.message(Build.product_photo, F.photo)
+async def product_photo(message: Message, state: FSMContext):
+    photo = message.photo[-1]
+    try:
+        file = await message.bot.get_file(photo.file_id)
+        name = f"{uuid.uuid4().hex}.jpg"
+        await message.bot.download_file(file.file_path, destination=UPLOADS / name)
+    except Exception as exc:
+        await message.answer(f"⚠️ Не смог сохранить фото: {html.escape(str(exc))}", parse_mode="HTML")
         return
-    await state.update_data(brief=brief)
-    await state.set_state(Build.token)
-    reuse = InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="🔁 Взять готового booking-бота", callback_data="reuse:booking")
-    ]]) if template == "booking" else None
+    await state.update_data(pending_image=f"/static/uploads/{name}")
+    await state.set_state(Build.product_info)
     await message.answer(
-        "🔑 <b>Последний шаг</b>\n\n"
-        "Пришли токен <b>нового</b> бота из @BotFather.\n\n"
-        "Он выглядит так:\n"
-        "<code>123456789:AA...</code>\n\n"
-        "<i>Это ключ от бота — не публикуй его.</i>",
+        "✅ Фото сохранил.\n\n"
+        "Теперь напиши товар в формате:\n"
+        "<code>Название | Цена | Описание | Категория</code>\n\n"
+        "Например:\n"
+        "<code>Медовик | 3200 | медовые коржи | Торты</code>",
         parse_mode="HTML",
-        reply_markup=reuse,
+    )
+
+
+@dp.message(Build.product_photo, F.text)
+async def products_done_or_text(message: Message, state: FSMContext):
+    value = (message.text or "").strip()
+    data = await state.get_data()
+    products = list(data.get("shop_products", []))
+    if value.lower() in ("готово", "хватит", "всё", "все", "/skip", "пропустить"):
+        brief = dict(data.get("brief", {}))
+        brief["products"] = "\n".join(products)
+        await state.update_data(brief=brief, index=2)
+        await state.set_state(Build.fields)
+        await message.answer(f"🛍 Товаров: {len(products)}. Дальше — доставка.", parse_mode="HTML")
+        await ask_next_field(message, state)
+        return
+    if "|" in value:
+        products.extend(line.strip() for line in value.splitlines() if line.strip())
+        data["shop_products"] = products
+        await state.update_data(shop_products=products)
+        await message.answer("Добавил. Пришли ещё фото или напиши «Готово».")
+        return
+    await message.answer("Пришли фото товара или напиши «Готово».")
+
+
+@dp.message(Build.product_info, F.text)
+async def product_info(message: Message, state: FSMContext):
+    value = (message.text or "").strip()
+    data = await state.get_data()
+    image = data.get("pending_image", "")
+    parts = [p.strip() for p in value.split("|")]
+    title = parts[0] if parts else "Товар"
+    price = parts[1] if len(parts) > 1 else "по запросу"
+    desc = parts[2] if len(parts) > 2 else ""
+    category = parts[3] if len(parts) > 3 else "Другое"
+    line = f"{title} | {price} | {desc} | {category} | 🛍 | {image}"
+    products = list(data.get("shop_products", []))
+    products.append(line)
+    await state.update_data(shop_products=products, pending_image="")
+    await state.set_state(Build.product_photo)
+    await message.answer(
+        f"✅ {html.escape(title)} добавлен.\n\n"
+        "Пришли фото следующего товара или напиши «Готово».",
+        parse_mode="HTML",
     )
 
 

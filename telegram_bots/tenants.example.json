@@ -14,20 +14,6 @@
     "project": null
   },
   {
-    "username": "ai_test_example_bot",
-    "template": "ai",
-    "brief": {
-      "business_name": "Труба у Палыча",
-      "niche": "сантехника",
-      "knowledge": "Магазин сантехники. Адрес, режим работы, ассортимент, доставка.",
-      "contact": "@soulnik",
-      "faq": "Есть ли доставка?|Да, по городу."
-    },
-    "token": "REPLACE_WITH_AI_TOKEN",
-    "owner_tg_id": 0,
-    "project": null
-  },
-  {
     "username": "shop_test_example_bot",
     "template": "shop",
     "brief": {

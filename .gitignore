@@ -43,3 +43,5 @@ node_modules/
 Thumbs.db
 
 telegram_bots/runtime/
+
+platform/static/uploads/
