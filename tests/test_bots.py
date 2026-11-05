@@ -191,3 +191,10 @@ def test_shop_payment_link():
     result = engine.message(bid, text="Москва, Примерная 10")
     assert any(b["action"].startswith("url:") for b in buttons(result))
     assert engine.stats(bid).get("orders") == 1
+
+def test_owner_order_journal(booking):
+    _fill_booking(booking, "16:00")
+    rows = engine.orders(booking)
+    assert rows and rows[-1]["type"] == "booking"
+    assert rows[-1]["phone"] == "+7 902 123-45-67"
+    assert engine.stats(booking).get("bookings") == 1

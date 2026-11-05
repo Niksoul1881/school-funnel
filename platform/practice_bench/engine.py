@@ -113,6 +113,7 @@ BOTS: dict[str, dict[str, Any]] = {}
 SESSIONS: dict[str, dict[str, Any]] = {}
 BOOKED: dict[str, set[str]] = {}
 STATS: dict[str, dict[str, int]] = {}
+ORDERS: dict[str, list[dict[str, Any]]] = {}
 
 
 def _lines(raw: str) -> list[str]:
@@ -199,6 +200,14 @@ def reset(bot_id: str) -> None:
 
 def stats(bot_id: str) -> dict[str, int]:
     return dict(STATS.get(bot_id, {}))
+
+
+def orders(bot_id: str, limit: int = 10) -> list[dict[str, Any]]:
+    return list(ORDERS.get(bot_id, []))[-limit:]
+
+
+def _remember(bot_id: str, record: dict[str, Any]) -> None:
+    ORDERS.setdefault(bot_id, []).append(record)
 
 
 def _bump(bot_id: str, key: str) -> None:
@@ -459,6 +468,14 @@ def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
             )]
         booked.add(slot_key)
         _bump(bot["id"], "bookings")
+        _remember(bot["id"], {
+            "type": "booking",
+            "service": data["service"]["title"],
+            "date": data["date"],
+            "time": data["time"],
+            "name": data["name"],
+            "phone": data["phone"],
+        })
         session["stage"] = "done"
         return [
             _msg(
@@ -531,6 +548,7 @@ def _gift(bot: dict, session: dict, text: str, action: str) -> list[dict]:
             buttons,
         )]
         _bump(bot["id"], "gifts")
+        _remember(bot["id"], {"type": "gift", "gift": gift, "user": session.get("user", "")})
         result.append(_msg(f"🎁 Подарок выдан\nБот: {bot['name']}\nПользователь: @{session.get('user', '')}", admin=True))
         return result
     channel = (brief.get("channel") or "").strip()
@@ -772,6 +790,15 @@ def _shop(bot: dict, session: dict, text: str, action: str) -> list[dict]:
         order_id = f"ORD-{uuid.uuid4().hex[:6].upper()}"
         lines = [f"• {by_id[int(pid)]['title']} × {qty} — {by_id[int(pid)]['price']}" for pid, qty in cart.items()]
         _bump(bot["id"], "orders")
+        _remember(bot["id"], {
+            "type": "order",
+            "order_id": order_id,
+            "items": lines,
+            "total": _total(by_id, cart),
+            "name": data["name"],
+            "phone": data["phone"],
+            "address": data["address"],
+        })
         session["stage"] = "done"
         pay = (brief.get("payment") or "").strip()
         pay_buttons = [("💳 Оплатить", f"url:{pay}")] if pay.startswith("http") else []

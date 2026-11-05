@@ -305,6 +305,24 @@ def tenant_dispatcher(bot_id: str, template: str):
             parse_mode="HTML",
         )
 
+    @tenant_dp.message(Command("orders"))
+    async def orders_cmd(message: Message):
+        if OWNER_ID and message.from_user.id != OWNER_ID:
+            return
+        rows = engine.orders(bot_id, 8)
+        if not rows:
+            await message.answer("📭 Заявок и заказов пока нет.")
+            return
+        lines = []
+        for row in reversed(rows):
+            if row.get("type") == "booking":
+                lines.append(f"📅 {row.get('date')} {row.get('time')} · {row.get('name')} · {row.get('phone')}")
+            elif row.get("type") == "order":
+                lines.append(f"🛍 {row.get('order_id')} · {row.get('total')} ₽ · {row.get('name')} · {row.get('phone')}")
+            else:
+                lines.append(f"🎁 {row.get('gift', '')[:60]}")
+        await message.answer("🧾 <b>Последние заявки</b>\n\n" + "\n".join(lines), parse_mode="HTML")
+
     @tenant_dp.message(F.text)
     async def text(message: Message):
         await emit(message.bot, message.chat.id, engine.message(bot_id, text=message.text))

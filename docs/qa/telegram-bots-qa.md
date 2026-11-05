@@ -1,4 +1,4 @@
-# QA-отчёт: Telegram-боты
+﻿# QA-отчёт: Telegram-боты
 
 Дата: 05.11.2026  
 Среда: Windows, Python 3.13, aiogram 3.x, публичный стенд `school.91-184-242-178.sslip.io:8443`  
@@ -33,7 +33,7 @@ AI-консультант и «Заявка» скрыты как legacy: не �
 - календарь на 7 дней и защита от двойной записи;
 - проверка подписки через getChatMember;
 - ссылка на оплату в заказе;
-- статистика владельца `/stats`.
+- статистика владельца `/stats` и журнал `/orders`.
 
 ## Проверено
 
@@ -118,6 +118,7 @@ python -m pytest
 
 ## Pytest
 
-Отдельный pytest-сьют: **23 passed** (`tests/test_bots.py`). CI: `.github/workflows/quality.yml`.
+Отдельный pytest-сьют: **24 passed** (`tests/test_bots.py`). CI: `.github/workflows/quality.yml`.
+
 
 
