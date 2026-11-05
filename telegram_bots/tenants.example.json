@@ -25,5 +25,18 @@
     "token": "REPLACE_WITH_SHOP_TOKEN",
     "owner_tg_id": 0,
     "project": null
+  },
+  {
+    "username": "gift_test_example_bot",
+    "template": "gift",
+    "brief": {
+      "business_name": "Школа AI-агентов",
+      "channel": "https://t.me/example",
+      "gift": "Гайд — https://example.com/gift",
+      "contact": "@manager"
+    },
+    "token": "REPLACE_WITH_GIFT_TOKEN",
+    "owner_tg_id": 0,
+    "project": null
   }
 ]

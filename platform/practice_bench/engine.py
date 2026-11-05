@@ -48,6 +48,24 @@ TEMPLATES: dict[str, dict[str, Any]] = {
             "address": "Москва, выезд по городу",
         },
     },
+    "gift": {
+        "name": "Подарок за подписку",
+        "icon": "🎁",
+        "accent": "#ff7a45",
+        "tagline": "Подписка на канал → подарок в боте",
+        "fields": [
+            {"key": "business_name", "label": "Название проекта", "type": "text", "required": True},
+            {"key": "channel", "label": "Канал для подписки", "type": "text", "hint": "Ссылка или @username"},
+            {"key": "gift", "label": "Что дарим", "type": "text", "hint": "Ссылка на файл, промокод или текст подарка"},
+            {"key": "contact", "label": "Контакт", "type": "text"},
+        ],
+        "defaults": {
+            "business_name": "Школа AI-агентов",
+            "channel": "https://t.me/platform_test_soulnik_bot",
+            "gift": "Гайд «5 ботов, которые можно продать» — https://example.com/gift",
+            "contact": "@soulnik",
+        },
+    },
     "ai": {
         "name": "Умный консультант",
         "icon": "✦",
@@ -193,6 +211,16 @@ def _start(bot: dict) -> list[dict]:
         return [
             _msg(f"Здравствуйте! Это {bot['name']}.\nВыберите услугу — подберу свободное время."),
             _msg("Что вас интересует?", [(s["title"] + " · " + s["price"], f"service:{i}") for i, s in enumerate(services)]),
+        ]
+    if template == "gift":
+        channel = (brief.get("channel") or "").strip()
+        link = channel if channel.startswith("http") else f"https://t.me/{channel.lstrip('@')}"
+        buttons = [("✅ Я подписался", "check")]
+        if channel:
+            buttons.insert(0, ("📣 Подписаться", f"url:{link}"))
+        return [
+            _msg(f"Здравствуйте! Это {bot['name']}.\nПодпишитесь на канал и заберите подарок 🎁"),
+            _msg("Как только подпишетесь — нажмите кнопку ниже.", buttons),
         ]
     if template == "lead":
         services = bot["config"].get("services") or []
@@ -407,6 +435,27 @@ def _llm_answer(bot: dict, session: dict, text: str) -> str | None:
     history.extend([{"role": "user", "content": text[:1500]}, {"role": "assistant", "content": answer}])
     session["data"]["history"] = history[-8:]
     return answer
+
+
+def _gift(bot: dict, session: dict, text: str, action: str) -> list[dict]:
+    brief = bot["config"]["brief"]
+    lowered = (text or "").lower()
+    if action == "check" or any(word in lowered for word in ("подписал", "готово", "получить", "забрать", "да")):
+        gift = brief.get("gift", "")
+        match = re.search(r"https?://\S+", gift)
+        buttons = [("🎁 Забрать подарок", f"url:{match.group(0)}")] if match else []
+        result = [_msg(
+            "🎁 Спасибо за подписку!\n\n"
+            f"{gift}\n\n"
+            f"Вопросы: {brief.get('contact', '')}",
+            buttons,
+        )]
+        result.append(_msg(f"🎁 Подарок выдан\nБот: {bot['name']}\nПользователь: @{session.get('user', '')}", admin=True))
+        return result
+    channel = (brief.get("channel") or "").strip()
+    link = channel if channel.startswith("http") else f"https://t.me/{channel.lstrip('@')}"
+    buttons = [("📣 Подписаться", f"url:{link}"), ("✅ Я подписался", "check")] if channel else [("✅ Я подписался", "check")]
+    return [_msg("Сначала подпишитесь на канал, потом нажмите «Я подписался».", buttons)]
 
 
 def _lead(bot: dict, session: dict, text: str, action: str) -> list[dict]:
@@ -628,6 +677,8 @@ def message(bot_id: str, text: str = "", action: str = "") -> list[dict]:
         return _start(BOTS[bot_id])
     if bot["template"] == "booking":
         return _booking(bot, session, text, action)
+    if bot["template"] == "gift":
+        return _gift(bot, session, text, action)
     if bot["template"] == "lead":
         return _lead(bot, session, text, action)
     if bot["template"] == "ai":

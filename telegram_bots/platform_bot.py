@@ -78,12 +78,14 @@ PLATFORM_API = os.getenv("PLATFORM_API_URL", PUBLIC).rstrip("/")
 SERVICE_TOKEN = os.getenv("PLATFORM_SERVICE_TOKEN", "").strip()
 COVERS = {
     "booking": f"{PUBLIC}/static/covers/booking.png",
+    "gift": f"{PUBLIC}/static/covers/gift.png",
     "lead": f"{PUBLIC}/static/covers/lead.png",
     "ai": f"{PUBLIC}/static/covers/ai.png",
     "shop": f"{PUBLIC}/static/covers/shop.png",
 }
 COVER_FILES = {
     "booking": ROOT / "platform" / "static" / "covers" / "booking.png",
+    "gift": ROOT / "platform" / "static" / "covers" / "gift.png",
     "lead": ROOT / "platform" / "static" / "covers" / "lead.png",
     "ai": ROOT / "platform" / "static" / "covers" / "ai.png",
     "shop": ROOT / "platform" / "static" / "covers" / "shop.png",
@@ -198,7 +200,16 @@ def templates_kb():
 
 def reply_markup(message):
     buttons = message.get("buttons") or []
-    return kb([(b["label"], b["action"]) for b in buttons]) if buttons else None
+    if not buttons:
+        return None
+    rows = []
+    for button in buttons:
+        label, action = button["label"], button["action"]
+        if action.startswith("url:"):
+            rows.append([InlineKeyboardButton(text=label, url=action[4:])])
+        else:
+            rows.append([InlineKeyboardButton(text=label, callback_data=action)])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 async def notify_owner(text: str) -> bool:
@@ -343,7 +354,7 @@ async def show_templates(message: Message) -> None:
         parse_mode="HTML",
     )
     for key, meta in engine.TEMPLATES.items():
-        if key == "ai":
+        if key in ("ai", "lead"):
             continue
         caption = (
             f"{meta['icon']} <b>{html.escape(meta['name'])}</b>\n"
@@ -626,3 +637,4 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+

@@ -5,6 +5,31 @@ from typing import Any
 
 TEMPLATES: list[dict[str, Any]] = [
     {
+        "id": "gift",
+        "name": "Подарок за подписку",
+        "direction": "bot",
+        "tagline": "Подписка на канал → бот выдаёт подарок.",
+        "description": "Бот-воронка: человек подписывается на канал, нажимает «Я подписался» и получает гайд, промокод или файл. Владелец видит выдачу.",
+        "price": "10–20 тыс. ₽",
+        "stack": ["Python", "aiogram"],
+        "preview": "bot",
+        "icon": "spark",
+        "cover": "/static/covers/gift.png",
+        "badge": "NEW",
+        "brief_fields": [
+            {"key": "business_name", "label": "Название проекта", "type": "text", "placeholder": "Школа AI-агентов", "required": True},
+            {"key": "channel", "label": "Канал для подписки", "type": "text", "placeholder": "https://t.me/channel или @channel", "required": True},
+            {"key": "gift", "label": "Что дарим", "type": "text", "placeholder": "Гайд + ссылка", "required": True},
+            {"key": "contact", "label": "Контакт", "type": "text", "placeholder": "@manager", "required": False},
+        ],
+        "defaults": {
+            "business_name": "Школа AI-агентов",
+            "channel": "https://t.me/platform_test_soulnik_bot",
+            "gift": "Гайд «5 ботов, которые можно продать» — https://example.com/gift",
+            "contact": "@soulnik",
+        },
+    },
+    {
         "id": "lead",
         "name": "Заявка на услугу",
         "direction": "bot",

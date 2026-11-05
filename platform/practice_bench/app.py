@@ -43,7 +43,7 @@ def templates():
                 "defaults": value["defaults"],
                 "accent": value["accent"],
             }
-            for key, value in engine.TEMPLATES.items() if key != "ai"
+            for key, value in engine.TEMPLATES.items() if key not in ("ai", "lead")
         ]
     }
 
@@ -94,4 +94,5 @@ def reset(bot_id: str):
         raise HTTPException(status_code=404, detail="Бот не найден")
     engine.reset(bot_id)
     return {"messages": engine.message(bot_id, action="start")}
+
 

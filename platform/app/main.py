@@ -401,7 +401,7 @@ def my_events(request: Request):
 
 @app.get("/api/catalog")
 def get_catalog():
-    return {"templates": [t for t in catalog.TEMPLATES if t["id"] != "ai-consultant"]}
+    return {"templates": [t for t in catalog.TEMPLATES if t["id"] not in ("ai-consultant", "lead")]}
 
 
 @app.get("/api/projects")
