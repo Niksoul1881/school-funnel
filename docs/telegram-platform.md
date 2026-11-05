@@ -176,3 +176,7 @@ POST /api/tg/create_project
 - После теста токены отозвать в BotFather.
 - Репозиторий публичный: не вставлять токены в код, тесты, Markdown.
 
+
+## QA
+
+Полный прогон: [qa/telegram-bots-qa.md](qa/telegram-bots-qa.md). Запуск: `python scripts/qa_bots.py`.

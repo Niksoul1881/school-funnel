@@ -169,6 +169,10 @@ def create_bot(template: str, brief: dict) -> dict:
         config["faq"] = _faq(base.get("faq", ""))
     elif template == "shop":
         config["products"] = _products(base.get("products", ""))
+        for product in config["products"]:
+            price = product.get("price", "").strip()
+            if price and "₽" not in price and "руб" not in price.lower():
+                product["price"] = f"{price} ₽"
         config["categories"] = []
         for product in config["products"]:
             if product["category"] not in config["categories"]:
@@ -240,7 +244,7 @@ def _start(bot: dict) -> list[dict]:
     buttons += [(p["title"] + " · " + p["price"], f"product:{p['id']}") for p in products[:2]]
     buttons += [("Корзина", "cart")]
     return [
-        _msg(f"Здравствуйте! Это {bot['name']}.\nВыбирайте — заказ придёт нам в Telegram."),
+        _msg(f"Здравствуйте! Это {bot['name']}.\nСмотрите каталог — заказ придёт нам в Telegram."),
         _msg("Категории и хиты:", buttons),
     ]
 
@@ -288,6 +292,8 @@ def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     stage = session.get("stage", "start")
 
     if text and any(word in text.lower() for word in ("отмена", "заново", "сначала")):
+        session["stage"] = "start"
+        session["data"] = {}
         return _start(bot)
 
     if action.startswith("service:"):
@@ -465,6 +471,8 @@ def _lead(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     stage = session.get("stage", "start")
 
     if text and any(word in text.lower() for word in ("отмена", "заново", "сначала")):
+        session["stage"] = "start"
+        session["data"] = {}
         return _start(bot)
 
     if action.startswith("service:"):
@@ -623,7 +631,7 @@ def _shop(bot: dict, session: dict, text: str, action: str) -> list[dict]:
         items = products if category == "Все" else [p for p in products if p["category"] == category]
         out = [_msg(f"Категория: {category}")]
         for product in items:
-            out.append(_msg(f"{product['title']}\n{product['price']} · {product['description']}", [("Открыть", f"product:{product['id']}")], product["image"]))
+            out.append(_msg(f"{product['emoji']} {product['title']}\n{product['price']} · {product['description']}", [("Открыть", f"product:{product['id']}")], product["image"]))
         out.append(_msg("Можно открыть товар и добавить в корзину.", [("Корзина", "cart")]))
         return out
     if action.startswith("product:"):
