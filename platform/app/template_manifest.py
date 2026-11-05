@@ -1,9 +1,34 @@
-﻿"""Visible template catalog: three products we are developing."""
+"""Visible template catalog: three products we are developing."""
 from __future__ import annotations
 
 from typing import Any
 
 TEMPLATES: list[dict[str, Any]] = [
+    {
+        "id": "lead",
+        "name": "Заявка на услугу",
+        "direction": "bot",
+        "tagline": "Клиент оставляет имя и телефон — заявка сразу владельцу.",
+        "description": "Бот-заявка для мастера, сервиса или консультации: клиент выбирает услугу, оставляет имя и телефон, владелец получает заявку в Telegram.",
+        "price": "10–20 тыс. ₽",
+        "stack": ["Python", "aiogram"],
+        "preview": "bot",
+        "icon": "spark",
+        "cover": "/static/covers/lead.png",
+        "badge": "NEW",
+        "brief_fields": [
+            {"key": "business_name", "label": "Название бизнеса", "type": "text", "placeholder": "Мастерская «Палыч»", "required": True},
+            {"key": "services", "label": "Что можно заказать", "type": "textarea", "placeholder": "Консультация — бесплатно\nЗамер — 1 000 ₽\nМонтаж — от 5 000 ₽", "required": True, "hint": "Каждая услуга с новой строки: Название — цена"},
+            {"key": "contact", "label": "Контакт для связи", "type": "text", "placeholder": "@master", "required": True},
+            {"key": "address", "label": "Адрес или формат работы", "type": "text", "placeholder": "Москва, выезд по городу", "required": False},
+        ],
+        "defaults": {
+            "business_name": "Мастерская «Палыч»",
+            "services": "Консультация — бесплатно\nЗамер — 1 000 ₽\nМонтаж — от 5 000 ₽\nВыезд мастера — 1 500 ₽",
+            "contact": "@soulnik",
+            "address": "Москва, выезд по городу",
+        },
+    },
     {
         "id": "booking",
         "name": "Запись к мастеру",

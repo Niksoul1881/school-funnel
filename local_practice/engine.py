@@ -30,6 +30,24 @@ TEMPLATES: dict[str, dict[str, Any]] = {
             "contact": "@marina_studio",
         },
     },
+    "lead": {
+        "name": "Заявка на услугу",
+        "icon": "📝",
+        "accent": "#3ec7ff",
+        "tagline": "Клиент оставляет заявку — вы получаете её в Telegram",
+        "fields": [
+            {"key": "business_name", "label": "Название бизнеса", "type": "text", "required": True},
+            {"key": "services", "label": "Что можно заказать", "type": "textarea", "hint": "Каждая услуга с новой строки: Название — цена"},
+            {"key": "contact", "label": "Контакт для связи", "type": "text"},
+            {"key": "address", "label": "Адрес или формат работы", "type": "text"},
+        ],
+        "defaults": {
+            "business_name": "Мастерская «Палыч»",
+            "services": "Консультация — бесплатно\nЗамер — 1 000 ₽\nМонтаж — от 5 000 ₽\nВыезд мастера — 1 500 ₽",
+            "contact": "@soulnik",
+            "address": "Москва, выезд по городу",
+        },
+    },
     "ai": {
         "name": "Умный консультант",
         "icon": "✦",
@@ -127,6 +145,8 @@ def create_bot(template: str, brief: dict) -> dict:
     if template == "booking":
         config["services"] = _services(base.get("services", ""))
         config["slots"] = [s.strip() for s in (base.get("slots") or "").split(",") if s.strip()]
+    elif template == "lead":
+        config["services"] = _services(base.get("services", ""))
     elif template == "ai":
         config["faq"] = _faq(base.get("faq", ""))
     elif template == "shop":
@@ -173,6 +193,12 @@ def _start(bot: dict) -> list[dict]:
         return [
             _msg(f"Здравствуйте! Это {bot['name']}.\nВыберите услугу — подберу свободное время."),
             _msg("Что вас интересует?", [(s["title"] + " · " + s["price"], f"service:{i}") for i, s in enumerate(services)]),
+        ]
+    if template == "lead":
+        services = bot["config"].get("services") or []
+        return [
+            _msg(f"Здравствуйте! Это {bot['name']}.\nОставьте заявку — свяжемся и уточним детали."),
+            _msg("Что вас интересует?", [(s["title"] + " · " + s["price"], f"service:{i}") for i, s in enumerate(services)] + [("Другое", "service:other")]),
         ]
     if template == "ai":
         faq = bot["config"]["faq"]
@@ -383,6 +409,74 @@ def _llm_answer(bot: dict, session: dict, text: str) -> str | None:
     return answer
 
 
+def _lead(bot: dict, session: dict, text: str, action: str) -> list[dict]:
+    brief = bot["config"]["brief"]
+    services = bot["config"].get("services") or []
+    data = session["data"]
+    stage = session.get("stage", "start")
+
+    if text and any(word in text.lower() for word in ("отмена", "заново", "сначала")):
+        return _start(bot)
+
+    if action.startswith("service:"):
+        value = action.split(":", 1)[1]
+        data["service"] = services[int(value)] if value.isdigit() else {"title": "Другое", "price": "по запросу"}
+        session["stage"] = "name"
+        return [_msg(f"Принял: {data['service']['title']}.\n\n👤 Как вас зовут?")]
+
+    if stage == "start" and text:
+        index = _service_match(services, text)
+        if index is not None:
+            data["service"] = services[index]
+            session["stage"] = "name"
+            return [_msg(f"Принял: {data['service']['title']}.\n\n👤 Как вас зовут?")]
+        return [_msg("Выберите, что нужно, или напишите свой вариант.", [(s["title"] + " · " + s["price"], f"service:{i}") for i, s in enumerate(services)] + [("Другое", "service:other")])]
+
+    if stage == "name" and text:
+        if len(text.strip()) < 2:
+            return [_msg("Напишите имя — хотя бы 2 буквы.")]
+        data["name"] = text.strip()
+        session["stage"] = "phone"
+        return [_msg(f"Приятно познакомиться, {data['name']}!\n\n📞 Телефон для связи:")]
+
+    if stage == "phone" and text:
+        digits = sum(ch.isdigit() for ch in text)
+        if digits < 10 or digits > 15:
+            return [_msg("Проверьте номер и напишите ещё раз.")]
+        data["phone"] = text.strip()
+        session["stage"] = "confirm"
+        return [_msg(
+            "📋 Проверьте заявку:\n\n"
+            f"📝 {data['service']['title']}\n"
+            f"👤 {data['name']}\n"
+            f"📞 {data['phone']}",
+            [("✅ Отправить", "confirm"), ("✏️ Изменить", "reset")],
+        )]
+
+    if stage == "confirm" and text:
+        lowered = text.lower()
+        if any(word in lowered for word in ("подтвер", "да", "ок", "верно")):
+            action = "confirm"
+        elif any(word in lowered for word in ("измен", "отмен", "заново")):
+            return _start(bot)
+        else:
+            return [_msg("Отправьте заявку кнопкой ниже или напишите «да».", [("✅ Отправить", "confirm"), ("✏️ Изменить", "reset")])]
+
+    if action == "confirm":
+        session["stage"] = "done"
+        return [
+            _msg(f"✅ Заявка принята, {data['name']}!\n\nСвяжемся по телефону {data['phone']}.\n\n{brief.get('contact', '')}"),
+            _msg(
+                "🔔 Новая заявка\n\n"
+                f"Что: {data['service']['title']}\n"
+                f"Имя: {data['name']}\n"
+                f"Телефон: {data['phone']}",
+                admin=True,
+            ),
+        ]
+    return [_msg("Напишите /start или «заново».")]
+
+
 def _ai(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     faq = bot["config"]["faq"]
     if action.startswith("q:"):
@@ -534,6 +628,8 @@ def message(bot_id: str, text: str = "", action: str = "") -> list[dict]:
         return _start(BOTS[bot_id])
     if bot["template"] == "booking":
         return _booking(bot, session, text, action)
+    if bot["template"] == "lead":
+        return _lead(bot, session, text, action)
     if bot["template"] == "ai":
         return _ai(bot, session, text, action)
     return _shop(bot, session, text, action)

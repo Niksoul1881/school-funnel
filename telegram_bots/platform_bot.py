@@ -78,11 +78,13 @@ PLATFORM_API = os.getenv("PLATFORM_API_URL", PUBLIC).rstrip("/")
 SERVICE_TOKEN = os.getenv("PLATFORM_SERVICE_TOKEN", "").strip()
 COVERS = {
     "booking": f"{PUBLIC}/static/covers/booking.png",
+    "lead": f"{PUBLIC}/static/covers/lead.png",
     "ai": f"{PUBLIC}/static/covers/ai.png",
     "shop": f"{PUBLIC}/static/covers/shop.png",
 }
 COVER_FILES = {
     "booking": ROOT / "platform" / "static" / "covers" / "booking.png",
+    "lead": ROOT / "platform" / "static" / "covers" / "lead.png",
     "ai": ROOT / "platform" / "static" / "covers" / "ai.png",
     "shop": ROOT / "platform" / "static" / "covers" / "shop.png",
 }
