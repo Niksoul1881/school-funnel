@@ -1,4 +1,4 @@
-"""Local practice bench API and static frontend."""
+﻿"""Local practice bench API and static frontend."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -43,7 +43,7 @@ def templates():
                 "defaults": value["defaults"],
                 "accent": value["accent"],
             }
-            for key, value in engine.TEMPLATES.items()
+            for key, value in engine.TEMPLATES.items() if key != "ai"
         ]
     }
 
@@ -94,3 +94,4 @@ def reset(bot_id: str):
         raise HTTPException(status_code=404, detail="Бот не найден")
     engine.reset(bot_id)
     return {"messages": engine.message(bot_id, action="start")}
+
