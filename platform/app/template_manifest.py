@@ -1,4 +1,4 @@
-"""Visible template catalog: three products we are developing."""
+﻿"""Visible template catalog: three products we are developing."""
 from __future__ import annotations
 
 from typing import Any
@@ -10,7 +10,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "direction": "bot",
         "tagline": "Подписка на канал → бот выдаёт подарок.",
         "description": "Бот-воронка: человек подписывается на канал, нажимает «Я подписался» и получает гайд, промокод или файл. Владелец видит выдачу.",
-        "price": "10–20 тыс. ₽",
+        "price": "1 990 ₽",
         "stack": ["Python", "aiogram"],
         "preview": "bot",
         "icon": "spark",
@@ -35,7 +35,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "direction": "bot",
         "tagline": "Клиент оставляет имя и телефон — заявка сразу владельцу.",
         "description": "Бот-заявка для мастера, сервиса или консультации: клиент выбирает услугу, оставляет имя и телефон, владелец получает заявку в Telegram.",
-        "price": "10–20 тыс. ₽",
+        "price": "1 990 ₽",
         "stack": ["Python", "aiogram"],
         "preview": "bot",
         "icon": "spark",
@@ -60,7 +60,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "direction": "bot",
         "tagline": "Услуги, свободные окна и заявка мастеру — без переписки вручную.",
         "description": "Бот для салона, мастера, репетитора или массажиста: клиент выбирает услугу, дату и время, оставляет имя и телефон — заявка сразу приходит администратору.",
-        "price": "15–30 тыс. ₽",
+        "price": "2 990 ₽",
         "stack": ["Python", "aiogram", "SQLite"],
         "preview": "bot",
         "icon": "calendar",
@@ -130,7 +130,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "direction": "bot",
         "tagline": "Фото товаров, корзина и заказ прямо в чате. Mini App — потом.",
         "description": "Бот-витрина для кондитера, цветочного, одежды и хендмейда: категории, карточки с фото, корзина, имя и телефон. Заказ приходит администратору. Когда будете готовы — вынесем ту же витрину в Mini App.",
-        "price": "20–40 тыс. ₽",
+        "price": "3 990 ₽",
         "stack": ["Python", "aiogram", "Фото"],
         "preview": "bot",
         "icon": "app",
@@ -156,4 +156,5 @@ TEMPLATES: list[dict[str, Any]] = [
 ]
 
 TEMPLATES_BY_ID = {t["id"]: t for t in TEMPLATES}
+
 
