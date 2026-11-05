@@ -77,6 +77,15 @@ def test_booking() -> None:
     r = engine.message(bid2, text="заново")
     ok("booking: «заново» сбрасывает этап", "Выберите услугу" in texts(r), texts(r)[:80])
 
+    bid3 = fresh("booking")
+    engine.message(bid3, action="service:0")
+    r = engine.message(bid3, action="back")
+    ok("booking: назад к услугам", "Выберите услугу" in texts(r), texts(r)[:80])
+    engine.message(bid3, action="service:0")
+    engine.message(bid3, action="date:tomorrow")
+    r = engine.message(bid3, action="back")
+    ok("booking: назад к дате", "На какую дату" in texts(r), texts(r)[:80])
+
 
 def test_gift() -> None:
     print("\n[gift] подарок за подписку")
@@ -108,6 +117,13 @@ def test_shop() -> None:
     ok("shop: добавление", "корзине" in texts(r).lower(), texts(r)[:80])
     r = engine.message(bid, action="cart")
     ok("shop: корзина", product["title"] in texts(r) and "Итого" in texts(r), texts(r)[:80])
+    ok("shop: количество в корзине", any(b["action"].startswith("qty:+") for m in r for b in m.get("buttons", [])), "")
+    r = engine.message(bid, action=f"qty:+{product['id']}")
+    ok("shop: плюс количество", "× 2" in texts(r), texts(r)[:80])
+    r = engine.message(bid, action=f"qty:-{product['id']}")
+    ok("shop: минус количество", "× 1" in texts(r), texts(r)[:80])
+    r = engine.message(bid, action=f"remove:{product['id']}")
+    ok("shop: удаление товара", "пустая" in texts(r).lower(), texts(r)[:80])
     r = engine.message(bid, action="clear")
     ok("shop: очистка", "очищена" in texts(r).lower(), texts(r)[:80])
     engine.message(bid, action=f"add:{product['id']}")
@@ -117,7 +133,9 @@ def test_shop() -> None:
     r = engine.message(bid, text="123")
     ok("shop: плохой телефон отклонён", "Проверьте" in texts(r) or "ещё раз" in texts(r), texts(r)[:80])
     r = engine.message(bid, text="+7 902 123-45-67")
-    ok("shop: заказ принят", "Заказ принят" in texts(r), texts(r)[:80])
+    ok("shop: шаг доставки", "Куда доставить" in texts(r), texts(r)[:80])
+    r = engine.message(bid, text="Москва, Примерная 10")
+    ok("shop: заказ принят с номером", "Заказ ORD-" in texts(r), texts(r)[:80])
     ok("shop: уведомление магазину", bool(admin(r)), "admin missing")
 
 

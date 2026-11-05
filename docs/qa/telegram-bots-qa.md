@@ -7,7 +7,7 @@
 ## Итог
 
 ```text
-PASSED 56 · FAILED 0
+PASSED 63 · FAILED 0
 ```
 
 Активные шаблоны:
@@ -19,6 +19,17 @@ PASSED 56 · FAILED 0
 | Витрина товаров | каталог → товар → корзина → checkout → заказ | ✅ |
 
 AI-консультант и «Заявка» скрыты как legacy: не показываются в каталоге, конструкторе и practice-стенде.
+
+## Product/UX-слой
+
+В этом прогоне добавлено:
+
+- назад/отмена на каждом шаге записи;
+- количество, удаление товара и очистка корзины;
+- шаг доставки/самовывоза;
+- номер заказа `ORD-XXXXXX`;
+- цена с валютой во всех карточках;
+- pytest-сьют и CI.
 
 ## Проверено
 
@@ -98,4 +109,10 @@ AI-консультант и «Заявка» скрыты как legacy: не �
 ```powershell
 python scripts\qa_bots.py
 python scripts\qa_covers.py
+python -m pytest
 ```
+
+## Pytest
+
+Отдельный pytest-сьют: **20 passed** (`tests/test_bots.py`). CI: `.github/workflows/quality.yml`.
+

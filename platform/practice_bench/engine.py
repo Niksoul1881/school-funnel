@@ -284,14 +284,78 @@ def _time_value(text: str, slots: list[str]) -> str | None:
     return None
 
 
+def _bk_date_msg(data: dict) -> list[dict]:
+    return [_msg(
+        f"📅 На какую дату записать?\nМожно написать «сегодня», «завтра» или 12.11.",
+        [("Сегодня", "date:today"), ("Завтра", "date:tomorrow"), ("↩️ Назад", "back"), ("❌ Отмена", "cancel")],
+    )]
+
+
+def _bk_time_msg(data: dict, slots: list[str]) -> list[dict]:
+    return [_msg(
+        f"📅 {data.get('date', '').capitalize()}.\n\n🕐 Выберите время:",
+        [(slot, f"time:{slot}") for slot in slots] + [("↩️ Назад", "back"), ("❌ Отмена", "cancel")],
+    )]
+
+
+def _bk_name_msg() -> list[dict]:
+    return [_msg("👤 Как вас зовут?", [("↩️ Назад", "back"), ("❌ Отмена", "cancel")])]
+
+
+def _bk_phone_msg(data: dict) -> list[dict]:
+    return [_msg(
+        f"Приятно познакомиться, {data.get('name', '')}!\n\n📞 Оставьте телефон для подтверждения:",
+        [("↩️ Назад", "back"), ("❌ Отмена", "cancel")],
+    )]
+
+
+def _bk_confirm_msg(data: dict, brief: dict) -> list[dict]:
+    return [_msg(
+        "📋 Проверьте заявку:\n\n"
+        f"💅 {data['service']['title']} — {data['service']['price']}\n"
+        f"📅 {data['date']}\n"
+        f"🕐 {data['time']}\n"
+        f"👤 {data['name']}\n"
+        f"📞 {data['phone']}\n\n"
+        f"📍 {brief.get('address', '')}",
+        [("✅ Подтвердить", "confirm"), ("✏️ Изменить", "back"), ("❌ Отмена", "cancel")],
+    )]
+
+
 def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     brief = bot["config"]["brief"]
     services = bot["config"]["services"]
     slots = bot["config"]["slots"]
     data = session["data"]
     stage = session.get("stage", "start")
+    lowered = (text or "").strip().lower()
 
-    if text and any(word in text.lower() for word in ("отмена", "заново", "сначала")):
+    if action == "cancel" or lowered in ("отмена", "отменить", "заново", "сначала", "/cancel"):
+        session["stage"] = "start"
+        session["data"] = {}
+        return _start(bot)
+
+    if action == "back" or lowered in ("назад", "изменить"):
+        if stage == "phone":
+            session["stage"] = "name"
+            data.pop("phone", None)
+            return _bk_name_msg()
+        if stage == "name":
+            session["stage"] = "time"
+            data.pop("name", None)
+            return _bk_time_msg(data, slots)
+        if stage == "time":
+            session["stage"] = "date"
+            data.pop("time", None)
+            return _bk_date_msg(data)
+        if stage == "date":
+            session["stage"] = "start"
+            data.pop("date", None)
+            return _start(bot)
+        session["stage"] = "start"
+        return _start(bot)
+
+    if text and any(word in lowered for word in ("отмена", "заново", "сначала")):
         session["stage"] = "start"
         session["data"] = {}
         return _start(bot)
@@ -299,81 +363,57 @@ def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     if action.startswith("service:"):
         data["service"] = services[int(action.split(":")[1])]
         session["stage"] = "date"
-        return [_msg(
-            f"Отлично, {data['service']['title']}.\n\n"
-            "📅 На какую дату записать?\n"
-            "Можно написать «сегодня», «завтра» или дату вроде 12.11.",
-            [("Сегодня", "date:today"), ("Завтра", "date:tomorrow")],
-        )]
+        return _bk_date_msg(data)
 
     if stage == "start" and text:
         index = _service_match(services, text)
         if index is not None:
             data["service"] = services[index]
             session["stage"] = "date"
-            return [_msg(
-                f"Отлично, {data['service']['title']}.\n\n"
-                "📅 На какую дату записать?\n"
-                "Можно написать «сегодня», «завтра» или дату вроде 12.11.",
-                [("Сегодня", "date:today"), ("Завтра", "date:tomorrow")],
-            )]
+            return _bk_date_msg(data)
         return [_msg("Не понял услугу. Выберите из списка или напишите название:", [(s["title"] + " · " + s["price"], f"service:{i}") for i, s in enumerate(services)])]
 
     if action.startswith("date:"):
         data["date"] = "сегодня" if action == "date:today" else "завтра"
         session["stage"] = "time"
-        return [_msg(
-            f"📅 {data['date'].capitalize()}.\n\n🕐 Выберите время или напишите своё:",
-            [(slot, f"time:{slot}") for slot in slots],
-        )]
+        return _bk_time_msg(data, slots)
 
     if stage == "date" and text:
         date = _date_value(text)
         if not date:
-            return [_msg("Напишите дату: «сегодня», «завтра» или 12.11.")]
+            return [_msg("Напишите дату: «сегодня», «завтра» или 12.11.", [("↩️ Назад", "back"), ("❌ Отмена", "cancel")])]
         data["date"] = date
         session["stage"] = "time"
-        return [_msg(
-            f"📅 {date}.\n\n🕐 Выберите время или напишите своё:",
-            [(slot, f"time:{slot}") for slot in slots],
-        )]
+        return _bk_time_msg(data, slots)
 
     if action.startswith("time:"):
         data["time"] = action.split(":", 1)[1]
         session["stage"] = "name"
-        return [_msg(f"🕐 {data['time']}.\n\n👤 Как вас зовут?")]
+        return _bk_name_msg()
 
     if stage == "time" and text:
         time = _time_value(text, slots)
         if not time:
-            return [_msg("Напишите время, например 14:00.")]
+            return [_msg("Напишите время, например 14:00.", [("↩️ Назад", "back"), ("❌ Отмена", "cancel")])]
         data["time"] = time
         session["stage"] = "name"
-        return [_msg(f"🕐 {time}.\n\n👤 Как вас зовут?")]
+        return _bk_name_msg()
 
     if stage == "name" and text:
         name = text.strip()
         if len(name) < 2:
-            return [_msg("Напишите имя — хотя бы 2 буквы.")]
+            return [_msg("Напишите имя — хотя бы 2 буквы.", [("↩️ Назад", "back"), ("❌ Отмена", "cancel")])]
         data["name"] = name
         session["stage"] = "phone"
-        return [_msg(f"Приятно познакомиться, {name}!\n\n📞 Оставьте телефон для подтверждения:")]
+        return _bk_phone_msg(data)
 
     if stage == "phone" and text:
         digits = sum(ch.isdigit() for ch in text)
         if digits < 10 or digits > 15:
-            return [_msg("Похоже, в номере ошибка. Напишите телефон ещё раз, например +7 999 123-45-67.")]
+            return [_msg("Похоже, в номере ошибка. Напишите телефон ещё раз, например +7 999 123-45-67.", [("↩️ Назад", "back"), ("❌ Отмена", "cancel")])]
         data["phone"] = text.strip()
         session["stage"] = "confirm"
-        return [_msg(
-            "📋 Проверьте заявку:\n\n"
-            f"💅 {data['service']['title']} — {data['service']['price']}\n"
-            f"📅 {data['date']}\n"
-            f"🕐 {data['time']}\n"
-            f"👤 {data['name']}\n"
-            f"📞 {data['phone']}",
-            [("✅ Подтвердить", "confirm"), ("✏️ Изменить", "reset")],
-        )]
+        return _bk_confirm_msg(data, brief)
 
     if stage == "confirm" and text:
         lowered = text.lower()
@@ -583,19 +623,36 @@ def _ai(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     ]
 
 
+def _cart_msg(bot: dict, cart: dict) -> list[dict]:
+    by_id = {p["id"]: p for p in bot["config"]["products"]}
+    if not cart:
+        return [_msg("🛒 Корзина пустая. Смотрите каталог.", [("Каталог", "cat:Все")])]
+    lines = []
+    buttons = []
+    for pid, qty in cart.items():
+        product = by_id[int(pid)]
+        lines.append(f"{product['emoji']} {product['title']} × {qty} — {product['price']}")
+        buttons.append((f"➖ {product['title'][:18]}", f"qty:-{pid}"))
+        buttons.append((f"➕ {product['title'][:18]}", f"qty:+{pid}"))
+        buttons.append((f"🗑 {product['title'][:18]}", f"remove:{pid}"))
+    buttons += [("✅ Оформить", "checkout"), ("🧹 Очистить", "clear"), ("🛍 Продолжить", "cat:Все")]
+    return [_msg(
+        "🛒 Корзина:\n\n" + "\n".join(lines) + f"\n\nИтого: {_total(by_id, cart)} ₽\n\nМеняйте количество кнопками.",
+        buttons,
+    )]
+
+
 def _shop(bot: dict, session: dict, text: str, action: str) -> list[dict]:
+    brief = bot["config"]["brief"]
     products = bot["config"]["products"]
     by_id = {p["id"]: p for p in products}
     data = session["data"]
     cart = data.setdefault("cart", {})
     stage = session.get("stage", "start")
-    if text and stage not in ("name", "phone"):
+    if text and stage not in ("name", "phone", "address"):
         lowered = text.lower()
         if any(word in lowered for word in ("корзин", "заказ")):
-            if cart:
-                lines = [f"{by_id[int(pid)]['title']} × {qty} — {by_id[int(pid)]['price']}" for pid, qty in cart.items()]
-                return [_msg("🛒 Корзина:\n\n" + "\n".join(lines) + f"\n\nИтого: {_total(by_id, cart)} ₽", [("Оформить", "checkout"), ("Очистить", "clear")])]
-            return [_msg("🛒 Корзина пока пустая. Напишите, что ищете.", [("Каталог", "cat:Все")])]
+            return _cart_msg(bot, cart)
         if "оформ" in lowered and cart:
             session["stage"] = "name"
             return [_msg("Оформляем. 👤 Как вас зовут?")]
@@ -622,10 +679,21 @@ def _shop(bot: dict, session: dict, text: str, action: str) -> list[dict]:
             [(c, f"cat:{c}") for c in ["Все"] + bot["config"]["categories"]],
         )]
     if action == "cart":
-        if not cart:
-            return [_msg("Корзина пустая. Выберите товар в каталоге.", [("Каталог", "cat:Все")])]
-        lines = [f"{by_id[int(pid)]['title']} × {qty} — {by_id[int(pid)]['price']}" for pid, qty in cart.items()]
-        return [_msg("Корзина:\n\n" + "\n".join(lines) + "\n\nИтого: " + _total(by_id, cart) + " ₽", [("Оформить", "checkout"), ("Очистить", "clear")])]
+        session["stage"] = "start"
+        return _cart_msg(bot, cart)
+    if action.startswith("qty:"):
+        payload = action.split(":", 1)[1]
+        sign, pid = payload[0], payload[1:]
+        if sign == "+":
+            cart[pid] = cart.get(pid, 0) + 1
+        else:
+            cart[pid] = cart.get(pid, 0) - 1
+            if cart[pid] <= 0:
+                cart.pop(pid, None)
+        return _cart_msg(bot, cart)
+    if action.startswith("remove:"):
+        cart.pop(action.split(":")[1], None)
+        return _cart_msg(bot, cart)
     if action.startswith("cat:"):
         category = action.split(":", 1)[1]
         items = products if category == "Все" else [p for p in products if p["category"] == category]
@@ -648,20 +716,41 @@ def _shop(bot: dict, session: dict, text: str, action: str) -> list[dict]:
         if not cart:
             return [_msg("Сначала добавьте товар.", [("Каталог", "cat:Все")])]
         session["stage"] = "name"
-        return [_msg("Как вас зовут?")]
+        return [_msg("Оформляем заказ.\n\n👤 Как вас зовут?", [("↩️ Назад", "cart"), ("❌ Отмена", "reset")])]
     if session["stage"] == "name" and text:
-        data["name"] = text
+        if len(text.strip()) < 2:
+            return [_msg("Напишите имя — хотя бы 2 буквы.", [("↩️ Назад", "cart"), ("❌ Отмена", "reset")])]
+        data["name"] = text.strip()
         session["stage"] = "phone"
-        return [_msg("Телефон для связи:")]
+        return [_msg(f"Приятно познакомиться, {data['name']}!\n\n📞 Телефон для связи:", [("↩️ Назад", "cart"), ("❌ Отмена", "reset")])]
     if session["stage"] == "phone" and text:
         if sum(ch.isdigit() for ch in text) < 10:
-            return [_msg("Проверьте номер и напишите ещё раз.")]
-        data["phone"] = text
+            return [_msg("Проверьте номер и напишите ещё раз.", [("↩️ Назад", "cart"), ("❌ Отмена", "reset")])]
+        data["phone"] = text.strip()
+        session["stage"] = "address"
+        return [_msg(
+            "📍 Куда доставить? Напишите адрес или выберите самовывоз.",
+            [("🏠 Самовывоз", "pickup"), ("↩️ Назад", "cart"), ("❌ Отмена", "reset")],
+        )]
+    if action == "pickup" or (session["stage"] == "address" and text):
+        data["address"] = "Самовывоз" if action == "pickup" else text.strip()
+        order_id = f"ORD-{uuid.uuid4().hex[:6].upper()}"
         lines = [f"• {by_id[int(pid)]['title']} × {qty} — {by_id[int(pid)]['price']}" for pid, qty in cart.items()]
         session["stage"] = "done"
         return [
-            _msg(f"Заказ принят, {data['name']}! Мы свяжемся с вами.", [("Сделать ещё заказ", "reset")]),
-            _msg("🔔 Уведомление магазину:\n" + "\n".join(lines) + f"\nИтого: {_total(by_id, cart)} ₽\nИмя: {data['name']}\nТелефон: {data['phone']}", admin=True),
+            _msg(
+                f"✅ Заказ {order_id} принят, {data['name']}!\n\n"
+                f"Итого: {_total(by_id, cart)} ₽\n"
+                f"Доставка: {data['address']}\n"
+                f"Телефон: {data['phone']}\n\n"
+                "Мы свяжемся для подтверждения.",
+                [("🛍 Сделать ещё заказ", "reset")],
+            ),
+            _msg(
+                f"🔔 Новый заказ {order_id}\n" + "\n".join(lines) +
+                f"\nИтого: {_total(by_id, cart)} ₽\nИмя: {data['name']}\nТелефон: {data['phone']}\nДоставка: {data['address']}",
+                admin=True,
+            ),
         ]
     if not text:
         return [_msg("Выберите категорию или товар.", [("Каталог", "cat:Все"), ("Корзина", "cart")])]
@@ -692,3 +781,4 @@ def message(bot_id: str, text: str = "", action: str = "") -> list[dict]:
     if bot["template"] == "ai":
         return _ai(bot, session, text, action)
     return _shop(bot, session, text, action)
+
