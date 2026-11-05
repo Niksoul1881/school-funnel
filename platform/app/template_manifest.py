@@ -1,4 +1,4 @@
-﻿"""Visible template catalog: three products we are developing."""
+"""Visible template catalog: three products we are developing."""
 from __future__ import annotations
 
 from typing import Any
@@ -10,7 +10,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "direction": "bot",
         "tagline": "Подписка на канал → бот выдаёт подарок.",
         "description": "Бот-воронка: человек подписывается на канал, нажимает «Я подписался» и получает гайд, промокод или файл. Владелец видит выдачу.",
-        "price": "1 990 ₽",
+        "price": "10–20 тыс. ₽",
         "stack": ["Python", "aiogram"],
         "preview": "bot",
         "icon": "spark",
@@ -35,7 +35,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "direction": "bot",
         "tagline": "Клиент оставляет имя и телефон — заявка сразу владельцу.",
         "description": "Бот-заявка для мастера, сервиса или консультации: клиент выбирает услугу, оставляет имя и телефон, владелец получает заявку в Telegram.",
-        "price": "1 990 ₽",
+        "price": "10–20 тыс. ₽",
         "stack": ["Python", "aiogram"],
         "preview": "bot",
         "icon": "spark",
@@ -60,7 +60,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "direction": "bot",
         "tagline": "Услуги, свободные окна и заявка мастеру — без переписки вручную.",
         "description": "Бот для салона, мастера, репетитора или массажиста: клиент выбирает услугу, дату и время, оставляет имя и телефон — заявка сразу приходит администратору.",
-        "price": "2 990 ₽",
+        "price": "15–30 тыс. ₽",
         "stack": ["Python", "aiogram", "SQLite"],
         "preview": "bot",
         "icon": "calendar",
@@ -130,7 +130,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "direction": "bot",
         "tagline": "Фото товаров, корзина и заказ прямо в чате. Mini App — потом.",
         "description": "Бот-витрина для кондитера, цветочного, одежды и хендмейда: категории, карточки с фото, корзина, имя и телефон. Заказ приходит администратору. Когда будете готовы — вынесем ту же витрину в Mini App.",
-        "price": "3 990 ₽",
+        "price": "20–40 тыс. ₽",
         "stack": ["Python", "aiogram", "Фото"],
         "preview": "bot",
         "icon": "app",
@@ -142,6 +142,7 @@ TEMPLATES: list[dict[str, Any]] = [
             {"key": "products", "label": "Товары", "type": "textarea", "placeholder": "Медовик | 3 200 | Медовые коржи и сметанный крем | Торты | 🍰 | https://.../cake.jpg", "required": True, "hint": "Каждый товар: Название | Цена | Описание | Категория | Эмодзи | Ссылка на фото"},
             {"key": "delivery", "label": "Доставка и самовывоз", "type": "textarea", "placeholder": "Самовывоз: Москва, ул. Примерная, 10\nДоставка по Москве: 500 ₽, от 5 000 ₽ — бесплатно", "required": True},
             {"key": "contact", "label": "Контакт", "type": "text", "placeholder": "@miod_dom", "required": True},
+            {"key": "payment", "label": "Ссылка на оплату", "type": "text", "placeholder": "https://pay.example.com/order", "required": False},
             {"key": "accent", "label": "Акцентный цвет", "type": "color", "default": "#c9825b"},
         ],
         "defaults": {
@@ -150,11 +151,13 @@ TEMPLATES: list[dict[str, Any]] = [
             "products": "Медовик | 3 200 | Медовые коржи и сметанный крем | Торты | 🍰 | https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=900&q=80&auto=format&fit=crop\nКрасный бархат | 3 800 | Нежный бисквит с крем-чизом | Торты | 🍒 | https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?w=900&q=80&auto=format&fit=crop\nНабор макарон | 1 900 | 12 штук, ассорти | Десерты | 🍬 | https://images.unsplash.com/photo-1558326567-98ae2405596b?w=900&q=80&auto=format&fit=crop\nСвеча «Ваниль» | 1 200 | Соя, 40 часов горения | Свечи | 🕯️ | https://images.unsplash.com/photo-1602874801007-bd458bb1b8b6?w=900&q=80&auto=format&fit=crop\nБукет пионов | 4 500 | 15 пионов, крафт | Букеты | 🌸 | https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=900&q=80&auto=format&fit=crop",
             "delivery": "Самовывоз: Москва, ул. Примерная, 10\nДоставка по Москве: 500 ₽, от 5 000 ₽ — бесплатно",
             "contact": "@miod_dom",
+            "payment": "",
             "accent": "#c9825b",
         },
     },
 ]
 
 TEMPLATES_BY_ID = {t["id"]: t for t in TEMPLATES}
+
 
 

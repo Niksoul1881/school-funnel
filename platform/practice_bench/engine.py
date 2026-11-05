@@ -5,6 +5,7 @@ import os
 import re
 import uuid
 from copy import deepcopy
+from datetime import date, timedelta
 from typing import Any
 
 import httpx
@@ -96,18 +97,22 @@ TEMPLATES: dict[str, dict[str, Any]] = {
             {"key": "products", "label": "Товары", "type": "textarea", "hint": "Название | Цена | Описание | Категория | Эмодзи | Фото"},
             {"key": "delivery", "label": "Доставка", "type": "textarea", "hint": "Самовывоз / доставка"},
             {"key": "contact", "label": "Контакт", "type": "text"},
+            {"key": "payment", "label": "Ссылка на оплату", "type": "text", "hint": "ЮKassa / Tinkoff / ссылка на счёт. Можно /skip"},
         ],
         "defaults": {
             "business_name": "Кондитерская «Медовый дом»",
             "products": "Медовик | 3 200 | Медовые коржи и сметанный крем | Торты | 🍰 | https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=900&q=80&auto=format&fit=crop\nКрасный бархат | 3 800 | Бисквит с крем-чизом | Торты | 🍒 | https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?w=900&q=80&auto=format&fit=crop\nНабор макарон | 1 900 | 12 штук, ассорти | Десерты | 🍬 | https://images.unsplash.com/photo-1558326567-98ae2405596b?w=900&q=80&auto=format&fit=crop\nБукет пионов | 4 500 | 15 пионов, крафт | Букеты | 🌸 | https://images.unsplash.com/photo-1526047932273-341f2a7631f9?w=900&q=80&auto=format&fit=crop",
             "delivery": "Самовывоз: Москва, ул. Примерная, 10\nДоставка по Москве: 500 ₽, от 5 000 ₽ — бесплатно",
             "contact": "@miod_dom",
+            "payment": "",
         },
     },
 }
 
 BOTS: dict[str, dict[str, Any]] = {}
 SESSIONS: dict[str, dict[str, Any]] = {}
+BOOKED: dict[str, set[str]] = {}
+STATS: dict[str, dict[str, int]] = {}
 
 
 def _lines(raw: str) -> list[str]:
@@ -190,6 +195,15 @@ def create_bot(template: str, brief: dict) -> dict:
 
 def reset(bot_id: str) -> None:
     SESSIONS[bot_id] = {"stage": "start", "data": {}, "messages": []}
+
+
+def stats(bot_id: str) -> dict[str, int]:
+    return dict(STATS.get(bot_id, {}))
+
+
+def _bump(bot_id: str, key: str) -> None:
+    row = STATS.setdefault(bot_id, {})
+    row[key] = row.get(key, 0) + 1
 
 
 def _buttons(items: list[tuple[str, str]]) -> list[dict]:
@@ -285,10 +299,13 @@ def _time_value(text: str, slots: list[str]) -> str | None:
 
 
 def _bk_date_msg(data: dict) -> list[dict]:
-    return [_msg(
-        f"📅 На какую дату записать?\nМожно написать «сегодня», «завтра» или 12.11.",
-        [("Сегодня", "date:today"), ("Завтра", "date:tomorrow"), ("↩️ Назад", "back"), ("❌ Отмена", "cancel")],
-    )]
+    buttons = [("Сегодня", "date:today"), ("Завтра", "date:tomorrow")]
+    today = date.today()
+    for offset in range(2, 7):
+        day = today + timedelta(days=offset)
+        buttons.append((day.strftime("%d.%m"), f"date:{day.isoformat()}"))
+    buttons += [("↩️ Назад", "back"), ("❌ Отмена", "cancel")]
+    return [_msg("📅 Выберите дату на ближайшие 7 дней:", buttons)]
 
 
 def _bk_time_msg(data: dict, slots: list[str]) -> list[dict]:
@@ -374,7 +391,14 @@ def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
         return [_msg("Не понял услугу. Выберите из списка или напишите название:", [(s["title"] + " · " + s["price"], f"service:{i}") for i, s in enumerate(services)])]
 
     if action.startswith("date:"):
-        data["date"] = "сегодня" if action == "date:today" else "завтра"
+        value = action.split(":", 1)[1]
+        if value in ("today", "tomorrow"):
+            data["date"] = "сегодня" if value == "today" else "завтра"
+        else:
+            try:
+                data["date"] = date.fromisoformat(value).strftime("%d.%m")
+            except ValueError:
+                return _bk_date_msg(data)
         session["stage"] = "time"
         return _bk_time_msg(data, slots)
 
@@ -425,6 +449,16 @@ def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
             return [_msg("Подтвердите кнопкой ниже или напишите «да».", [("✅ Подтвердить", "confirm"), ("✏️ Изменить", "reset")])]
 
     if action == "confirm":
+        slot_key = f"{data.get('date')}|{data.get('time')}"
+        booked = BOOKED.setdefault(bot["id"], set())
+        if slot_key in booked:
+            session["stage"] = "time"
+            return [_msg(
+                "⚠️ Это время уже занято. Выберите другое.",
+                [(slot, f"time:{slot}") for slot in slots] + [("↩️ Назад", "back"), ("❌ Отмена", "cancel")],
+            )]
+        booked.add(slot_key)
+        _bump(bot["id"], "bookings")
         session["stage"] = "done"
         return [
             _msg(
@@ -486,7 +520,7 @@ def _llm_answer(bot: dict, session: dict, text: str) -> str | None:
 def _gift(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     brief = bot["config"]["brief"]
     lowered = (text or "").lower()
-    if action == "check" or any(word in lowered for word in ("подписал", "готово", "получить", "забрать", "да")):
+    if action in ("check", "grant") or any(word in lowered for word in ("подписал", "готово", "получить", "забрать", "да")):
         gift = brief.get("gift", "")
         match = re.search(r"https?://\S+", gift)
         buttons = [("🎁 Забрать подарок", f"url:{match.group(0)}")] if match else []
@@ -496,6 +530,7 @@ def _gift(bot: dict, session: dict, text: str, action: str) -> list[dict]:
             f"Вопросы: {brief.get('contact', '')}",
             buttons,
         )]
+        _bump(bot["id"], "gifts")
         result.append(_msg(f"🎁 Подарок выдан\nБот: {bot['name']}\nПользователь: @{session.get('user', '')}", admin=True))
         return result
     channel = (brief.get("channel") or "").strip()
@@ -736,7 +771,11 @@ def _shop(bot: dict, session: dict, text: str, action: str) -> list[dict]:
         data["address"] = "Самовывоз" if action == "pickup" else text.strip()
         order_id = f"ORD-{uuid.uuid4().hex[:6].upper()}"
         lines = [f"• {by_id[int(pid)]['title']} × {qty} — {by_id[int(pid)]['price']}" for pid, qty in cart.items()]
+        _bump(bot["id"], "orders")
         session["stage"] = "done"
+        pay = (brief.get("payment") or "").strip()
+        pay_buttons = [("💳 Оплатить", f"url:{pay}")] if pay.startswith("http") else []
+        pay_buttons.append(("🛍 Сделать ещё заказ", "reset"))
         return [
             _msg(
                 f"✅ Заказ {order_id} принят, {data['name']}!\n\n"
@@ -744,7 +783,7 @@ def _shop(bot: dict, session: dict, text: str, action: str) -> list[dict]:
                 f"Доставка: {data['address']}\n"
                 f"Телефон: {data['phone']}\n\n"
                 "Мы свяжемся для подтверждения.",
-                [("🛍 Сделать ещё заказ", "reset")],
+                pay_buttons,
             ),
             _msg(
                 f"🔔 Новый заказ {order_id}\n" + "\n".join(lines) +
@@ -781,4 +820,5 @@ def message(bot_id: str, text: str = "", action: str = "") -> list[dict]:
     if bot["template"] == "ai":
         return _ai(bot, session, text, action)
     return _shop(bot, session, text, action)
+
 

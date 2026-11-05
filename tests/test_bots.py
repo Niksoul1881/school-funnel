@@ -1,4 +1,4 @@
-"""Pytest suite for bot scenarios and template contract."""
+﻿"""Pytest suite for bot scenarios and template contract."""
 from __future__ import annotations
 
 import json
@@ -68,7 +68,7 @@ def test_no_placeholder_in_brief(template):
 
 def test_booking_text_flow_and_admin(booking):
     engine.message(booking, action="start")
-    assert "На какую дату" in text(engine.message(booking, text="хочу стрижку"))
+    assert "Выберите дату" in text(engine.message(booking, text="хочу стрижку"))
     assert "Выберите время" in text(engine.message(booking, text="завтра"))
     assert "Как вас зовут" in text(engine.message(booking, text="15:00"))
     assert "телефон" in text(engine.message(booking, text="Никита")).lower()
@@ -155,3 +155,39 @@ def test_shop_pickup(shop):
     result = engine.message(shop, action="pickup")
     assert "Самовывоз" in text(result)
     assert "ORD-" in text(result)
+
+
+def test_booking_calendar_buttons(booking):
+    result = engine.message(booking, action="service:0")
+    actions = [b["action"] for b in buttons(result)]
+    assert sum(a.startswith("date:") for a in actions) >= 7
+
+
+def _fill_booking(bid: str, slot: str = "12:00"):
+    engine.message(bid, action="service:0")
+    engine.message(bid, action="date:tomorrow")
+    engine.message(bid, action=f"time:{slot}")
+    engine.message(bid, text="Никита")
+    engine.message(bid, text="+7 902 123-45-67")
+    return engine.message(bid, action="confirm")
+
+
+def test_booking_blocks_double_slot(booking):
+    first = _fill_booking(booking)
+    assert "Готово" in text(first)
+    second = _fill_booking(booking)
+    assert "занято" in text(second).lower()
+
+
+def test_shop_payment_link():
+    brief = dict(engine.TEMPLATES["shop"]["defaults"])
+    brief["payment"] = "https://pay.example.com/order"
+    bid = engine.create_bot("shop", brief)["id"]
+    product = engine.BOTS[bid]["config"]["products"][0]
+    engine.message(bid, action=f"add:{product['id']}")
+    engine.message(bid, action="checkout")
+    engine.message(bid, text="Никита")
+    engine.message(bid, text="+7 902 123-45-67")
+    result = engine.message(bid, text="Москва, Примерная 10")
+    assert any(b["action"].startswith("url:") for b in buttons(result))
+    assert engine.stats(bid).get("orders") == 1

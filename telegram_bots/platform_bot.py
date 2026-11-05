@@ -270,8 +270,40 @@ def tenant_dispatcher(bot_id: str, template: str):
 
     @tenant_dp.callback_query()
     async def callback(call: CallbackQuery):
+        action = call.data
+        if action == "check" and template == "gift":
+            raw = (engine.BOTS.get(bot_id, {}).get("config", {}).get("brief", {}).get("channel") or "").strip()
+            channel = raw.split("t.me/")[-1].strip("/") if "t.me/" in raw else raw
+            if channel and not channel.startswith("@"):
+                channel = "@" + channel
+            if not channel:
+                action = "grant"
+            else:
+                try:
+                    member = await call.bot.get_chat_member(channel, call.from_user.id)
+                    status = getattr(member, "status", "")
+                    if status not in ("member", "administrator", "creator"):
+                        await call.answer("Сначала подпишитесь на канал.", show_alert=True)
+                        return
+                    action = "grant"
+                except Exception as exc:
+                    await notify_owner(f"⚠️ Не смог проверить подписку у @{call.from_user.username or call.from_user.id}: {exc}")
+                    action = "grant"
         await call.answer()
-        await emit(call.message.bot, call.message.chat.id, engine.message(bot_id, action=call.data))
+        await emit(call.message.bot, call.message.chat.id, engine.message(bot_id, action=action))
+
+    @tenant_dp.message(Command("stats"))
+    async def stats_cmd(message: Message):
+        if OWNER_ID and message.from_user.id != OWNER_ID:
+            return
+        data = engine.stats(bot_id)
+        await message.answer(
+            "📊 <b>Статистика бота</b>\n\n"
+            f"Записей: <b>{data.get('bookings', 0)}</b>\n"
+            f"Заказов: <b>{data.get('orders', 0)}</b>\n"
+            f"Подарков: <b>{data.get('gifts', 0)}</b>",
+            parse_mode="HTML",
+        )
 
     @tenant_dp.message(F.text)
     async def text(message: Message):
