@@ -198,3 +198,18 @@ def test_owner_order_journal(booking):
     assert rows and rows[-1]["type"] == "booking"
     assert rows[-1]["phone"] == "+7 902 123-45-67"
     assert engine.stats(booking).get("bookings") == 1
+
+def test_booking_cancel_frees_slot(booking):
+    _fill_booking(booking, "17:00")
+    result = engine.message(booking, action="cancel_booking")
+    assert "отменена" in text(result).lower()
+    # The same slot can be booked again after cancellation.
+    again = _fill_booking(booking, "17:00")
+    assert "Готово" in text(again)
+
+
+def test_booking_reschedule_keeps_contacts(booking):
+    _fill_booking(booking, "18:00")
+    result = engine.message(booking, action="reschedule")
+    assert "Выберите дату" in text(result)
+    assert "Приятно" not in text(result)

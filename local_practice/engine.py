@@ -383,6 +383,27 @@ def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
         session["data"] = {}
         return _start(bot)
 
+    if action in ("cancel_booking", "reschedule") and stage == "done":
+        key = data.get("slot_key")
+        if key:
+            BOOKED.get(bot["id"], set()).discard(key)
+        if action == "cancel_booking":
+            summary = f"{data.get('service', {}).get('title', '')} · {data.get('date', '')} {data.get('time', '')} · {data.get('name', '')}"
+            phone = data.get("phone", "")
+            session["stage"] = "start"
+            session["data"] = {}
+            return [
+                _msg("Запись отменена. Если понадобится — начните заново.", [("Записаться", "start")]),
+                _msg(f"❌ Клиент отменил запись\n{summary}\nТелефон: {phone}", admin=True),
+            ]
+        data.pop("date", None)
+        data.pop("time", None)
+        session["stage"] = "date"
+        return [
+            _msg("Выберите новую дату — услуга и контакты сохранятся."),
+            *_bk_date_msg(data),
+        ]
+
     if action == "back" or lowered in ("назад", "изменить"):
         if stage == "phone":
             session["stage"] = "name"
@@ -489,6 +510,7 @@ def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
                 [(slot, f"time:{slot}") for slot in slots] + [("↩️ Назад", "back"), ("❌ Отмена", "cancel")],
             )]
         booked.add(slot_key)
+        data["slot_key"] = slot_key
         _bump(bot["id"], "bookings")
         _remember(bot["id"], {
             "type": "booking",
@@ -504,7 +526,8 @@ def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
                 f"✅ Готово, {data['name']}!\n\n"
                 f"Вы записаны: {data['service']['title']}, {data['date']} в {data['time']}.\n"
                 f"Мастер подтвердит запись по телефону {data['phone']}.\n\n"
-                f"Связаться: {brief.get('contact')}"
+                f"Связаться: {brief.get('contact')}",
+                [("🔁 Перенести", "reschedule"), ("❌ Отменить", "cancel_booking")],
             ),
             _msg(
                 "🔔 Новая заявка\n\n"

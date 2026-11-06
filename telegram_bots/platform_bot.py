@@ -14,6 +14,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.storage.base import BaseStorage, StorageKey
 from aiogram.types import (
     BotCommand,
     CallbackQuery,
@@ -35,7 +36,46 @@ PLATFORM_TOKEN = os.getenv("PLATFORM_BOT_TOKEN", "").strip()
 OWNER_ID = os.getenv("OWNER_TG_ID", "").strip()
 TENANTS: dict[str, dict] = {}
 MY_BOTS: list[dict] = []
-dp = Dispatcher()
+
+
+class JsonFSMStorage(BaseStorage):
+    """Small durable FSM storage: survives platform-bot restarts."""
+
+    def __init__(self, path: Path):
+        self.path = path
+        self._lock = asyncio.Lock()
+        try:
+            self._data = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            self._data = {}
+
+    def _flush(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text(json.dumps(self._data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    async def set_state(self, key: StorageKey, state: State | str | None = None) -> None:
+        async with self._lock:
+            value = getattr(state, "state", state)
+            self._data.setdefault(str(key), {})["state"] = value
+            self._flush()
+
+    async def get_state(self, key: StorageKey) -> State | str | None:
+        value = self._data.get(str(key), {}).get("state")
+        return State(value) if value else None
+
+    async def set_data(self, key: StorageKey, data: dict) -> None:
+        async with self._lock:
+            self._data.setdefault(str(key), {})["data"] = data
+            self._flush()
+
+    async def get_data(self, key: StorageKey) -> dict:
+        return dict(self._data.get(str(key), {}).get("data") or {})
+
+    async def close(self) -> None:
+        self._flush()
+
+
+dp = Dispatcher(storage=JsonFSMStorage(ROOT / "private" / "fsm_state.json"))
 
 MENU_START = "🚀 Старт"
 MENU_BUILD = "🛠 Собрать бота"
