@@ -139,18 +139,18 @@ PUBLIC = "https://school.91-184-242-178.sslip.io:8443"
 PLATFORM_API = os.getenv("PLATFORM_API_URL", PUBLIC).rstrip("/")
 SERVICE_TOKEN = os.getenv("PLATFORM_SERVICE_TOKEN", "").strip()
 COVERS = {
-    "booking": f"{PUBLIC}/static/covers/booking.png",
-    "gift": f"{PUBLIC}/static/covers/gift.png",
-    "lead": f"{PUBLIC}/static/covers/lead.png",
-    "ai": f"{PUBLIC}/static/covers/ai.png",
-    "shop": f"{PUBLIC}/static/covers/shop.png",
+    "booking": f"{PUBLIC}/static/covers/booking.jpg",
+    "gift": f"{PUBLIC}/static/covers/gift.jpg",
+    "lead": f"{PUBLIC}/static/covers/lead.jpg",
+    "ai": f"{PUBLIC}/static/covers/ai.jpg",
+    "shop": f"{PUBLIC}/static/covers/shop.jpg",
 }
 COVER_FILES = {
-    "booking": ROOT / "platform" / "static" / "covers" / "booking.png",
-    "gift": ROOT / "platform" / "static" / "covers" / "gift.png",
-    "lead": ROOT / "platform" / "static" / "covers" / "lead.png",
-    "ai": ROOT / "platform" / "static" / "covers" / "ai.png",
-    "shop": ROOT / "platform" / "static" / "covers" / "shop.png",
+    "booking": ROOT / "platform" / "static" / "covers" / "booking.jpg",
+    "gift": ROOT / "platform" / "static" / "covers" / "gift.jpg",
+    "lead": ROOT / "platform" / "static" / "covers" / "lead.jpg",
+    "ai": ROOT / "platform" / "static" / "covers" / "ai.jpg",
+    "shop": ROOT / "platform" / "static" / "covers" / "shop.jpg",
 }
 LESSON_COVER = ROOT / "platform" / "static" / "covers" / "lesson2.png"
 EXAMPLES = {
@@ -787,4 +787,5 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 

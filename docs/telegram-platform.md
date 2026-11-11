@@ -1,4 +1,4 @@
-# Telegram-платформа практики
+﻿# Telegram-платформа практики
 
 Документация для разработчика/друга. Здесь главный бот и три активных шаблона. AI-консультант отключён: код остался, но в каталоге и конструкторе его нет.
 
@@ -165,7 +165,7 @@ POST /api/tg/create_project
 - Приветствие, меню, бриф, прогресс: `telegram_bots/platform_bot.py`.
 - Сценарии клиента: `local_practice/engine.py`.
 - Шаблоны standalone: `platform/app/template_booking.py`, `template_ai.py`, `template_shop.py`.
-- Обложки: `platform/static/covers/*.png`, генератор `scripts/make_*.py`.
+- Обложки: WebP для веба и JPEG для Telegram (`platform/static/covers/*.webp`, `*.jpg`), исходники — PNG.
 - Тексты уроков и ТЗ: `docs/`.
 
 ## Безопасность
@@ -180,3 +180,4 @@ POST /api/tg/create_project
 ## QA
 
 Полный прогон: [qa/telegram-bots-qa.md](qa/telegram-bots-qa.md). Запуск: `python scripts/qa_bots.py`.
+
