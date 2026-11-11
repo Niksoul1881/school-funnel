@@ -14,7 +14,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "stack": ["Python", "aiogram"],
         "preview": "bot",
         "icon": "spark",
-        "cover": "/static/covers/gift.png",
+        "cover": "/static/covers/gift.webp",
         "badge": "NEW",
         "brief_fields": [
             {"key": "business_name", "label": "Название проекта", "type": "text", "placeholder": "Школа AI-агентов", "required": True},
@@ -39,7 +39,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "stack": ["Python", "aiogram"],
         "preview": "bot",
         "icon": "spark",
-        "cover": "/static/covers/lead.png",
+        "cover": "/static/covers/lead.webp",
         "badge": "NEW",
         "brief_fields": [
             {"key": "business_name", "label": "Название бизнеса", "type": "text", "placeholder": "Мастерская «Палыч»", "required": True},
@@ -64,7 +64,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "stack": ["Python", "aiogram", "SQLite"],
         "preview": "bot",
         "icon": "calendar",
-        "cover": "/static/covers/booking.png",
+        "cover": "/static/covers/booking.webp",
         "badge": "ХИТ",
         "brief_fields": [
             {"key": "business_name", "label": "Название студии", "type": "text", "placeholder": "Студия «Марина»", "required": True},
@@ -101,7 +101,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "stack": ["Python", "aiogram", "LLM"],
         "preview": "bot",
         "icon": "spark",
-        "cover": "/static/covers/ai.png",
+        "cover": "/static/covers/ai.webp",
         "badge": "AI",
         "brief_fields": [
             {"key": "business_name", "label": "Название бизнеса", "type": "text", "placeholder": "Студия «Марина»", "required": True},
@@ -134,7 +134,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "stack": ["Python", "aiogram", "Фото"],
         "preview": "bot",
         "icon": "app",
-        "cover": "/static/covers/shop.png",
+        "cover": "/static/covers/shop.webp",
         "badge": "ХИТ",
         "brief_fields": [
             {"key": "business_name", "label": "Название магазина", "type": "text", "placeholder": "Кондитерская «Медовый дом»", "required": True},
@@ -158,6 +158,7 @@ TEMPLATES: list[dict[str, Any]] = [
 ]
 
 TEMPLATES_BY_ID = {t["id"]: t for t in TEMPLATES}
+
 
 
 
