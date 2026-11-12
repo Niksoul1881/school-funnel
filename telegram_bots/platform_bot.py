@@ -792,17 +792,18 @@ async def mybots_command(message: Message):
 @dp.message(F.text)
 async def fallback_text(message: Message, state: FSMContext):
     current = await state.get_state()
-    name = getattr(current, "state", current)
+    name = getattr(current, "state", current) or ""
+    leaf = str(name).split(":")[-1]
     data = await state.get_data()
     print(f"[fallback] text from {message.from_user.id}: {(message.text or '')[:80]!r} state={current} data_keys={list(data)}", flush=True)
-    if name == Build.fields.state or (not name and "template" in data):
-        await fill_field(message, state)
-    elif name == Build.token.state:
+    if leaf == "token":
         await receive_token(message, state)
-    elif name == Build.product_photo.state:
+    elif leaf == "product_photo":
         await products_done_or_text(message, state)
-    elif name == Build.product_info.state:
+    elif leaf == "product_info":
         await product_info(message, state)
+    elif "template" in data and "index" in data:
+        await fill_field(message, state)
 
 
 async def restore_tenants() -> None:
