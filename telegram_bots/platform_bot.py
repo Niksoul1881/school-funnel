@@ -522,9 +522,9 @@ async def start(message: Message, state: FSMContext):
 async def show_templates(message: Message) -> None:
     await clear_ui(message.bot, message.chat.id)
     markup = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="📅 Запись к мастеру", callback_data="tpl:booking")],
-        [InlineKeyboardButton(text="🎁 Подарок за подписку", callback_data="tpl:gift")],
-        [InlineKeyboardButton(text="🛍 Витрина товаров", callback_data="tpl:shop")],
+        [InlineKeyboardButton(text="📅 Запись к мастеру", callback_data="tpl2:booking")],
+        [InlineKeyboardButton(text="🎁 Подарок за подписку", callback_data="tpl2:gift")],
+        [InlineKeyboardButton(text="🛍 Витрина товаров", callback_data="tpl2:shop")],
     ])
     text = (
         "🎨 <b>Выбери шаблон</b>\n\n"
@@ -572,6 +572,14 @@ async def mybots(call: CallbackQuery):
 
 
 @dp.callback_query(F.data.startswith("tpl:"))
+async def legacy_template_button(call: CallbackQuery, state: FSMContext):
+    await call.answer("Это старая кнопка. Показываю актуальное меню.", show_alert=True)
+    await state.clear()
+    await state.set_state(Build.template)
+    await show_templates(call.message)
+
+
+@dp.callback_query(F.data.startswith("tpl2:"))
 async def choose_template(call: CallbackQuery, state: FSMContext):
     template = call.data.split(":", 1)[1]
     if template not in engine.TEMPLATES:
