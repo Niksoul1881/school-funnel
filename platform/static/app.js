@@ -2155,6 +2155,14 @@ function renderLesson(id) {
           <div class="practice-head"><span class="badge gold">Практика</span><b>Как создать бота: общий маршрут</b></div>
           <ol class="practice-steps">${l.common_steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
         </div>` : ''}
+      ${l.links ? `<div class="lesson-links">${l.links.map((x) => `<a class="btn sm" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.label)} ${svg('arrow')}</a>`).join('')}</div>` : ''}
+      ${l.botfather_steps ? `
+        <div class="practice-block">
+          <div class="practice-head"><b>BotFather: пять экранов</b><span class="small dim">токен создаётся здесь</span></div>
+          <div class="bf-grid">
+            ${l.botfather_steps.map((s, i) => `<figure class="bf-card"><img src="${s.image}" alt="${esc(s.title)}" loading="lazy"><figcaption><b>${i + 1}. ${esc(s.title)}</b><span>${esc(s.text)}</span></figcaption></figure>`).join('')}
+          </div>
+        </div>` : ''}
       ${l.tracks ? `
         <div class="practice-tracks">
           <div class="practice-head"><b>Выбери один трек и дойди до результата</b></div>

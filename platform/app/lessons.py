@@ -38,9 +38,22 @@ LESSONS = [
             "Нажми «🛠 Собрать бота» → выбери шаблон.",
             "Ответь на 4 вопроса брифа. Это содержание будущего бота.",
             "Открой @BotFather → /newbot → придумай имя и username → скопируй токен.",
+            "На этом шаге мы не создаём нового бота внутри платформы: мы получаем токен в BotFather и вставляем его в чат.",
             "Вставь токен в чат платформы. Бот запустится, а проект появится в разделе «Проекты».",
             "В Telegram нажми «📦 Мои боты» — там будет твой бот и кнопка в кабинет.",
             "В кабинете открой проект и нажми «Архив» — скачается папка с ботом и AGENT.md для VS Code.",
+        ],
+        "links": [
+            {"label": "Открыть BotFather", "url": "https://t.me/BotFather"},
+            {"label": "Открыть платформу", "url": "https://t.me/platform_test_soulnik_bot"},
+            {"label": "Тестовый бот записи", "url": "https://t.me/booking_test_soulnik_bot"},
+        ],
+        "botfather_steps": [
+            {"image": "/static/lessons/botfather-1.webp", "title": "Открой BotFather", "text": "В Telegram нажми поиск и введи @BotFather. Открой бота с галочкой."},
+            {"image": "/static/lessons/botfather-2.webp", "title": "Отправь /newbot", "text": "В чате с BotFather отправь команду /newbot."},
+            {"image": "/static/lessons/botfather-3.webp", "title": "Придумай имя", "text": "Напиши имя бота, которое увидят пользователи."},
+            {"image": "/static/lessons/botfather-4.webp", "title": "Придумай username", "text": "Username должен заканчиваться на _bot. Например: my_first_school_bot."},
+            {"image": "/static/lessons/botfather-5.webp", "title": "Скопируй токен", "text": "BotFather пришлёт токен вида 123456789:AA... Скопируй его и вставь в платформу."},
         ],
         "tracks": [
             {
