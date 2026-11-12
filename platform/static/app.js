@@ -2528,7 +2528,7 @@ async function renderProfile() {
     </div>
     <div class="card">
       <div class="between"><h3>Telegram</h3><span class="badge">аккаунт</span></div>
-      <div class="small dim" style="margin:8px 0 10px">Привяжи Telegram к этому аккаунту — новые боты и проекты будут появляться здесь, а не в отдельном `tg...@school.local`.</div>
+      <div class="small dim" style="margin:8px 0 10px">Привяжи Telegram к этому аккаунту — новые боты и проекты будут появляться здесь, а не в отдельном <code>tg...@school.local</code>.</div>
       <button class="btn primary" id="link-telegram">Привязать Telegram</button>
       <div id="link-result"></div>
     </div>
@@ -2845,6 +2845,15 @@ document.addEventListener('keydown', (e) => {
 async function boot() {
   const savedTheme = localStorage.getItem('school-theme');
   document.body.classList.toggle('theme-light', savedTheme === 'light');
+  const params = new URLSearchParams(location.search);
+  if (params.get('magic') === 'invalid') {
+    history.replaceState({}, '', location.pathname + location.hash);
+    state.user = null;
+    state.authMode = 'login';
+    renderAuth();
+    setTimeout(() => toast('Ссылка для входа устарела. Войди по email или запроси новую.', 'err'), 120);
+    return;
+  }
   try {
     const me = await api('/api/me');
     state.user = me.user;
