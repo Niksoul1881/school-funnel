@@ -120,6 +120,13 @@ CREATE TABLE IF NOT EXISTS telegram_links (
     created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS telegram_link_codes (
+    code_hash TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires_at TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS magic_tokens (
     token_hash TEXT PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

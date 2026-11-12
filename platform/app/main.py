@@ -292,6 +292,55 @@ def magic_login(token: str = ""):
     return response
 
 
+@app.post("/api/telegram/link-code")
+def telegram_link_code(request: Request):
+    user = require_user(request)
+    code = secrets.token_hex(4).upper()
+    expires = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat(timespec="seconds")
+    execute(
+        "INSERT INTO telegram_link_codes(code_hash, user_id, expires_at, created_at) VALUES (?,?,?,?)",
+        (security.token_hash(code), user["id"], expires, security.now()),
+    )
+    return {
+        "code": code,
+        "deep_link": f"https://t.me/platform_test_soulnik_bot?start=link_{code}",
+        "expires_in": 600,
+    }
+
+
+@app.post("/api/tg/link")
+async def tg_link(request: Request):
+    _require_service(request)
+    data = await _body(request)
+    code = str(data.get("code", "")).strip().upper()
+    tg_id = str(data.get("tg_id", "")).strip()
+    username = str(data.get("username", "")).strip()[:64]
+    if not code or not tg_id.isdigit():
+        raise HTTPException(status_code=400, detail="Нужны code и tg_id")
+    row = fetch_one(
+        "SELECT * FROM telegram_link_codes WHERE code_hash = ? AND expires_at > ?",
+        (security.token_hash(code), security.now()),
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Код неверный или истёк")
+    target = fetch_one("SELECT * FROM users WHERE id = ?", (row["user_id"],))
+    if not target:
+        raise HTTPException(status_code=404, detail="Аккаунт не найден")
+    auto = fetch_one("SELECT * FROM users WHERE email = ?", (f"tg{tg_id}@school.local",))
+    if auto and auto["id"] != target["id"]:
+        execute("UPDATE projects SET user_id = ? WHERE user_id = ?", (target["id"], auto["id"]))
+        execute("UPDATE lesson_progress SET user_id = ? WHERE user_id = ?", (target["id"], auto["id"]))
+    execute("DELETE FROM telegram_links WHERE user_id = ?", (target["id"],))
+    execute(
+        "INSERT INTO telegram_links(tg_id, user_id, username, created_at) VALUES (?,?,?,?) "
+        "ON CONFLICT(tg_id) DO UPDATE SET user_id = excluded.user_id, username = excluded.username",
+        (tg_id, target["id"], username, security.now()),
+    )
+    execute("DELETE FROM telegram_link_codes WHERE code_hash = ?", (security.token_hash(code),))
+    store.log_event(target["id"], "telegram_link", None, {"tg_id": tg_id})
+    return {"ok": True, "user_id": target["id"], "magic_url": _magic_url(target["id"])}
+
+
 @app.post("/api/tg/create_project")
 async def tg_create_project(request: Request):
     """Сервисный endpoint: бот-платформа создаёт проект в кабинете ученика."""

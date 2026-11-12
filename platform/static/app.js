@@ -2527,6 +2527,12 @@ async function renderProfile() {
       </form>
     </div>
     <div class="card">
+      <div class="between"><h3>Telegram</h3><span class="badge">аккаунт</span></div>
+      <div class="small dim" style="margin:8px 0 10px">Привяжи Telegram к этому аккаунту — новые боты и проекты будут появляться здесь, а не в отдельном `tg...@school.local`.</div>
+      <button class="btn primary" id="link-telegram">Привязать Telegram</button>
+      <div id="link-result"></div>
+    </div>
+    <div class="card">
       <div class="between"><h3>Мой компьютер</h3><span class="badge">local runner</span></div>
       <div class="small dim" style="margin:8px 0 10px">Подключи свой ПК, чтобы выполнять команды и работать с файлами локально. Пока это терминал; файлы и DSH — следующий шаг.</div>
       <button class="btn primary" id="pair-device">Подключить компьютер</button>
@@ -2570,6 +2576,15 @@ async function renderProfile() {
     } catch (err) { toast(err.message, 'err'); }
   };
   await bindDevices();
+  const linkBtn = $('#link-telegram');
+  if (linkBtn) linkBtn.onclick = async () => {
+    linkBtn.disabled = true;
+    try {
+      const data = await api('/api/telegram/link-code', { method: 'POST', body: {} });
+      $('#link-result').innerHTML = `<div class="pair-box"><div class="eyebrow">Код привязки</div><b>${data.code}</b><p>Открой бота по кнопке ниже. Код действует 10 минут.</p><a class="btn primary" href="${data.deep_link}" target="_blank" rel="noopener">Открыть бота и привязать</a></div>`;
+    } catch (err) { toast(err.message, 'err'); }
+    linkBtn.disabled = false;
+  };
 }
 
 /* ---------- admin ---------- */

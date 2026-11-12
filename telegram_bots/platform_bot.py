@@ -503,9 +503,31 @@ async def save_project(tg_id: int, template: str, brief: dict, username: str) ->
         return None
 
 
+async def link_telegram(message: Message, code: str) -> None:
+    if not SERVICE_TOKEN:
+        await message.answer("Привязка Telegram временно недоступна.")
+        return
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            response = await client.post(
+                f"{PLATFORM_API}/api/tg/link",
+                headers={"X-Service-Token": SERVICE_TOKEN},
+                json={"code": code, "tg_id": str(message.from_user.id), "username": message.from_user.username or ""},
+            )
+        if response.status_code != 200:
+            await message.answer("Код неверный или истёк. Сгенерируй новый в профиле.")
+            return
+        await message.answer("✅ Telegram привязан к аккаунту школы. Проекты теперь в нём.")
+    except Exception as exc:
+        await message.answer(f"Не удалось привязать: {html.escape(str(exc))}")
+
+
 @dp.message(CommandStart())
 async def start(message: Message, state: FSMContext):
     await state.clear()
+    parts = (message.text or "").split(maxsplit=1)
+    if len(parts) == 2 and parts[1].startswith("link_"):
+        await link_telegram(message, parts[1][5:])
     text = (
         "✨ <b>Платформа практики</b>\n\n"
         "Урок 2 · <b>Чат-боты</b>\n\n"
