@@ -341,6 +341,32 @@ async def tg_link(request: Request):
     return {"ok": True, "user_id": target["id"], "magic_url": _magic_url(target["id"])}
 
 
+@app.get("/api/tg/project/{project_id}/brief")
+def tg_project_brief(project_id: int, request: Request):
+    _require_service(request)
+    project = store.get_project(0, project_id, is_admin=True)
+    if not project:
+        raise HTTPException(status_code=404, detail="Проект не найден")
+    brief = dict(project.get("brief") or {})
+    content_raw = next((f["content"] for f in project["files"] if f["path"] == "content.json"), "")
+    try:
+        content = json.loads(content_raw) if content_raw else {}
+    except json.JSONDecodeError:
+        content = {}
+    business = content.get("business") or {}
+    if business.get("name"):
+        brief["business_name"] = business["name"]
+    if content.get("contact"):
+        brief["contact"] = content["contact"]
+    services = content.get("services")
+    if isinstance(services, list) and services:
+        brief["services"] = "\n".join(
+            f"{s.get('title', '')} | {s.get('price', '')} | {s.get('duration', '')}"
+            for s in services if isinstance(s, dict)
+        )
+    return {"template_id": project["template_id"], "brief": brief, "name": project["name"]}
+
+
 @app.post("/api/tg/create_project")
 async def tg_create_project(request: Request):
     """Сервисный endpoint: бот-платформа создаёт проект в кабинете ученика."""
@@ -989,7 +1015,7 @@ async def deploy(project_id: int, request: Request):
         {"step": "token", "status": "ok", "message": f"Токен принят: @{username}"},
         {"step": "build", "status": "ok", "message": "Файлы проекта проверены"},
         {"step": "register", "status": "ok", "message": "Бот зарегистрирован в платформе"},
-        {"step": "runtime", "status": "warn", "message": "MVP: 24/7-рантайм появится на следующем этапе"},
+        {"step": "runtime", "status": "ok", "message": "Работающий бот подхватит сохранённый content.json"},
     ]
     store.save_deployment(project_id, token, username, "deployed", log)
     store.log_event(user["id"], "deploy", project_id, {"bot": username})

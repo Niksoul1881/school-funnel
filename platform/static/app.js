@@ -2031,7 +2031,7 @@ function openDeploy() {
       <div id="deploy-log"></div>
       <button class="btn primary" style="width:100%;margin-top:12px" type="submit">Проверить и опубликовать</button>
     </form>
-    <div class="hint-row">MVP: токен проверяется, деплой записывается. 24/7-рантайм — следующий этап.</div>
+    <div class="hint-row">Сохрани content.json — работающий бот подхватит изменения автоматически за несколько секунд.</div>
   </div>`;
   document.body.appendChild(modal);
   $('#deploy-close').onclick = () => modal.remove();

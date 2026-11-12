@@ -504,7 +504,7 @@ async def start_tenant(token: str, template: str, brief: dict, tg_id: int = 0, p
     bot_id = engine.create_bot(template, brief)["id"]
     engine.BOTS[bot_id]["username"] = me.username
     task = asyncio.create_task(tenant_dispatcher(bot_id, template, tg_id).start_polling(bot))
-    TENANTS[bot_id] = {"id": bot_id, "token": token, "username": me.username, "task": task, "template": template, "owner_tg_id": tg_id, "brief": brief}
+    TENANTS[bot_id] = {"id": bot_id, "token": token, "username": me.username, "task": task, "template": template, "owner_tg_id": tg_id, "brief": brief, "project": project}
     if project is None and tg_id:
         project = await save_project(tg_id, template, brief, me.username)
     info = {"id": bot_id, "username": me.username, "template": template, "project": project, "owner_tg_id": tg_id}
@@ -889,6 +889,45 @@ async def restore_tenants() -> None:
             print(f"restore failed {record.get('username')}: {exc}")
 
 
+async def sync_projects() -> None:
+    """Подтягивает сохранённый content.json в работающих ботов."""
+    seen: dict[str, str] = {}
+    print(f"[sync] started tenants={len(TENANTS)} service_token={bool(SERVICE_TOKEN)}", flush=True)
+    while True:
+        for bot_id, record in list(TENANTS.items()):
+            project = record.get("project") or {}
+            project_id = project.get("project_id") or project.get("id") if isinstance(project, dict) else None
+            if not project_id or not SERVICE_TOKEN:
+                continue
+            try:
+                async with httpx.AsyncClient(timeout=10) as client:
+                    response = await client.get(
+                        f"{PLATFORM_API}/api/tg/project/{project_id}/brief",
+                        headers={"X-Service-Token": SERVICE_TOKEN},
+                    )
+                if response.status_code != 200:
+                    continue
+                payload = response.json()
+                brief = payload.get("brief") or {}
+                signature = json.dumps(brief, ensure_ascii=False, sort_keys=True)
+                if seen.get(bot_id) == signature:
+                    continue
+                seen[bot_id] = signature
+                fresh = engine.create_bot(record["template"], brief)
+                if engine.BOTS.get(bot_id):
+                    engine.BOTS[bot_id]["config"] = fresh["config"]
+                record["brief"] = brief
+                items = load_tenants()
+                for item in items:
+                    if item.get("token") == record.get("token"):
+                        item["brief"] = brief
+                save_tenants(items)
+                print(f"[sync] updated @{record.get('username')}", flush=True)
+            except Exception:
+                continue
+        await asyncio.sleep(6)
+
+
 async def main() -> None:
     if not PLATFORM_TOKEN:
         raise SystemExit("PLATFORM_BOT_TOKEN не задан")
@@ -899,6 +938,7 @@ async def main() -> None:
     ])
     await restore_tenants()
     load_engine_state()
+    asyncio.create_task(sync_projects())
     await dp.start_polling(bot)
 
 
