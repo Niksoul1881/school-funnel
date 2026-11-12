@@ -526,17 +526,14 @@ async def show_templates(message: Message) -> None:
         [InlineKeyboardButton(text="🎁 Подарок за подписку", callback_data="tpl2:gift")],
         [InlineKeyboardButton(text="🛍 Витрина товаров", callback_data="tpl2:shop")],
     ])
-    text = (
+    caption = (
         "🎨 <b>Выбери шаблон</b>\n\n"
-        "<b>📅 Запись к мастеру</b>\n"
-        "Услуги → дата → время → заявка\n\n"
-        "<b>🎁 Подарок за подписку</b>\n"
-        "Канал → подписка → подарок\n\n"
-        "<b>🛍 Витрина товаров</b>\n"
-        "Фото → корзина → заказ\n\n"
-        "<i>Один шаблон. Дальше только бриф и токен.</i>"
+        "Три готовых сценария. Нажми кнопку — покажу бриф."
     )
-    sent = await message.answer(text, parse_mode="HTML", reply_markup=markup)
+    try:
+        sent = await message.answer_photo(FSInputFile(TEMPLATES_COVER), caption=caption, parse_mode="HTML", reply_markup=markup)
+    except Exception:
+        sent = await message.answer(caption, parse_mode="HTML", reply_markup=markup)
     remember_ui(message.bot, message.chat.id, sent)
 
 

@@ -2215,8 +2215,21 @@ function renderLesson(id) {
       ${l.botfather_steps ? `
         <div class="practice-block">
           <div class="practice-head"><b>BotFather: пять экранов</b><span class="small dim">токен создаётся здесь</span></div>
-          <div class="bf-grid">
-            ${l.botfather_steps.map((s, i) => `<figure class="bf-card"><img src="${s.image}" alt="${esc(s.title)}" loading="lazy"><figcaption><b>${i + 1}. ${esc(s.title)}</b><span>${esc(s.text)}</span></figcaption></figure>`).join('')}
+          <div class="bf-viewer" data-bf-viewer>
+            <div class="bf-stage">
+              <a data-bf-link href="${l.botfather_steps[0].image}" target="_blank" rel="noopener" title="Открыть скрин в полном размере">
+                <img class="bf-image" data-bf-image src="${l.botfather_steps[0].image}" alt="${esc(l.botfather_steps[0].title)}">
+              </a>
+              <div class="bf-copy">
+                <div class="bf-counter" data-bf-counter>1 / ${l.botfather_steps.length}</div>
+                <h4 data-bf-title>${esc(l.botfather_steps[0].title)}</h4>
+                <p data-bf-text>${esc(l.botfather_steps[0].text)}</p>
+                <a class="bf-open" data-bf-link href="${l.botfather_steps[0].image}" target="_blank" rel="noopener">Открыть полноразмер →</a>
+              </div>
+            </div>
+            <div class="bf-thumbs">
+              ${l.botfather_steps.map((s, i) => `<button class="bf-thumb ${i === 0 ? 'on' : ''}" data-bf-step="${i}" data-src="${s.image}" data-title="${esc(s.title)}" data-text="${esc(s.text)}"><img src="${s.image}" alt=""><span>${i + 1}</span></button>`).join('')}
+            </div>
           </div>
         </div>` : ''}
       ${l.tracks ? `
@@ -2251,6 +2264,34 @@ function renderLesson(id) {
   $('#app').innerHTML = layout(content, { panel: null });
   bindCommon();
   initPracticeChecks(l);
+  initBfViewer();
+}
+
+function initBfViewer() {
+  const viewer = $('[data-bf-viewer]');
+  if (!viewer) return;
+  const image = viewer.querySelector('[data-bf-image]');
+  const title = viewer.querySelector('[data-bf-title]');
+  const text = viewer.querySelector('[data-bf-text]');
+  const counter = viewer.querySelector('[data-bf-counter]');
+  const links = viewer.querySelectorAll('[data-bf-link]');
+  const thumbs = viewer.querySelectorAll('[data-bf-step]');
+  const show = (button) => {
+    if (!button) return;
+    const index = Number(button.dataset.bfStep || 0);
+    image.src = button.dataset.src || '';
+    image.alt = button.dataset.title || '';
+    title.textContent = button.dataset.title || '';
+    text.textContent = button.dataset.text || '';
+    counter.textContent = `${index + 1} / ${thumbs.length}`;
+    links.forEach((link) => { link.href = button.dataset.src || ''; });
+    thumbs.forEach((item) => item.classList.toggle('on', item === button));
+  };
+  thumbs.forEach((button) => { button.onclick = () => show(button); });
+  const next = viewer.querySelector('[data-bf-next]');
+  const prev = viewer.querySelector('[data-bf-prev]');
+  if (next) next.onclick = () => { const current = [...thumbs].findIndex((b) => b.classList.contains('on')); show(thumbs[(current + 1) % thumbs.length]); };
+  if (prev) prev.onclick = () => { const current = [...thumbs].findIndex((b) => b.classList.contains('on')); show(thumbs[(current - 1 + thumbs.length) % thumbs.length]); };
 }
 
 async function completeLesson(id) {
