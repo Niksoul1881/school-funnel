@@ -373,6 +373,7 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
 
     @tenant_dp.message(CommandStart())
     async def start(message: Message):
+        await clear_ui(message.bot, message.chat.id)
         meta = engine.TEMPLATES[template]
         try:
             await message.answer_photo(
@@ -405,6 +406,7 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
 
     @tenant_dp.callback_query()
     async def callback(call: CallbackQuery):
+        await clear_ui(call.message.bot, call.message.chat.id)
         action = call.data
         if action == "check" and template == "gift":
             raw = (engine.BOTS.get(bot_id, {}).get("config", {}).get("brief", {}).get("channel") or "").strip()
@@ -501,6 +503,7 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
 
     @tenant_dp.message(F.text.in_({"🚀 Старт", "💅 Записаться", "🎁 Подарок", "🛍 Каталог", "🛒 Корзина", "📣 Канал", "📞 Связаться"}))
     async def menu_action(message: Message):
+        await clear_ui(message.bot, message.chat.id)
         brief = engine.BOTS.get(bot_id, {}).get("config", {}).get("brief", {})
         label = message.text
         if label in ("🚀 Старт", "💅 Записаться", "🎁 Подарок"):
@@ -520,6 +523,7 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
 
     @tenant_dp.message(F.text)
     async def text(message: Message):
+        await clear_ui(message.bot, message.chat.id)
         await emit(message.bot, message.chat.id, engine.message(bot_id, text=message.text), owner_tg_id)
 
     return tenant_dp
@@ -971,6 +975,7 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 
