@@ -255,11 +255,7 @@ def _seed() -> None:
             ts,
         ),
     )
-    for lesson in ("l0", "l1"):
-        execute(
-            "INSERT INTO lesson_progress(user_id, lesson_id, status, updated_at) VALUES (?,?,?,?)",
-            (demo_id, lesson, "done", ts),
-        )
+    # Progress starts empty: completed lessons must be earned, not seeded.
 
     # Второй демо-проект: мини-апп, чтобы на дашборде было два направления.
     tpl = catalog.TEMPLATES_BY_ID["miniapp-showcase"]
