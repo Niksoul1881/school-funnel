@@ -54,7 +54,7 @@ LESSONS = [
             {"image": "/static/lessons/botfather-real-2.webp", "title": "Отправь /newbot", "text": "В чате с BotFather отправь команду /newbot."},
             {"image": "/static/lessons/botfather-real-3.webp", "title": "Придумай имя", "text": "Напиши имя бота, которое увидят пользователи."},
             {"image": "/static/lessons/botfather-real-4.webp", "title": "Придумай username", "text": "Username должен заканчиваться на _bot. Например: my_first_school_bot."},
-            {"image": "/static/lessons/botfather-real-5.webp", "title": "Скопируй токен", "text": "BotFather пришлёт токен вида 123456789:AA... Скопируй его и вставь в платформу."},
+            {"image": "/static/lessons/botfather-real-5.webp", "title": "Скопируй токен", "text": "На скрине видно, как выглядит токен: длинная строка из цифр, двоеточия и букв. Этот токен уже отозван — у тебя будет свой. Скопируй его и вставь в платформу."},
         ],
         "tracks": [
             {
@@ -175,4 +175,5 @@ def with_progress(done_ids: set[str]) -> list[dict]:
         item["done"] = lesson["id"] in done_ids
         out.append(item)
     return out
+
 
