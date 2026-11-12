@@ -1,4 +1,4 @@
-"""Пять уроков тест-драйва + финал. Контент — текстовый, без видео в MVP."""
+﻿"""Пять уроков тест-драйва + финал. Контент — текстовый, без видео в MVP."""
 from __future__ import annotations
 
 LESSONS = [
@@ -50,11 +50,11 @@ LESSONS = [
             {"label": "Тестовый бот записи", "url": "https://t.me/booking_test_soulnik_bot"},
         ],
         "botfather_steps": [
-            {"image": "/static/lessons/botfather-1.webp", "title": "Открой BotFather", "text": "В Telegram нажми поиск и введи @BotFather. Открой бота с галочкой."},
-            {"image": "/static/lessons/botfather-2.webp", "title": "Отправь /newbot", "text": "В чате с BotFather отправь команду /newbot."},
-            {"image": "/static/lessons/botfather-3.webp", "title": "Придумай имя", "text": "Напиши имя бота, которое увидят пользователи."},
-            {"image": "/static/lessons/botfather-4.webp", "title": "Придумай username", "text": "Username должен заканчиваться на _bot. Например: my_first_school_bot."},
-            {"image": "/static/lessons/botfather-5.webp", "title": "Скопируй токен", "text": "BotFather пришлёт токен вида 123456789:AA... Скопируй его и вставь в платформу."},
+            {"image": "/static/lessons/botfather-real-1.webp", "title": "Открой BotFather", "text": "В Telegram нажми поиск и введи @BotFather. Открой бота с галочкой."},
+            {"image": "/static/lessons/botfather-real-2.webp", "title": "Отправь /newbot", "text": "В чате с BotFather отправь команду /newbot."},
+            {"image": "/static/lessons/botfather-real-3.webp", "title": "Придумай имя", "text": "Напиши имя бота, которое увидят пользователи."},
+            {"image": "/static/lessons/botfather-real-4.webp", "title": "Придумай username", "text": "Username должен заканчиваться на _bot. Например: my_first_school_bot."},
+            {"image": "/static/lessons/botfather-real-5.webp", "title": "Скопируй токен", "text": "BotFather пришлёт токен вида 123456789:AA... Скопируй его и вставь в платформу."},
         ],
         "tracks": [
             {
@@ -175,3 +175,4 @@ def with_progress(done_ids: set[str]) -> list[dict]:
         item["done"] = lesson["id"] in done_ids
         out.append(item)
     return out
+
