@@ -82,6 +82,23 @@ MENU_BUILD = "🛠 Собрать бота"
 MENU_MY = "📦 Мои боты"
 TENANTS_FILE = ROOT / "private" / "tenants.json"
 STATE_FILE = ROOT / "private" / "tenant_state.json"
+TEMPLATES_COVER = ROOT / "platform" / "static" / "covers" / "templates-menu.jpg"
+UI_MESSAGES: dict[int, list[int]] = {}
+
+
+def remember_ui(bot: Bot, chat_id: int, sent) -> None:
+    if sent is None:
+        return
+    UI_MESSAGES.setdefault(chat_id, []).append(sent.message_id)
+    UI_MESSAGES[chat_id] = UI_MESSAGES[chat_id][-12:]
+
+
+async def clear_ui(bot: Bot, chat_id: int) -> None:
+    for message_id in UI_MESSAGES.pop(chat_id, []):
+        try:
+            await bot.delete_message(chat_id, message_id)
+        except Exception:
+            pass
 
 
 def load_tenants() -> list[dict]:
@@ -202,10 +219,11 @@ def field_prompt(template: str, index: int) -> str:
 
 async def ask_token(message: Message, state: FSMContext, template: str) -> None:
     await state.set_state(Build.token)
+    await clear_ui(message.bot, message.chat.id)
     reuse = InlineKeyboardMarkup(inline_keyboard=[[
         InlineKeyboardButton(text="🔁 Взять готового booking-бота", callback_data="reuse:booking")
     ]]) if template == "booking" else None
-    await message.answer(
+    sent = await message.answer(
         "🔑 <b>Последний шаг</b>\n\n"
         "Пришли токен <b>нового</b> бота из @BotFather.\n\n"
         "Он выглядит так:\n"
@@ -214,6 +232,7 @@ async def ask_token(message: Message, state: FSMContext, template: str) -> None:
         parse_mode="HTML",
         reply_markup=reuse,
     )
+    remember_ui(message.bot, message.chat.id, sent)
 
 
 async def ask_next_field(message: Message, state: FSMContext) -> None:
@@ -221,6 +240,7 @@ async def ask_next_field(message: Message, state: FSMContext) -> None:
     template = data["template"]
     index = data["index"]
     fields = engine.TEMPLATES[template]["fields"]
+    await clear_ui(message.bot, message.chat.id)
     if index >= len(fields):
         await ask_token(message, state, template)
         return
@@ -228,16 +248,18 @@ async def ask_next_field(message: Message, state: FSMContext) -> None:
     if template == "shop" and field["key"] == "products":
         await state.update_data(shop_products=[])
         await state.set_state(Build.product_photo)
-        await message.answer(
+        sent = await message.answer(
             "📸 <b>Фото товаров</b>\n\n"
             "Пришли фото товара — я сохраню его в веб-формате.\n"
             "Можно несколько. После каждого фото спрошу название, цену и описание.\n\n"
             "Когда закончишь — напиши «Готово».",
             parse_mode="HTML",
         )
+        remember_ui(message.bot, message.chat.id, sent)
         return
     await state.set_state(Build.fields)
-    await message.answer(field_prompt(template, index), parse_mode="HTML")
+    sent = await message.answer(field_prompt(template, index), parse_mode="HTML")
+    remember_ui(message.bot, message.chat.id, sent)
 
 
 class Build(StatesGroup):
@@ -307,11 +329,13 @@ async def emit(bot: Bot, chat_id: int, replies: list[dict]) -> None:
             image = reply["image"]
             photo = FSInputFile(ROOT / "platform" / image.lstrip("/")) if image.startswith("/static/") else image
             try:
-                await bot.send_photo(chat_id, photo, caption=text, reply_markup=markup)
+                sent = await bot.send_photo(chat_id, photo, caption=text, reply_markup=markup)
+                remember_ui(bot, chat_id, sent)
                 continue
             except Exception as exc:
                 print(f"photo error: {exc}")
-        await bot.send_message(chat_id, text, reply_markup=markup)
+        sent = await bot.send_message(chat_id, text, reply_markup=markup)
+        remember_ui(bot, chat_id, sent)
     save_engine_state()
 
 
@@ -487,35 +511,30 @@ async def start(message: Message, state: FSMContext):
         "Без кода. Всё кнопками."
     )
     markup = main_menu()
+    await clear_ui(message.bot, message.chat.id)
     try:
-        await message.answer_photo(FSInputFile(LESSON_COVER), caption=text, parse_mode="HTML", reply_markup=markup)
+        sent = await message.answer_photo(FSInputFile(LESSON_COVER), caption=text, parse_mode="HTML", reply_markup=markup)
     except Exception:
-        await message.answer(text, parse_mode="HTML", reply_markup=markup)
+        sent = await message.answer(text, parse_mode="HTML", reply_markup=markup)
+    remember_ui(message.bot, message.chat.id, sent)
 
 
 async def show_templates(message: Message) -> None:
-    await message.answer(
+    await clear_ui(message.bot, message.chat.id)
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="📅 Запись к мастеру", callback_data="tpl:booking"), InlineKeyboardButton(text="🎁 Подарок", callback_data="tpl:gift")],
+        [InlineKeyboardButton(text="🛍 Витрина товаров", callback_data="tpl:shop")],
+    ])
+    caption = (
         "🎨 <b>Выбери шаблон</b>\n\n"
-        "Готовые сценарии. Внутри — бриф, запуск и проект в кабинете.",
-        parse_mode="HTML",
+        "Один экран — три сценария.\n"
+        "Дальше 4 вопроса брифа, токен и запуск."
     )
-    for key, meta in engine.TEMPLATES.items():
-        if key in ("ai", "lead"):
-            continue
-        caption = (
-            f"{meta['icon']} <b>{html.escape(meta['name'])}</b>\n"
-            f"<i>{html.escape(meta['tagline'])}</i>\n\n"
-            "• 4–5 вопросов\n• запуск за 5 минут\n• проект сразу в кабинете"
-        )
-        try:
-            await message.answer_photo(
-                FSInputFile(COVER_FILES[key]),
-                caption=caption,
-                parse_mode="HTML",
-                reply_markup=kb([("Выбрать этот шаблон", f"tpl:{key}")]),
-            )
-        except Exception:
-            await message.answer(caption, parse_mode="HTML", reply_markup=kb([("Выбрать этот шаблон", f"tpl:{key}")]))
+    try:
+        sent = await message.answer_photo(FSInputFile(TEMPLATES_COVER), caption=caption, parse_mode="HTML", reply_markup=markup)
+    except Exception:
+        sent = await message.answer(caption, parse_mode="HTML", reply_markup=markup)
+    remember_ui(message.bot, message.chat.id, sent)
 
 
 def user_bots(user_id: int) -> list[dict]:
@@ -525,11 +544,14 @@ def user_bots(user_id: int) -> list[dict]:
 async def show_my_bots(message: Message, user_id: int | None = None) -> None:
     user_id = user_id or message.from_user.id
     items = user_bots(user_id)
+    await clear_ui(message.bot, message.chat.id)
     if not items:
-        await message.answer("📦 Пока нет ботов.\n\nНажми «🛠 Собрать бота» внизу.", parse_mode="HTML", reply_markup=main_menu())
+        sent = await message.answer("📦 Пока нет ботов.\n\nНажми «🛠 Собрать бота» внизу.", parse_mode="HTML", reply_markup=main_menu())
+        remember_ui(message.bot, message.chat.id, sent)
         return
     lines = [f"• <b>@{html.escape(b['username'])}</b> — {html.escape(engine.TEMPLATES[b['template']]['name'])}" for b in items]
-    await message.answer("📦 <b>Мои боты</b>\n\n" + "\n".join(lines), parse_mode="HTML", reply_markup=main_menu())
+    sent = await message.answer("📦 <b>Мои боты</b>\n\n" + "\n".join(lines), parse_mode="HTML", reply_markup=main_menu())
+    remember_ui(message.bot, message.chat.id, sent)
 
 
 @dp.callback_query(F.data == "build")
@@ -555,11 +577,12 @@ async def choose_template(call: CallbackQuery, state: FSMContext):
     await state.update_data(template=template, index=0, brief={})
     await state.set_state(Build.fields)
     meta = engine.TEMPLATES[template]
-    await call.message.answer(
-        f"{meta['icon']} <b>{html.escape(meta['name'])}</b>\n\nЗаполним бриф.",
+    await clear_ui(call.message.bot, call.message.chat.id)
+    sent = await call.message.answer(
+        f"{meta['icon']} <b>{html.escape(meta['name'])}</b>\n\n" + field_prompt(template, 0),
         parse_mode="HTML",
     )
-    await call.message.answer(field_prompt(template, 0), parse_mode="HTML")
+    remember_ui(call.message.bot, call.message.chat.id, sent)
     await call.answer()
 
 
