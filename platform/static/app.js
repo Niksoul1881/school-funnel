@@ -2146,7 +2146,7 @@ function renderLesson(id) {
     <div class="sub" style="color:var(--muted);font-size:16px;margin-top:8px">${esc(l.subtitle)}</div>
     ${l.mini ? `<div class="lesson-mini"><b>Мини-инструкция.</b> ${esc(l.mini)}</div>` : ''}
     <div class="card" style="margin-top:20px">
-      ${l.video ? `<div class="lesson-video"><video controls preload="metadata" playsinline src="${l.video}"></video></div>` : ''}
+      ${l.video ? `<div class="lesson-video"><video controls preload="metadata" playsinline poster="${l.video_poster || ''}" src="${l.video}"></video></div>` : ''}
       ${l.practice_note ? `<div class="lesson-note">${esc(l.practice_note)}</div>` : ''}
       <h3>Что разбираем</h3>
       <ul class="lesson-list">${l.bullets.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>
