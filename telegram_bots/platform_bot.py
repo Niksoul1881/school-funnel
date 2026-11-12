@@ -56,11 +56,15 @@ class JsonFSMStorage(BaseStorage):
     async def set_state(self, key: StorageKey, state: State | str | None = None) -> None:
         async with self._lock:
             value = getattr(state, "state", state)
+            if isinstance(value, str) and value.startswith("@:"):
+                value = value[2:]
             self._data.setdefault(str(key), {})["state"] = value
             self._flush()
 
     async def get_state(self, key: StorageKey) -> State | str | None:
         value = self._data.get(str(key), {}).get("state")
+        if isinstance(value, str) and value.startswith("@:"):
+            value = value[2:]
         return State(value) if value else None
 
     async def set_data(self, key: StorageKey, data: dict) -> None:
@@ -614,6 +618,7 @@ async def menu_my(message: Message):
 @dp.message(Build.fields)
 async def fill_field(message: Message, state: FSMContext):
     data = await state.get_data()
+    print(f"[brief] text from {message.from_user.id}: {(message.text or '')[:80]!r} state={await state.get_state()} data_keys={list(data)}", flush=True)
     template = data["template"]
     index = data["index"]
     fields = engine.TEMPLATES[template]["fields"]
@@ -782,6 +787,22 @@ async def receive_token(message: Message, state: FSMContext):
 @dp.message(Command("mybots"))
 async def mybots_command(message: Message):
     await show_my_bots(message, message.from_user.id)
+
+
+@dp.message(F.text)
+async def fallback_text(message: Message, state: FSMContext):
+    current = await state.get_state()
+    name = getattr(current, "state", current)
+    data = await state.get_data()
+    print(f"[fallback] text from {message.from_user.id}: {(message.text or '')[:80]!r} state={current} data_keys={list(data)}", flush=True)
+    if name == Build.fields.state or (not name and "template" in data):
+        await fill_field(message, state)
+    elif name == Build.token.state:
+        await receive_token(message, state)
+    elif name == Build.product_photo.state:
+        await products_done_or_text(message, state)
+    elif name == Build.product_info.state:
+        await product_info(message, state)
 
 
 async def restore_tenants() -> None:
