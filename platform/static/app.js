@@ -729,6 +729,8 @@ async function renderProject(projectId) {
   $$('[data-tg-action]').forEach((b) => b.onclick = () => tgAction(b.dataset.tgAction));
   const chatForm = $('#chat-form');
   if (chatForm) { chatForm.onsubmit = sendChat; bindChatForm(chatForm); }
+  const historyBtn = $('#chat-history');
+  if (historyBtn) historyBtn.onclick = () => openChatHistory(p);
   const saveBtn = $('#save-file');
   if (saveBtn) saveBtn.onclick = saveFile;
   const deployForm = $('#deploy-form');
@@ -1163,6 +1165,7 @@ function renderMarkdown(text) {
 function chatView(p) {
   const isCode = p.template.direction === 'code';
   return `<div class="chat">
+    <div class="chat-toolbar"><span>Диалог · ${p.messages.length}</span><button class="btn sm ghost" id="chat-history">Вся история</button></div>
     <div class="chat-log" id="chat-log">
       ${p.messages.map((m, idx) => `<div class="msg ${m.role === 'user' ? 'user' : ''}">
         ${m.meta?.image ? `<img class="msg-shot" src="${esc(m.meta.image)}" alt="Скриншот">` : ''}
@@ -1199,6 +1202,25 @@ function chatView(p) {
       <div class="chat-hint">Enter — отправить · Shift+Enter — строка · микрофон — голосом · скрепка или Ctrl+V — скриншот</div>
     </form>
   </div>`;
+}
+
+function openChatHistory(p) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-bg';
+  modal.innerHTML = `<div class="modal chat-history-modal">
+    <div class="between"><div><h3>История диалога</h3><div class="small dim">${p.messages.length} сообщений</div></div><button class="btn sm ghost" id="history-close">✕</button></div>
+    <div class="chat-history-list">
+      ${p.messages.map((m) => `<div class="history-item ${m.role === 'user' ? 'user' : ''}">
+        <div class="history-head"><b>${m.role === 'user' ? 'Ты' : 'AI-помощник'}</b><span>${ago(m.created_at)}</span></div>
+        <div class="history-body">${m.role === 'user' ? esc(m.content) : renderMarkdown(m.content)}</div>
+        ${m.meta?.actions?.length ? `<div class="acts">${m.meta.actions.map((a) => `<span>✓ ${esc(a.summary || a.path)}</span>`).join('')}</div>` : ''}
+      </div>`).join('')}
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  const close = () => modal.remove();
+  modal.querySelector('#history-close').onclick = close;
+  modal.onclick = (event) => { if (event.target === modal) close(); };
 }
 
 function escCode(value) {

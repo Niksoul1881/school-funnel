@@ -380,3 +380,14 @@ h1{font-size:34px}h2{font-size:24px}h3{font-size:18px}
 .track-panel .practice-check input{width:19px;height:19px}
 .track-panel .track-result{font-size:13.5px;padding-top:12px;border-top:1px solid var(--line);max-width:900px}
 @media(max-width:700px){.track-tabs{flex-wrap:nowrap;overflow:auto}.track-tab{white-space:nowrap}.track-panel-head{flex-direction:column}.track-panel h3{font-size:21px}}
+
+.chat-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
+.chat-toolbar .btn{font-size:11px;padding:5px 9px}
+.chat-history-modal{width:min(760px,94vw);max-height:82vh;display:flex;flex-direction:column}
+.chat-history-list{overflow:auto;margin-top:14px;padding-right:6px;display:flex;flex-direction:column;gap:10px}
+.history-item{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:#0d121a}
+.history-item.user{background:rgba(255,180,189,.07);border-color:rgba(255,180,189,.25)}
+.history-head{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted);margin-bottom:5px}
+.history-head b{color:var(--text)}
+.history-body{font-size:13px;line-height:1.55;color:#d8d0c6;white-space:pre-wrap}
+.history-body p{margin:0 0 8px}
