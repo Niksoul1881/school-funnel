@@ -286,10 +286,19 @@ def templates_kb():
 
 
 def reply_markup(message):
+    rows = []
+    for row in message.get("button_rows") or []:
+        line = []
+        for button in row:
+            label, action = button["label"], button["action"]
+            line.append(InlineKeyboardButton(text=label, url=action[4:]) if action.startswith("url:") else InlineKeyboardButton(text=label, callback_data=action))
+        if line:
+            rows.append(line)
+    if rows:
+        return InlineKeyboardMarkup(inline_keyboard=rows)
     buttons = message.get("buttons") or []
     if not buttons:
         return None
-    rows = []
     for button in buttons:
         label, action = button["label"], button["action"]
         if action.startswith("url:"):

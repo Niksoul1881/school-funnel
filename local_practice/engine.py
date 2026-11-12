@@ -258,10 +258,13 @@ def _buttons(items: list[tuple[str, str]]) -> list[dict]:
     return [{"label": label, "action": action} for label, action in items]
 
 
-def _msg(text: str, buttons: list[tuple[str, str]] | None = None, image: str = "", admin: bool = False) -> dict:
+def _msg(text: str, buttons: list[tuple[str, str]] | None = None, image: str = "", admin: bool = False, rows: list[list[tuple[str, str]]] | None = None) -> dict:
     out: dict[str, Any] = {"text": text}
     if buttons:
         out["buttons"] = _buttons(buttons)
+    if rows:
+        out["button_rows"] = [[{"label": label, "action": action} for label, action in row] for row in rows]
+        out["buttons"] = [{"label": label, "action": action} for row in rows for label, action in row]
     if image:
         out["image"] = image
     if admin:
@@ -347,19 +350,29 @@ def _time_value(text: str, slots: list[str]) -> str | None:
 
 
 def _bk_date_msg(data: dict) -> list[dict]:
-    buttons = [("Сегодня", "date:today"), ("Завтра", "date:tomorrow")]
     today = date.today()
+    weekdays = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"]
+    dates = [
+        ("Сегодня", "date:today"),
+        ("Завтра", "date:tomorrow"),
+    ]
     for offset in range(2, 7):
         day = today + timedelta(days=offset)
-        buttons.append((day.strftime("%d.%m"), f"date:{day.isoformat()}"))
-    buttons += [("↩️ Назад", "back"), ("❌ Отмена", "cancel")]
-    return [_msg("📅 Выберите дату на ближайшие 7 дней:", buttons)]
+        dates.append((f"{day.strftime('%d.%m')} · {weekdays[day.weekday()]}", f"date:{day.isoformat()}"))
+    rows = [dates[0:2]]
+    for i in range(2, len(dates), 2):
+        rows.append(dates[i:i + 2])
+    rows.append([("↩️ Назад", "back"), ("❌ Отмена", "cancel")])
+    return [_msg("📅 Выберите дату на ближайшие 7 дней:", rows=rows)]
 
 
 def _bk_time_msg(data: dict, slots: list[str]) -> list[dict]:
+    entries = [(slot, f"time:{slot}") for slot in slots]
+    rows = [entries[i:i + 3] for i in range(0, len(entries), 3)]
+    rows.append([("↩️ Назад", "back"), ("❌ Отмена", "cancel")])
     return [_msg(
         f"📅 {data.get('date', '').capitalize()}.\n\n🕐 Выберите время:",
-        [(slot, f"time:{slot}") for slot in slots] + [("↩️ Назад", "back"), ("❌ Отмена", "cancel")],
+        rows=rows,
     )]
 
 
