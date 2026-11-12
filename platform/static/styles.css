@@ -362,3 +362,21 @@ h1{font-size:34px}h2{font-size:24px}h3{font-size:18px}
 .bf-thumb.on{opacity:1;border-color:#ffb4bd}
 .bf-thumb:hover{opacity:.85}
 @media (max-width:760px){.bf-viewer{grid-template-columns:1fr}.bf-thumbs{flex-direction:row;overflow:auto;padding-bottom:4px}.bf-thumb{flex:0 0 86px}.bf-image{max-height:62vh}}
+
+.track-tabs{display:flex;gap:8px;margin:14px 0 12px;flex-wrap:wrap}
+.track-tab{border:1px solid var(--line);background:rgba(255,255,255,.03);color:#b9afa4;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px}
+.track-tab span{font-size:10px;letter-spacing:.14em;color:#ff9bad}
+.track-tab.on{background:#ffb4bd;color:#1a1115;border-color:#ffb4bd}
+.track-tab.on span{color:#5b2b35}
+.track-panel{display:none;border:1px solid var(--line);border-radius:14px;padding:20px;background:rgba(255,255,255,.02)}
+.track-panel.on{display:block}
+.track-panel-head{display:flex;gap:20px;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.track-kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#ff9bad;font-weight:800;margin-bottom:6px}
+.track-panel h3{margin:0 0 7px;font-size:25px;letter-spacing:-.03em}
+.track-panel .track-goal{font-size:15px;line-height:1.55;max-width:680px}
+.track-panel .track-progress{min-width:150px}
+.track-panel .track-checklist{gap:11px;margin:8px 0 14px;max-width:900px}
+.track-panel .practice-check{font-size:14px;line-height:1.6}
+.track-panel .practice-check input{width:19px;height:19px}
+.track-panel .track-result{font-size:13.5px;padding-top:12px;border-top:1px solid var(--line);max-width:900px}
+@media(max-width:700px){.track-tabs{flex-wrap:nowrap;overflow:auto}.track-tab{white-space:nowrap}.track-panel-head{flex-direction:column}.track-panel h3{font-size:21px}}

@@ -2167,6 +2167,13 @@ function initPracticeChecks(lesson) {
     inputs.forEach((input) => { input.checked = false; });
     updatePracticeProgress(lesson);
   };
+  $$('[data-track-tab]').forEach((tab) => {
+    tab.onclick = () => {
+      const key = tab.dataset.trackTab;
+      $$('[data-track-tab]').forEach((item) => item.classList.toggle('on', item === tab));
+      $$('[data-track-panel]').forEach((panel) => panel.classList.toggle('on', panel.dataset.trackPanel === key));
+    };
+  });
   updatePracticeProgress(lesson);
 }
 
@@ -2236,19 +2243,22 @@ function renderLesson(id) {
         <div class="practice-tracks">
           <div class="practice-head"><b>Выбери один трек и дойди до результата</b></div>
           <div class="practice-overall"><span data-overall-label>0 из 0 шагов</span><div class="practice-bar"><i data-overall-bar style="width:0%"></i></div><button class="btn sm ghost" data-practice-reset>Сбросить</button></div>
-          <div class="track-grid">
+          <div class="track-tabs">
+            ${l.tracks.map((t, i) => `<button class="track-tab ${i === 0 ? 'on' : ''}" data-track-tab="${esc(t.key)}"><span>0${i + 1}</span>${esc(t.title.replace(/^Трек \d+\.\s*/, ''))}</button>`).join('')}
+          </div>
+          <div class="track-panels">
             ${l.tracks.map((t, i) => `
-              <article class="track-card" data-track="${esc(t.key)}">
-                <div class="track-top"><span class="track-num">${String(i + 1).padStart(2, '0')}</span><span class="badge">${esc(t.title.split('.')[0])}</span></div>
-                <h4>${esc(t.title)}</h4>
-                <p class="track-goal">${esc(t.goal)}</p>
-                <div class="track-progress"><span data-track-label="${esc(t.key)}">0/${t.steps.length + 1}</span><div class="practice-bar"><i data-track-bar="${esc(t.key)}" style="width:0%"></i></div></div>
+              <section class="track-panel ${i === 0 ? 'on' : ''}" data-track-panel="${esc(t.key)}">
+                <div class="track-panel-head">
+                  <div><div class="track-kicker">Трек ${i + 1} · ${t.steps.length + 1} шагов</div><h3>${esc(t.title.replace(/^Трек \d+\.\s*/, ''))}</h3><p class="track-goal">${esc(t.goal)}</p></div>
+                  <div class="track-progress"><span data-track-label="${esc(t.key)}">0/${t.steps.length + 1}</span><div class="practice-bar"><i data-track-bar="${esc(t.key)}" style="width:0%"></i></div></div>
+                </div>
                 <div class="track-checklist">
                   ${t.steps.map((s, si) => `<label class="practice-check"><input type="checkbox" data-practice="${esc(l.id)}:${esc(t.key)}:${si}"><span>${esc(s)}</span></label>`).join('')}
                   <label class="practice-check practice-check-task"><input type="checkbox" data-practice="${esc(l.id)}:${esc(t.key)}:task"><span><b>Задание на усложнение.</b> ${esc(t.task)}</span></label>
                 </div>
                 <div class="track-result"><b>Результат:</b> ${esc(t.result)}</div>
-              </article>`).join('')}
+              </section>`).join('')}
           </div>
         </div>` : ''}
       <div class="task-box"><b>Задание.</b> ${esc(l.task)}</div>
