@@ -331,3 +331,17 @@ h1{font-size:34px}h2{font-size:24px}h3{font-size:18px}
 .bf-card img{display:block;width:100%;height:auto}
 .bf-card figcaption{padding:10px 12px;display:flex;flex-direction:column;gap:3px}
 .bf-card b{font-size:12.5px}.bf-card span{font-size:11.5px;color:var(--muted);line-height:1.45}
+
+.practice-overall{display:flex;align-items:center;gap:12px;margin:10px 0 14px;color:var(--muted);font-size:12px}
+.practice-overall .practice-bar{flex:1;max-width:420px}
+.practice-bar{height:6px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.practice-bar i{display:block;height:100%;background:#ffb4bd;border-radius:99px;transition:width .25s ease}
+.track-progress{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
+.track-progress .practice-bar{flex:1}
+.track-checklist{display:flex;flex-direction:column;gap:7px}
+.practice-check{display:flex;gap:9px;align-items:flex-start;cursor:pointer;font-size:12.5px;line-height:1.5;color:var(--muted)}
+.practice-check input{appearance:none;width:17px;height:17px;border-radius:5px;border:1px solid #55606f;background:#0d121a;flex:none;margin-top:1px;position:relative;cursor:pointer}
+.practice-check input:checked{background:#ffb4bd;border-color:#ffb4bd}
+.practice-check input:checked:after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#1a1115;font-size:12px;font-weight:900}
+.practice-check input:checked+span{color:var(--text);text-decoration:line-through;text-decoration-color:rgba(255,180,189,.5)}
+.practice-check-task{padding:9px 10px;border-radius:9px;background:rgba(255,209,102,.07);border:1px solid rgba(255,209,102,.22)}

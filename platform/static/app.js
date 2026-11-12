@@ -2133,6 +2133,62 @@ function renderLessons() {
   bindCommon();
 }
 
+function practiceKey() {
+  return 'dsh_practice_v1';
+}
+
+function readPractice() {
+  try { return JSON.parse(localStorage.getItem(practiceKey()) || '{}'); } catch { return {}; }
+}
+
+function writePractice(data) {
+  try { localStorage.setItem(practiceKey(), JSON.stringify(data)); } catch {}
+}
+
+function initPracticeChecks(lesson) {
+  const inputs = $$('.practice-check input[data-practice]');
+  if (!inputs.length) return;
+  const saved = readPractice();
+  inputs.forEach((input) => {
+    if (saved[input.dataset.practice]) input.checked = true;
+    input.onchange = () => {
+      const data = readPractice();
+      if (input.checked) data[input.dataset.practice] = true;
+      else delete data[input.dataset.practice];
+      writePractice(data);
+      updatePracticeProgress(lesson);
+    };
+  });
+  const reset = $('[data-practice-reset]');
+  if (reset) reset.onclick = () => {
+    const data = readPractice();
+    Object.keys(data).forEach((key) => { if (key.startsWith(lesson.id + ':')) delete data[key]; });
+    writePractice(data);
+    inputs.forEach((input) => { input.checked = false; });
+    updatePracticeProgress(lesson);
+  };
+  updatePracticeProgress(lesson);
+}
+
+function updatePracticeProgress(lesson) {
+  let totalDone = 0;
+  let totalAll = 0;
+  (lesson.tracks || []).forEach((track) => {
+    const group = $$(`input[data-practice^="${lesson.id}:${track.key}:"]`);
+    const done = group.filter((input) => input.checked).length;
+    const all = group.length;
+    totalDone += done;
+    totalAll += all;
+    const label = $(`[data-track-label="${track.key}"]`);
+    const bar = $(`[data-track-bar="${track.key}"]`);
+    if (label) label.textContent = `${done}/${all}`;
+    if (bar) bar.style.width = `${all ? Math.round((done / all) * 100) : 0}%`;
+  });
+  const overallLabel = $('[data-overall-label]');
+  const overallBar = $('[data-overall-bar]');
+  if (overallLabel) overallLabel.textContent = `${totalDone} из ${totalAll} шагов`;
+  if (overallBar) overallBar.style.width = `${totalAll ? Math.round((totalDone / totalAll) * 100) : 0}%`;
+}
 function renderLesson(id) {
   const l = state.lessons.find((x) => x.id === id);
   if (!l) { location.hash = '#/lessons'; return; }
@@ -2166,14 +2222,18 @@ function renderLesson(id) {
       ${l.tracks ? `
         <div class="practice-tracks">
           <div class="practice-head"><b>Выбери один трек и дойди до результата</b></div>
+          <div class="practice-overall"><span data-overall-label>0 из 0 шагов</span><div class="practice-bar"><i data-overall-bar style="width:0%"></i></div><button class="btn sm ghost" data-practice-reset>Сбросить</button></div>
           <div class="track-grid">
             ${l.tracks.map((t, i) => `
-              <article class="track-card">
+              <article class="track-card" data-track="${esc(t.key)}">
                 <div class="track-top"><span class="track-num">${String(i + 1).padStart(2, '0')}</span><span class="badge">${esc(t.title.split('.')[0])}</span></div>
                 <h4>${esc(t.title)}</h4>
                 <p class="track-goal">${esc(t.goal)}</p>
-                <ol class="track-steps">${t.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
-                <div class="track-task"><b>Задание на усложнение.</b> ${esc(t.task)}</div>
+                <div class="track-progress"><span data-track-label="${esc(t.key)}">0/${t.steps.length + 1}</span><div class="practice-bar"><i data-track-bar="${esc(t.key)}" style="width:0%"></i></div></div>
+                <div class="track-checklist">
+                  ${t.steps.map((s, si) => `<label class="practice-check"><input type="checkbox" data-practice="${esc(l.id)}:${esc(t.key)}:${si}"><span>${esc(s)}</span></label>`).join('')}
+                  <label class="practice-check practice-check-task"><input type="checkbox" data-practice="${esc(l.id)}:${esc(t.key)}:task"><span><b>Задание на усложнение.</b> ${esc(t.task)}</span></label>
+                </div>
                 <div class="track-result"><b>Результат:</b> ${esc(t.result)}</div>
               </article>`).join('')}
           </div>
@@ -2190,6 +2250,7 @@ function renderLesson(id) {
   </div>`;
   $('#app').innerHTML = layout(content, { panel: null });
   bindCommon();
+  initPracticeChecks(l);
 }
 
 async function completeLesson(id) {
