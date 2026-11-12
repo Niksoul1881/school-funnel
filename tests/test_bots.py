@@ -70,7 +70,7 @@ def test_booking_text_flow_and_admin(booking):
     engine.message(booking, action="start")
     assert "Выберите дату" in text(engine.message(booking, text="хочу стрижку"))
     assert "Выберите время" in text(engine.message(booking, text="завтра"))
-    assert "Как вас зовут" in text(engine.message(booking, text="15:00"))
+    assert "Как вас зовут" in text(engine.message(booking, text="16:00"))
     assert "телефон" in text(engine.message(booking, text="Никита")).lower()
     assert "Проверьте заявку" in text(engine.message(booking, text="+7 902 123-45-67"))
     result = engine.message(booking, text="да")
@@ -200,11 +200,11 @@ def test_owner_order_journal(booking):
     assert engine.stats(booking).get("bookings") == 1
 
 def test_booking_cancel_frees_slot(booking):
-    _fill_booking(booking, "17:00")
+    _fill_booking(booking, "18:00")
     result = engine.message(booking, action="cancel_booking")
     assert "отменена" in text(result).lower()
     # The same slot can be booked again after cancellation.
-    again = _fill_booking(booking, "17:00")
+    again = _fill_booking(booking, "18:00")
     assert "Готово" in text(again)
 
 
@@ -224,3 +224,4 @@ def test_services_human_price_format():
     rows = engine._services("Стрижка 1500 р 60 минут\nСпа Энергия 6000 90 минут")
     assert rows[0] == {"title": "Стрижка", "price": "1500 ₽", "duration": "60 мин"}
     assert rows[1] == {"title": "Спа Энергия", "price": "6000 ₽", "duration": "90 мин"}
+

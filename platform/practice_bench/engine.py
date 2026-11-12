@@ -5,7 +5,7 @@ import os
 import re
 import uuid
 from copy import deepcopy
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 
 import httpx
@@ -371,12 +371,45 @@ def _bk_date_msg(data: dict) -> list[dict]:
     return [_msg("📅 Выберите дату на ближайшие 7 дней:", rows=rows)]
 
 
-def _bk_time_msg(data: dict, slots: list[str]) -> list[dict]:
-    entries = [(slot, f"time:{slot}") for slot in slots]
+def _date_obj(label: str):
+    value = (label or "").strip().lower()
+    if "сегодня" in value:
+        return date.today()
+    if "завтра" in value:
+        return date.today() + timedelta(days=1)
+    match = re.search(r"(\d{1,2})[./](\d{1,2})", value)
+    if match:
+        try:
+            return date(date.today().year, int(match.group(2)), int(match.group(1)))
+        except ValueError:
+            return None
+    return None
+
+
+def _slot_available(bot_id: str, date_label: str, slot: str, slots: list[str]) -> bool:
+    if slot not in slots:
+        return False
+    if f"{date_label}|{slot}" in BOOKED.get(bot_id, set()):
+        return False
+    day = _date_obj(date_label)
+    if day == date.today() and slot <= datetime.now().strftime("%H:%M"):
+        return False
+    return True
+
+
+def _bk_time_msg(bot_id: str, data: dict, slots: list[str]) -> list[dict]:
+    date_label = data.get("date", "")
+    available = [slot for slot in slots if _slot_available(bot_id, date_label, slot, slots)]
+    if not available:
+        return [_msg(
+            f"📅 {date_label.capitalize()}.\n\nНа этот день свободных окон уже нет. Выберите другую дату.",
+            [("📅 Другая дата", "back"), ("❌ Отмена", "cancel")],
+        )]
+    entries = [(slot, f"time:{slot}") for slot in available]
     rows = [entries[i:i + 3] for i in range(0, len(entries), 3)]
     rows.append([("↩️ Назад", "back"), ("❌ Отмена", "cancel")])
     return [_msg(
-        f"📅 {data.get('date', '').capitalize()}.\n\n🕐 Выберите время:",
+        f"📅 {date_label.capitalize()}.\n\n🕐 Выберите время:",
         rows=rows,
     )]
 
@@ -447,7 +480,7 @@ def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
         if stage == "name":
             session["stage"] = "time"
             data.pop("name", None)
-            return _bk_time_msg(data, slots)
+            return _bk_time_msg(bot["id"], data, slots)
         if stage == "time":
             session["stage"] = "date"
             data.pop("time", None)
@@ -487,7 +520,7 @@ def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
             except ValueError:
                 return _bk_date_msg(data)
         session["stage"] = "time"
-        return _bk_time_msg(data, slots)
+        return _bk_time_msg(bot["id"], data, slots)
 
     if stage == "date" and text:
         parsed_date = _date_value(text)
@@ -495,18 +528,21 @@ def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
             return [_msg("Напишите дату: «сегодня», «завтра» или 12.11.", [("↩️ Назад", "back"), ("❌ Отмена", "cancel")])]
         data["date"] = parsed_date
         session["stage"] = "time"
-        return _bk_time_msg(data, slots)
+        return _bk_time_msg(bot["id"], data, slots)
 
     if action.startswith("time:"):
-        data["time"] = action.split(":", 1)[1]
+        chosen = action.split(":", 1)[1]
+        if not _slot_available(bot["id"], data.get("date", ""), chosen, slots):
+            return [_msg("⚠️ Это время недоступно: уже занято или прошло.")] + _bk_time_msg(bot["id"], data, slots)
+        data["time"] = chosen
         session["stage"] = "name"
         return _bk_name_msg()
 
     if stage == "time" and text:
-        time = _time_value(text, slots)
-        if not time:
-            return [_msg("Напишите время, например 14:00.", [("↩️ Назад", "back"), ("❌ Отмена", "cancel")])]
-        data["time"] = time
+        time_value = _time_value(text, slots)
+        if not time_value or not _slot_available(bot["id"], data.get("date", ""), time_value, slots):
+            return [_msg("⚠️ Это время недоступно: уже занято или прошло.")] + _bk_time_msg(bot["id"], data, slots)
+        data["time"] = time_value
         session["stage"] = "name"
         return _bk_name_msg()
 
@@ -540,10 +576,7 @@ def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
         booked = BOOKED.setdefault(bot["id"], set())
         if slot_key in booked:
             session["stage"] = "time"
-            return [_msg(
-                "⚠️ Это время уже занято. Выберите другое.",
-                [(slot, f"time:{slot}") for slot in slots] + [("↩️ Назад", "back"), ("❌ Отмена", "cancel")],
-            )]
+            return [_msg("⚠️ Это время уже занято. Выберите другое.")] + _bk_time_msg(bot["id"], data, slots)
         booked.add(slot_key)
         data["slot_key"] = slot_key
         _bump(bot["id"], "bookings")
@@ -927,5 +960,7 @@ def message(bot_id: str, text: str = "", action: str = "") -> list[dict]:
     if bot["template"] == "ai":
         return _ai(bot, session, text, action)
     return _shop(bot, session, text, action)
+
+
 
 
