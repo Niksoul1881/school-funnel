@@ -330,7 +330,7 @@ def tenant_menu(template: str) -> ReplyKeyboardMarkup:
     )
 
 
-def tenant_dispatcher(bot_id: str, template: str):
+def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
     tenant_dp = Dispatcher()
 
     @tenant_dp.message(CommandStart())
@@ -373,7 +373,7 @@ def tenant_dispatcher(bot_id: str, template: str):
 
     @tenant_dp.message(Command("stats"))
     async def stats_cmd(message: Message):
-        if OWNER_ID and message.from_user.id != OWNER_ID:
+        if message.from_user.id != owner_tg_id and str(message.from_user.id) != OWNER_ID:
             return
         data = engine.stats(bot_id)
         await message.answer(
@@ -386,7 +386,7 @@ def tenant_dispatcher(bot_id: str, template: str):
 
     @tenant_dp.message(Command("orders"))
     async def orders_cmd(message: Message):
-        if OWNER_ID and message.from_user.id != OWNER_ID:
+        if message.from_user.id != owner_tg_id and str(message.from_user.id) != OWNER_ID:
             return
         rows = engine.orders(bot_id, 8)
         if not rows:
@@ -433,11 +433,11 @@ async def start_tenant(token: str, template: str, brief: dict, tg_id: int = 0, p
     me = await bot.get_me()
     bot_id = engine.create_bot(template, brief)["id"]
     engine.BOTS[bot_id]["username"] = me.username
-    task = asyncio.create_task(tenant_dispatcher(bot_id, template).start_polling(bot))
-    TENANTS[bot_id] = {"id": bot_id, "token": token, "username": me.username, "task": task, "template": template}
+    task = asyncio.create_task(tenant_dispatcher(bot_id, template, tg_id).start_polling(bot))
+    TENANTS[bot_id] = {"id": bot_id, "token": token, "username": me.username, "task": task, "template": template, "owner_tg_id": tg_id}
     if project is None and tg_id:
         project = await save_project(tg_id, template, brief, me.username)
-    info = {"id": bot_id, "username": me.username, "template": template, "project": project}
+    info = {"id": bot_id, "username": me.username, "template": template, "project": project, "owner_tg_id": tg_id}
     if persist:
         remember_tenant({
             "username": me.username,
@@ -479,9 +479,6 @@ async def save_project(tg_id: int, template: str, brief: dict, username: str) ->
 @dp.message(CommandStart())
 async def start(message: Message, state: FSMContext):
     await state.clear()
-    if OWNER_ID and str(message.from_user.id) != OWNER_ID:
-        await message.answer("Это тестовый конструктор. Доступ только у владельца.")
-        return
     text = (
         "✨ <b>Платформа практики</b>\n\n"
         "Урок 2 · <b>Чат-боты</b>\n\n"
@@ -521,11 +518,17 @@ async def show_templates(message: Message) -> None:
             await message.answer(caption, parse_mode="HTML", reply_markup=kb([("Выбрать этот шаблон", f"tpl:{key}")]))
 
 
-async def show_my_bots(message: Message) -> None:
-    if not MY_BOTS:
+def user_bots(user_id: int) -> list[dict]:
+    return [b for b in MY_BOTS if str(b.get("owner_tg_id", "")) == str(user_id)]
+
+
+async def show_my_bots(message: Message, user_id: int | None = None) -> None:
+    user_id = user_id or message.from_user.id
+    items = user_bots(user_id)
+    if not items:
         await message.answer("📦 Пока нет ботов.\n\nНажми «🛠 Собрать бота» внизу.", parse_mode="HTML", reply_markup=main_menu())
         return
-    lines = [f"• <b>@{html.escape(b['username'])}</b> — {html.escape(engine.TEMPLATES[b['template']]['name'])}" for b in MY_BOTS]
+    lines = [f"• <b>@{html.escape(b['username'])}</b> — {html.escape(engine.TEMPLATES[b['template']]['name'])}" for b in items]
     await message.answer("📦 <b>Мои боты</b>\n\n" + "\n".join(lines), parse_mode="HTML", reply_markup=main_menu())
 
 
@@ -539,7 +542,7 @@ async def build(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query(F.data == "mybots")
 async def mybots(call: CallbackQuery):
-    await show_my_bots(call.message)
+    await show_my_bots(call.message, call.from_user.id)
     await call.answer()
 
 
@@ -747,12 +750,7 @@ async def receive_token(message: Message, state: FSMContext):
 
 @dp.message(Command("mybots"))
 async def mybots_command(message: Message):
-    if not MY_BOTS:
-        await message.answer("📦 Пока нет ботов.")
-        return
-    await message.answer("📦 <b>Мои боты</b>\n\n" + "\n".join(
-        f"• <b>@{html.escape(b['username'])}</b> — {html.escape(engine.TEMPLATES[b['template']]['name'])}" for b in MY_BOTS
-    ), parse_mode="HTML")
+    await show_my_bots(message, message.from_user.id)
 
 
 async def restore_tenants() -> None:
@@ -762,7 +760,7 @@ async def restore_tenants() -> None:
                 record["token"],
                 record["template"],
                 record.get("brief", {}),
-                tg_id=0,
+                tg_id=record.get("owner_tg_id", 0),
                 project=record.get("project"),
                 persist=False,
             )
