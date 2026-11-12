@@ -124,13 +124,30 @@ def _services(raw: str) -> list[dict]:
     items = []
     for line in _lines(raw):
         parts = [p.strip() for p in re.split(r"[—|]", line)]
-        if not parts:
-            continue
-        items.append({
-            "title": parts[0],
-            "price": parts[1] if len(parts) > 1 else "по запросу",
-            "duration": parts[2] if len(parts) > 2 else "60 мин",
-        })
+        if len(parts) >= 2:
+            title = parts[0]
+            price = parts[1] or "по запросу"
+            duration = parts[2] if len(parts) > 2 else "60 мин"
+        else:
+            rest = line
+            duration = "60 мин"
+            match = re.search(r"(\d+)\s*(?:мин(?:ут)?|ч(?:ас)?)\b", rest, re.I)
+            if match:
+                duration = f"{match.group(1)} мин" if "ч" not in match.group(0).lower() else f"{match.group(1)} ч"
+                rest = (rest[:match.start()] + rest[match.end():]).strip(" ,.-")
+            match = re.search(r"(\d[\d\s]*)\s*(?:₽|р\.?|руб\.?|рублей)?\s*$", rest, re.I)
+            if match:
+                price = match.group(1).strip()
+                title = rest[:match.start()].strip(" ,.-")
+                if "₽" not in price and "руб" not in price.lower():
+                    price = f"{price} ₽"
+            else:
+                price = "по запросу"
+                title = rest
+        if title:
+            if "₽" not in price and "руб" not in price.lower():
+                price = f"{price} ₽"
+            items.append({"title": title, "price": price, "duration": duration})
     return items
 
 

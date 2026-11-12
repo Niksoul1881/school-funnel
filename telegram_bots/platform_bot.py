@@ -373,6 +373,8 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
             pass
         await emit(message.bot, message.chat.id, engine.message(bot_id, action="start"))
         await message.answer("Меню бота 👇", reply_markup=tenant_menu(template))
+        if message.from_user.id == owner_tg_id:
+            await message.answer("⚙️ Цены и услуги: /manage")
 
     @tenant_dp.callback_query()
     async def callback(call: CallbackQuery):
@@ -397,6 +399,47 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
                     action = "grant"
         await call.answer()
         await emit(call.message.bot, call.message.chat.id, engine.message(bot_id, action=action))
+
+    @tenant_dp.message(Command("manage"))
+    async def manage_cmd(message: Message):
+        if message.from_user.id != owner_tg_id and str(message.from_user.id) != OWNER_ID:
+            return
+        services = engine.BOTS.get(bot_id, {}).get("config", {}).get("services", [])
+        if not services:
+            await message.answer("У этого бота нет списка услуг.")
+            return
+        lines = [f"{i + 1}. {s['title']} — {s['price']} · {s['duration']}" for i, s in enumerate(services)]
+        await message.answer(
+            "⚙️ <b>Управление услугами</b>\n\n" + "\n".join(lines) +
+            "\n\nИзменить цену:\n<code>/price 1 2500</code>",
+            parse_mode="HTML",
+        )
+
+    @tenant_dp.message(Command("price"))
+    async def price_cmd(message: Message):
+        if message.from_user.id != owner_tg_id and str(message.from_user.id) != OWNER_ID:
+            return
+        parts = (message.text or "").split(maxsplit=2)
+        if len(parts) < 3 or not parts[1].isdigit():
+            await message.answer("Формат: <code>/price 1 2500</code>", parse_mode="HTML")
+            return
+        index = int(parts[1]) - 1
+        services = engine.BOTS.get(bot_id, {}).get("config", {}).get("services", [])
+        if index < 0 or index >= len(services):
+            await message.answer("Нет услуги с таким номером. Смотри /manage.")
+            return
+        raw = parts[2].strip()
+        price = raw if ("₽" in raw or "руб" in raw.lower()) else f"{raw} ₽"
+        services[index]["price"] = price
+        brief = dict(TENANTS.get(bot_id, {}).get("brief") or {})
+        brief["services"] = "\n".join(f"{s['title']} | {s['price']} | {s['duration']}" for s in services)
+        TENANTS[bot_id]["brief"] = brief
+        items = load_tenants()
+        for record in items:
+            if record.get("token") == TENANTS[bot_id]["token"]:
+                record["brief"] = brief
+        save_tenants(items)
+        await message.answer(f"✅ {services[index]['title']}: <b>{price}</b>", parse_mode="HTML")
 
     @tenant_dp.message(Command("stats"))
     async def stats_cmd(message: Message):
@@ -461,7 +504,7 @@ async def start_tenant(token: str, template: str, brief: dict, tg_id: int = 0, p
     bot_id = engine.create_bot(template, brief)["id"]
     engine.BOTS[bot_id]["username"] = me.username
     task = asyncio.create_task(tenant_dispatcher(bot_id, template, tg_id).start_polling(bot))
-    TENANTS[bot_id] = {"id": bot_id, "token": token, "username": me.username, "task": task, "template": template, "owner_tg_id": tg_id}
+    TENANTS[bot_id] = {"id": bot_id, "token": token, "username": me.username, "task": task, "template": template, "owner_tg_id": tg_id, "brief": brief}
     if project is None and tg_id:
         project = await save_project(tg_id, template, brief, me.username)
     info = {"id": bot_id, "username": me.username, "template": template, "project": project, "owner_tg_id": tg_id}

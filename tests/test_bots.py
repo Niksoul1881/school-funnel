@@ -219,3 +219,8 @@ def test_booking_calendar_iso_action(booking):
     result = engine.message(booking, action="date:2026-11-13")
     assert "Выберите время" in text(result)
     assert "13.11" in text(result)
+
+def test_services_human_price_format():
+    rows = engine._services("Стрижка 1500 р 60 минут\nСпа Энергия 6000 90 минут")
+    assert rows[0] == {"title": "Стрижка", "price": "1500 ₽", "duration": "60 мин"}
+    assert rows[1] == {"title": "Спа Энергия", "price": "6000 ₽", "duration": "90 мин"}
