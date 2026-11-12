@@ -455,10 +455,10 @@ def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
         return _bk_time_msg(data, slots)
 
     if stage == "date" and text:
-        date = _date_value(text)
-        if not date:
+        parsed_date = _date_value(text)
+        if not parsed_date:
             return [_msg("Напишите дату: «сегодня», «завтра» или 12.11.", [("↩️ Назад", "back"), ("❌ Отмена", "cancel")])]
-        data["date"] = date
+        data["date"] = parsed_date
         session["stage"] = "time"
         return _bk_time_msg(data, slots)
 

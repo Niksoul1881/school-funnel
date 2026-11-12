@@ -213,3 +213,9 @@ def test_booking_reschedule_keeps_contacts(booking):
     result = engine.message(booking, action="reschedule")
     assert "Выберите дату" in text(result)
     assert "Приятно" not in text(result)
+
+def test_booking_calendar_iso_action(booking):
+    engine.message(booking, action="service:0")
+    result = engine.message(booking, action="date:2026-11-13")
+    assert "Выберите время" in text(result)
+    assert "13.11" in text(result)
