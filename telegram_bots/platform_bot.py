@@ -224,17 +224,16 @@ def field_prompt(template: str, index: int) -> str:
 async def ask_token(message: Message, state: FSMContext, template: str) -> None:
     await state.set_state(Build.token)
     await clear_ui(message.bot, message.chat.id)
-    reuse = InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="🔁 Взять готового booking-бота", callback_data="reuse:booking")
-    ]]) if template == "booking" else None
+    markup = InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text="🤖 Открыть BotFather", url="https://t.me/BotFather")
+    ]])
     sent = await message.answer(
         "🔑 <b>Последний шаг</b>\n\n"
-        "Пришли токен <b>нового</b> бота из @BotFather.\n\n"
-        "Он выглядит так:\n"
-        "<code>123456789:AA...</code>\n\n"
+        "Пришли токен <b>своего нового</b> бота из @BotFather.\n\n"
+        "Токен из урока уже отозван — он не подойдёт.\n\n"
         "<i>Это ключ от бота — не публикуй его.</i>",
         parse_mode="HTML",
-        reply_markup=reuse,
+        reply_markup=markup,
     )
     remember_ui(message.bot, message.chat.id, sent)
 
@@ -700,6 +699,8 @@ async def product_info(message: Message, state: FSMContext):
 
 @dp.callback_query(F.data == "reuse:booking")
 async def reuse_booking(call: CallbackQuery, state: FSMContext):
+    await call.answer("Кнопка отключена: этот токен уже занят. Создай нового бота в BotFather.", show_alert=True)
+    return
     data = await state.get_data()
     if not data or data.get("template") != "booking":
         await call.answer("Этот вариант доступен для шаблона записи", show_alert=True)
