@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import hmac
+import io
 import json
 import queue
 import re
@@ -13,6 +14,7 @@ import tempfile
 import threading
 import time
 import uuid
+import zipfile
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -467,6 +469,69 @@ def get_project(project_id: int, request: Request):
     if not project:
         raise HTTPException(status_code=404, detail="Проект не найден")
     return {"project": project}
+
+
+@app.get("/api/projects/{project_id}/archive")
+def project_archive(project_id: int, request: Request):
+    user = require_user(request)
+    project = store.get_project(user["id"], project_id, is_admin=user["role"] == "admin")
+    if not project:
+        raise HTTPException(status_code=404, detail="Проект не найден")
+    buffer = io.BytesIO()
+    archive_root = re.sub(r"[^\w.-]+", "-", project.get("name") or f"project-{project_id}").strip("-") or f"project-{project_id}"
+    files = project.get("files") or []
+    agent_md = f"""# {project.get('name', 'Проект')}
+
+Шаблон: {project.get('template', {}).get('name', project.get('template_id', ''))}
+
+## Что это
+
+Это рабочий проект Telegram-бота, собранный в «Школе AI-агентов».
+Его можно открыть в VS Code, запустить локально или на своём сервере и дальше вести агентом.
+
+## Быстрый запуск
+
+1. Установи Python 3.12+ и VS Code.
+2. Открой эту папку в VS Code.
+3. Создай `.env` по примеру `.env.example` и вставь токен бота из BotFather.
+4. Установи зависимости: `pip install -r requirements.txt`.
+5. Запусти: `python bot.py`.
+
+## Как работать с агентом
+
+- Открой папку проекта в VS Code.
+- Подключи своего агента (Claude Code, Codex, Cursor или DSH).
+- Скажи: «Прочитай AGENT.md и content.json, предложи три улучшения, ничего не ломая».
+- После правок проверь бота в Telegram и сохрани изменения в Git.
+
+## Файлы
+
+{chr(10).join('- `' + f.get('path', '') + '`' for f in files[:40])}
+
+## Важно
+
+- Не коммить `.env` и токены.
+- Перед запуском на сервере настрой webhook/polling.
+- Тексты бота лежат в `content.json`, их можно менять без кода.
+"""
+    try:
+        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            for file in files:
+                path = str(file.get("path", "")).replace("\\", "/").lstrip("/")
+                if not path or ".." in path.split("/"):
+                    continue
+                zf.writestr(f"{archive_root}/{path}", file.get("content", ""))
+            zf.writestr(f"{archive_root}/AGENT.md", agent_md)
+            if not any(str(f.get("path", "")).lower() == ".env.example" for f in files):
+                zf.writestr(f"{archive_root}/.env.example", "BOT_TOKEN=\nLLM_API_KEY=\n")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Не удалось собрать архив: {exc}")
+    filename = f"project-{project_id}.zip"
+    return Response(
+        content=buffer.getvalue(),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @app.delete("/api/projects/{project_id}")
@@ -985,4 +1050,5 @@ def spa(full_path: str):
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404, detail="Not found")
     return FileResponse(config.STATIC_DIR / "index.html")
+
 

@@ -691,7 +691,7 @@ async function renderProject(projectId) {
     </aside>
     <div class="drop-overlay" id="drop-overlay">${svg('plus')}<b>Отпусти файлы</b><span>Добавлю их в проект</span></div>
   </div>`;
-  const actions = `<button class="btn sm ghost" data-action="toggle-focus" title="${state.focusMode ? 'Вернуть панели' : 'Развернуть редактор'}">${svg('external')}</button><button class="btn sm" data-action="open-deploy">${svg('rocket')}Опубликовать</button>${p.is_shared ? '<span class="shared-badge">общий</span>' : `<button class="btn sm ghost" data-action="delete-project" title="Удалить">${svg('trash')}</button>`}`;
+  const actions = `<a class="btn sm ghost" href="/api/projects/${p.id}/archive" download title="Скачать папку проекта и AGENT.md">${svg('folder')}Архив</a><button class="btn sm ghost" data-action="toggle-focus" title="${state.focusMode ? 'Вернуть панели' : 'Развернуть редактор'}">${svg('external')}</button><button class="btn sm" data-action="open-deploy">${svg('rocket')}Опубликовать</button>${p.is_shared ? '<span class="shared-badge">общий</span>' : `<button class="btn sm ghost" data-action="delete-project" title="Удалить">${svg('trash')}</button>`}`;
   $('#app').innerHTML = layout(content, {
     title: p.name,
     tabs,
@@ -2144,9 +2144,32 @@ function renderLesson(id) {
     <div class="row" style="margin-top:12px;gap:8px"><span class="badge gold">Урок ${l.number}</span><span class="badge">${l.minutes} мин</span>${l.done ? '<span class="badge green">Пройден</span>' : ''}</div>
     <h1 style="margin-top:12px;font-size:34px">${esc(l.title)}</h1>
     <div class="sub" style="color:var(--muted);font-size:16px;margin-top:8px">${esc(l.subtitle)}</div>
+    ${l.mini ? `<div class="lesson-mini"><b>Мини-инструкция.</b> ${esc(l.mini)}</div>` : ''}
     <div class="card" style="margin-top:20px">
+      ${l.video ? `<div class="lesson-video"><video controls preload="metadata" playsinline src="${l.video}"></video></div>` : ''}
+      ${l.practice_note ? `<div class="lesson-note">${esc(l.practice_note)}</div>` : ''}
       <h3>Что разбираем</h3>
       <ul class="lesson-list">${l.bullets.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>
+      ${l.common_steps ? `
+        <div class="practice-block">
+          <div class="practice-head"><span class="badge gold">Практика</span><b>Как создать бота: общий маршрут</b></div>
+          <ol class="practice-steps">${l.common_steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
+        </div>` : ''}
+      ${l.tracks ? `
+        <div class="practice-tracks">
+          <div class="practice-head"><b>Выбери один трек и дойди до результата</b></div>
+          <div class="track-grid">
+            ${l.tracks.map((t, i) => `
+              <article class="track-card">
+                <div class="track-top"><span class="track-num">${String(i + 1).padStart(2, '0')}</span><span class="badge">${esc(t.title.split('.')[0])}</span></div>
+                <h4>${esc(t.title)}</h4>
+                <p class="track-goal">${esc(t.goal)}</p>
+                <ol class="track-steps">${t.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
+                <div class="track-task"><b>Задание на усложнение.</b> ${esc(t.task)}</div>
+                <div class="track-result"><b>Результат:</b> ${esc(t.result)}</div>
+              </article>`).join('')}
+          </div>
+        </div>` : ''}
       <div class="task-box"><b>Задание.</b> ${esc(l.task)}</div>
       <div class="row" style="margin-top:16px">
         ${l.done ? `<span class="badge green">${svg('check')} Урок пройден</span>` : `<button class="btn primary" data-action="complete-lesson" data-id="${l.id}">${svg('check')}Отметить пройденным</button>`}

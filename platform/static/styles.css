@@ -302,3 +302,24 @@ h1{font-size:34px}h2{font-size:24px}h3{font-size:18px}
   .brief-grid{grid-template-columns:1fr}.brief-form{grid-template-columns:1fr}.brief-aside{position:static}
   .page-head{flex-direction:column;align-items:flex-start}
 }
+
+/* practice lesson */
+.lesson-video{margin:0 0 16px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#05070a}
+.lesson-video video{display:block;width:100%;aspect-ratio:16/9;background:#05070a}
+.lesson-note{margin:0 0 18px;padding:12px 14px;border-radius:10px;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.25);color:var(--muted);font-size:13px}
+.practice-block{margin:22px 0;padding:18px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)}
+.practice-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:14px}
+.practice-steps{margin:0;padding-left:22px;color:var(--muted);font-size:14px;line-height:1.7}
+.practice-tracks{margin:24px 0}
+.track-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:12px}
+.track-card{padding:18px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02);display:flex;flex-direction:column;gap:10px}
+.track-top{display:flex;justify-content:space-between;align-items:center}
+.track-num{font-size:12px;font-weight:800;color:#ffb4bd;letter-spacing:.12em}
+.track-card h4{margin:0;font-size:17px}
+.track-goal{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.track-steps{margin:0;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.6}
+.track-task{padding:10px 12px;border-radius:9px;background:rgba(255,209,102,.07);border:1px solid rgba(255,209,102,.22);font-size:12.5px;line-height:1.55}
+.track-result{font-size:12.5px;color:var(--muted);line-height:1.55}
+
+.lesson-mini{margin:14px 0 0;padding:12px 14px;border-radius:10px;background:rgba(80,170,255,.08);border:1px solid rgba(80,170,255,.22);font-size:13px;line-height:1.5;color:var(--muted)}
+.lesson-mini b{color:var(--text)}
