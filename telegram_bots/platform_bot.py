@@ -522,18 +522,21 @@ async def start(message: Message, state: FSMContext):
 async def show_templates(message: Message) -> None:
     await clear_ui(message.bot, message.chat.id)
     markup = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="📅 Запись к мастеру", callback_data="tpl:booking"), InlineKeyboardButton(text="🎁 Подарок", callback_data="tpl:gift")],
+        [InlineKeyboardButton(text="📅 Запись к мастеру", callback_data="tpl:booking")],
+        [InlineKeyboardButton(text="🎁 Подарок за подписку", callback_data="tpl:gift")],
         [InlineKeyboardButton(text="🛍 Витрина товаров", callback_data="tpl:shop")],
     ])
-    caption = (
+    text = (
         "🎨 <b>Выбери шаблон</b>\n\n"
-        "Один экран — три сценария.\n"
-        "Дальше 4 вопроса брифа, токен и запуск."
+        "<b>📅 Запись к мастеру</b>\n"
+        "Услуги → дата → время → заявка\n\n"
+        "<b>🎁 Подарок за подписку</b>\n"
+        "Канал → подписка → подарок\n\n"
+        "<b>🛍 Витрина товаров</b>\n"
+        "Фото → корзина → заказ\n\n"
+        "<i>Один шаблон. Дальше только бриф и токен.</i>"
     )
-    try:
-        sent = await message.answer_photo(FSInputFile(TEMPLATES_COVER), caption=caption, parse_mode="HTML", reply_markup=markup)
-    except Exception:
-        sent = await message.answer(caption, parse_mode="HTML", reply_markup=markup)
+    sent = await message.answer(text, parse_mode="HTML", reply_markup=markup)
     remember_ui(message.bot, message.chat.id, sent)
 
 
