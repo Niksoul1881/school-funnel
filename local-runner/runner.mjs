@@ -29,18 +29,8 @@ let root = arg('dir');
 let name = arg('name') || 'Мой компьютер';
 const forcePair = argv.includes('--force-pair');
 
-if (code && !forcePair && existsSync(configPath)) {
-  try {
-    const saved = JSON.parse(readFileSync(configPath, 'utf8'));
-    if (saved.token) {
-      console.log('[runner] Использую сохранённый токен; для новой пары добавь --force-pair');
-      code = '';
-      server = saved.server || server;
-      root = root || saved.root;
-    }
-  } catch {}
-}
-
+// A fresh pairing code must always win over a saved device token.
+// Only reuse the saved token when the user did not pass --code.
 if (!code && existsSync(configPath)) {
   try {
     const saved = JSON.parse(readFileSync(configPath, 'utf8'));
