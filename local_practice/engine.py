@@ -277,8 +277,13 @@ def _start(bot: dict) -> list[dict]:
     brief = bot["config"]["brief"]
     if template == "booking":
         services = bot["config"]["services"]
+        greeting = (brief.get("greeting") or f"Здравствуйте! Это {bot['name']}.").strip()
+        address = (brief.get("address") or "").strip()
+        intro = f"{greeting}\nВыберите услугу — подберу свободное время."
+        if address:
+            intro += f"\n\n📍 {address}"
         return [
-            _msg(f"Здравствуйте! Это {bot['name']}.\nВыберите услугу — подберу свободное время."),
+            _msg(intro),
             _msg("Что вас интересует?", [(s["title"] + " · " + s["price"], f"service:{i}") for i, s in enumerate(services)]),
         ]
     if template == "gift":

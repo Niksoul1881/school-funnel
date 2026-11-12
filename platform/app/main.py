@@ -358,6 +358,9 @@ def tg_project_brief(project_id: int, request: Request):
         brief["business_name"] = business["name"]
     if content.get("contact"):
         brief["contact"] = content["contact"]
+    for key in ("greeting", "master_name", "tone", "address"):
+        if content.get(key):
+            brief[key] = content[key]
     services = content.get("services")
     if isinstance(services, list) and services:
         brief["services"] = "\n".join(
