@@ -36,6 +36,7 @@ PLATFORM_TOKEN = os.getenv("PLATFORM_BOT_TOKEN", "").strip()
 OWNER_ID = os.getenv("OWNER_TG_ID", "").strip()
 TENANTS: dict[str, dict] = {}
 MY_BOTS: list[dict] = []
+TENANT_USERS: dict[str, set[int]] = {}
 
 
 class JsonFSMStorage(BaseStorage):
@@ -324,17 +325,18 @@ async def notify_owner(text: str) -> bool:
         return False
 
 
-async def emit(bot: Bot, chat_id: int, replies: list[dict]) -> None:
+async def emit(bot: Bot, chat_id: int, replies: list[dict], admin_chat_id: int = 0) -> None:
     for reply in replies:
         text = reply.get("text", "")
         if reply.get("admin"):
-            if await notify_owner(text):
-                continue
-            if OWNER_ID:
+            targets = {int(OWNER_ID)} if OWNER_ID.isdigit() else set()
+            if admin_chat_id:
+                targets.add(int(admin_chat_id))
+            for target in targets:
                 try:
-                    await bot.send_message(int(OWNER_ID), text)
+                    await bot.send_message(target, text)
                 except Exception as exc:
-                    print(f"owner notify error: {exc}")
+                    print(f"owner notify error {target}: {exc}")
             continue
         markup = reply_markup(reply)
         if reply.get("image"):
@@ -380,10 +382,26 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
             )
         except Exception:
             pass
-        await emit(message.bot, message.chat.id, engine.message(bot_id, action="start"))
+        await emit(message.bot, message.chat.id, engine.message(bot_id, action="start"), owner_tg_id)
         await message.answer("Меню бота 👇", reply_markup=tenant_menu(template))
         if message.from_user.id == owner_tg_id:
             await message.answer("⚙️ Цены и услуги: /manage")
+        known = TENANT_USERS.setdefault(bot_id, set())
+        uid = message.from_user.id
+        if uid not in known and uid != owner_tg_id and str(uid) != OWNER_ID:
+            known.add(uid)
+            await emit(
+                message.bot,
+                message.chat.id,
+                [_msg(
+                    "🆕 Новый пользователь бота\n"
+                    f"Бот: @{engine.BOTS.get(bot_id, {}).get('username', '')}\n"
+                    f"Имя: {message.from_user.full_name}\n"
+                    f"ID: {uid}",
+                    admin=True,
+                )],
+                owner_tg_id,
+            )
 
     @tenant_dp.callback_query()
     async def callback(call: CallbackQuery):
@@ -407,7 +425,7 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
                     await notify_owner(f"⚠️ Не смог проверить подписку у @{call.from_user.username or call.from_user.id}: {exc}")
                     action = "grant"
         await call.answer()
-        await emit(call.message.bot, call.message.chat.id, engine.message(bot_id, action=action))
+        await emit(call.message.bot, call.message.chat.id, engine.message(bot_id, action=action), owner_tg_id)
 
     @tenant_dp.message(Command("manage"))
     async def manage_cmd(message: Message):
@@ -486,11 +504,11 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
         brief = engine.BOTS.get(bot_id, {}).get("config", {}).get("brief", {})
         label = message.text
         if label in ("🚀 Старт", "💅 Записаться", "🎁 Подарок"):
-            await emit(message.bot, message.chat.id, engine.message(bot_id, action="start"))
+            await emit(message.bot, message.chat.id, engine.message(bot_id, action="start"), owner_tg_id)
         elif label == "🛍 Каталог":
-            await emit(message.bot, message.chat.id, engine.message(bot_id, action="cat:Все"))
+            await emit(message.bot, message.chat.id, engine.message(bot_id, action="cat:Все"), owner_tg_id)
         elif label == "🛒 Корзина":
-            await emit(message.bot, message.chat.id, engine.message(bot_id, action="cart"))
+            await emit(message.bot, message.chat.id, engine.message(bot_id, action="cart"), owner_tg_id)
         elif label == "📣 Канал":
             channel = brief.get("channel", "")
             link = channel if str(channel).startswith("http") else f"https://t.me/{str(channel).lstrip('@')}"
@@ -502,7 +520,7 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
 
     @tenant_dp.message(F.text)
     async def text(message: Message):
-        await emit(message.bot, message.chat.id, engine.message(bot_id, text=message.text))
+        await emit(message.bot, message.chat.id, engine.message(bot_id, text=message.text), owner_tg_id)
 
     return tenant_dp
 
@@ -953,5 +971,6 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
