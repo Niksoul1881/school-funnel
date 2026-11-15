@@ -364,6 +364,21 @@ async def notify_owner(text: str) -> bool:
         return False
 
 
+async def send_platform_notify(tg_id: int, text: str) -> bool:
+    if not PLATFORM_TOKEN:
+        return False
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.post(
+                f"https://api.telegram.org/bot{PLATFORM_TOKEN}/sendMessage",
+                json={"chat_id": tg_id, "text": text},
+            )
+        return response.status_code == 200
+    except Exception as exc:
+        print(f"platform notify error {tg_id}: {exc}")
+        return False
+
+
 async def emit(bot: Bot, chat_id: int, replies: list[dict], admin_chat_id: int = 0) -> None:
     for reply in replies:
         text = reply.get("text", "")
@@ -372,6 +387,8 @@ async def emit(bot: Bot, chat_id: int, replies: list[dict], admin_chat_id: int =
             if admin_chat_id:
                 targets.add(int(admin_chat_id))
             for target in targets:
+                if await send_platform_notify(target, text):
+                    continue
                 try:
                     await bot.send_message(target, text)
                 except Exception as exc:
