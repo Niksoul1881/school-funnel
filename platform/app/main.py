@@ -6,6 +6,7 @@ import base64
 import hmac
 import io
 import json
+import os
 import queue
 import re
 import secrets
@@ -25,7 +26,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
-from . import agent, catalog, config, lessons, security, store, telegram, terminal
+from . import agent, catalog, config, flow_seed, lessons, security, store, telegram, terminal
 from .db import execute, fetch_all, fetch_one, init_db
 from .security import hash_password, public_user, require_admin, require_user, verify_password
 from practice_bench.app import app as practice_app
@@ -232,6 +233,63 @@ def _user_payload(user: dict) -> dict:
 @app.get("/api/health")
 def health():
     return {"ok": True, "app": config.APP_NAME, "agent_mode": config.AGENT_MODE, "version": "0.1.0"}
+
+
+FLOW_SHARE_KEY = os.environ.get("FLOW_SHARE_KEY", "flows-2026").strip() or "flows-2026"
+FLOW_DIR = config.DATA_DIR / "flows"
+FLOW_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _flow_path(slug: str):
+    if slug not in flow_seed.FLOWS:
+        raise HTTPException(status_code=404, detail="Схема не найдена")
+    return FLOW_DIR / f"{slug}.json"
+
+
+def _load_flow(slug: str) -> dict:
+    path = _flow_path(slug)
+    if not path.exists():
+        path.write_text(json.dumps(flow_seed.FLOWS[slug], ensure_ascii=False, indent=2), encoding="utf-8")
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return flow_seed.FLOWS[slug]
+
+
+def _flow_ok(request: Request) -> None:
+    key = request.query_params.get("key") or request.headers.get("x-flow-key", "")
+    if not key or not hmac.compare_digest(key, FLOW_SHARE_KEY):
+        raise HTTPException(status_code=403, detail="Нет доступа к схеме")
+
+
+@app.get("/api/flows/{slug}")
+def get_flow(slug: str, request: Request):
+    _flow_ok(request)
+    return _load_flow(slug)
+
+
+@app.put("/api/flows/{slug}")
+async def save_flow(slug: str, request: Request):
+    _flow_ok(request)
+    path = _flow_path(slug)
+    data = await _body(request)
+    if not isinstance(data.get("stages"), list):
+        raise HTTPException(status_code=400, detail="Нужен список этапов")
+    if len(data["stages"]) > 60:
+        raise HTTPException(status_code=400, detail="Слишком много этапов")
+    payload = json.dumps(data, ensure_ascii=False, indent=2)
+    if len(payload.encode("utf-8")) > 300_000:
+        raise HTTPException(status_code=413, detail="Схема слишком большая")
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(payload, encoding="utf-8")
+    tmp.replace(path)
+    return {"ok": True, "updated_at": security.now()}
+
+
+@app.get("/flow/{slug}")
+def flow_page(slug: str):
+    _flow_path(slug)
+    return FileResponse(config.STATIC_DIR / "flow.html")
 
 
 @app.post("/api/auth/register")
@@ -1128,6 +1186,8 @@ def spa(full_path: str):
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404, detail="Not found")
     return FileResponse(config.STATIC_DIR / "index.html")
+
+
 
 
 

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Схема бота — Школа AI-агентов</title>
+<style>
+:root{--bg:#0b0f16;--card:#111823;--line:#2c3644;--text:#f4ede4;--muted:#98a4b3;--accent:#ffb4bd;--accent2:#6ec8ff}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(900px 420px at 100% 0%,rgba(255,93,143,.13),transparent 60%),var(--bg);color:var(--text);font-family:"Segoe UI",Arial,sans-serif}
+.top{max-width:1120px;margin:0 auto;padding:30px 22px 8px;display:flex;gap:16px;align-items:flex-start;justify-content:space-between}
+.brand{font-size:11px;letter-spacing:.18em;color:var(--accent);font-weight:800;text-transform:uppercase}
+h1{font-size:38px;line-height:1.05;letter-spacing:-.04em;margin:12px 0 8px}
+.sub{color:var(--muted);font-size:15px;line-height:1.5}
+.tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+button,.btn{border:1px solid var(--line);background:#172130;color:var(--text);border-radius:9px;padding:10px 13px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none}
+button.primary{background:var(--accent);border-color:var(--accent);color:#24151a}
+button.ghost{background:transparent}
+button.small{padding:6px 9px;font-size:12px}
+button.danger{color:#ffb3b3}
+#status{font-size:12px;color:var(--muted);align-self:center}
+.wrap{max-width:1120px;margin:0 auto;padding:10px 22px 70px}
+.bar{position:sticky;top:0;z-index:5;background:#0b0f16ee;backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin:18px 0 20px;padding:10px 0;display:flex;gap:10px;align-items:center}
+.bar .grow{flex:1}
+.stage{border:1px solid var(--line);border-radius:15px;background:var(--card);padding:18px 20px;margin-bottom:11px}
+.stage.branch{border-style:dashed}
+.stage-head{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.num{width:38px;height:38px;border-radius:10px;background:var(--accent);color:#24151a;display:grid;place-items:center;font-weight:900;font-size:13px;flex:none}
+.stage-head input{background:#0b111a;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font-weight:800;font-size:17px;min-width:0}
+.stage-head .kicker{width:230px;font-weight:500;font-size:12px;color:var(--accent2)}
+.block{margin:12px 0}
+.label{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#7f8b9a;font-weight:800;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+textarea,input[type=text]{width:100%;background:#0a1018;border:1px solid #28323f;border-radius:9px;color:#e9e1d7;padding:10px 12px;font:14px/1.55 "Segoe UI",Arial,sans-serif;resize:vertical}
+textarea.msg{min-height:74px}
+textarea.note{min-height:44px;color:#a9b4c2;font-size:13px}
+textarea.buttons{min-height:42px}
+.arrow{text-align:center;color:var(--accent);font-size:18px;line-height:22px;margin:2px 0 10px}
+.add-stage{margin-top:14px}
+.error{border:1px solid #693b45;background:#2a151b;color:#ffc1c8;padding:14px;border-radius:12px;margin-bottom:16px}
+.linkbox{font-size:12px;color:var(--muted);margin-top:10px;word-break:break-all}
+@media(max-width:760px){.top{display:block}.tools{justify-content:flex-start;margin-top:14px}.stage-head{flex-wrap:wrap}.stage-head input{flex:1}.stage-head .kicker{width:100%}h1{font-size:30px}}
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <div class="brand">Школа AI-агентов · схемы ботов</div>
+    <h1 id="title">Загрузка…</h1>
+    <div class="sub" id="subtitle"></div>
+  </div>
+  <div class="tools">
+    <button class="primary" id="save">Сохранить</button>
+    <button class="ghost" id="copy">Скопировать ссылку</button>
+    <button class="ghost" id="download">Скачать JSON</button>
+    <span id="status"></span>
+  </div>
+</div>
+<div class="wrap">
+  <div id="error"></div>
+  <div class="bar"><span id="count">0 этапов</span><span class="grow"></span><span class="sub">Правки сохраняются на сервере. Ссылку можно передать.</span></div>
+  <div id="stages"></div>
+  <div class="add-stage"><button id="add">+ Добавить этап</button></div>
+  <div class="linkbox" id="linkbox"></div>
+</div>
+<script>
+const slug = location.pathname.split('/').filter(Boolean).pop();
+const key = new URLSearchParams(location.search).get('key') || '';
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = (v) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+let flow = null;
+let saving = false;
+
+function stageHtml(stage, i) {
+  const messages = (stage.messages || []).map((m, mi) => `
+    <div class="block" data-mi="${mi}">
+      <div class="label"><span>Сообщение бота</span><button class="small ghost danger" data-del-msg="${mi}">Удалить</button></div>
+      <textarea class="msg" data-msg="${mi}">${esc(m)}</textarea>
+    </div>`).join('');
+  return `<article class="stage ${stage.branch ? 'branch' : ''}" data-i="${i}">
+    <div class="stage-head">
+      <span class="num">${String(i + 1).padStart(2,'0')}</span>
+      <input type="text" data-title value="${esc(stage.title || '')}" placeholder="Название этапа">
+      <input type="text" class="kicker" data-kicker value="${esc(stage.kicker || '')}" placeholder="/start или событие">
+      <button class="small ghost danger" data-del-stage>Удалить</button>
+    </div>
+    <div class="block">
+      <div class="label"><span>Сообщения</span><button class="small ghost" data-add-msg>+ сообщение</button></div>
+      ${messages}
+    </div>
+    <div class="block">
+      <div class="label"><span>Кнопки — по одной в строке</span></div>
+      <textarea class="buttons" data-buttons>${esc((stage.buttons || []).join('\n'))}</textarea>
+    </div>
+    <div class="block">
+      <div class="label"><span>Комментарий / ветка</span></div>
+      <textarea class="note" data-note>${esc(stage.note || '')}</textarea>
+    </div>
+  </article><div class="arrow">↓</div>`;
+}
+
+function render() {
+  $('#title').textContent = flow.title || 'Схема бота';
+  $('#subtitle').textContent = flow.subtitle || '';
+  $('#stages').innerHTML = (flow.stages || []).map(stageHtml).join('');
+  $('#count').textContent = `${(flow.stages || []).length} этапов`;
+  $('#linkbox').textContent = `Ссылка для правок: ${location.href}`;
+  bind();
+}
+
+function bind() {
+  $$('.stage').forEach((card) => {
+    const i = Number(card.dataset.i);
+    card.querySelector('[data-title]').oninput = (e) => flow.stages[i].title = e.target.value;
+    card.querySelector('[data-kicker]').oninput = (e) => flow.stages[i].kicker = e.target.value;
+    card.querySelector('[data-buttons]').oninput = (e) => flow.stages[i].buttons = e.target.value.split('\n').map(x => x.trim()).filter(Boolean);
+    card.querySelector('[data-note]').oninput = (e) => flow.stages[i].note = e.target.value;
+    $$('[data-msg]', card).forEach((ta) => ta.oninput = (e) => flow.stages[i].messages[Number(ta.dataset.msg)] = e.target.value);
+    $$('[data-del-msg]', card).forEach((b) => b.onclick = () => { flow.stages[i].messages.splice(Number(b.dataset.delMsg), 1); render(); });
+    card.querySelector('[data-add-msg]').onclick = () => { flow.stages[i].messages = flow.stages[i].messages || []; flow.stages[i].messages.push(''); render(); };
+    card.querySelector('[data-del-stage]').onclick = () => { if (confirm('Удалить этап?')) { flow.stages.splice(i, 1); render(); } };
+  });
+}
+
+async function load() {
+  if (!key) { $('#error').textContent = 'В ссылке нет ключа доступа. Нужна ссылка с ?key=…'; return; }
+  try {
+    const res = await fetch(`/api/flows/${slug}?key=${encodeURIComponent(key)}`);
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || `Ошибка ${res.status}`);
+    flow = await res.json();
+    render();
+  } catch (e) {
+    $('#error').innerHTML = `<div class="error">${esc(e.message)}</div>`;
+    $('#title').textContent = 'Схема недоступна';
+  }
+}
+
+$('#save').onclick = async () => {
+  if (!flow || saving) return;
+  saving = true; $('#status').textContent = 'Сохраняю…';
+  try {
+    const res = await fetch(`/api/flows/${slug}?key=${encodeURIComponent(key)}`, {method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(flow)});
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || `Ошибка ${res.status}`);
+    $('#status').textContent = 'Сохранено';
+    setTimeout(() => $('#status').textContent = '', 2500);
+  } catch (e) { $('#status').textContent = 'Ошибка: ' + e.message; }
+  saving = false;
+};
+$('#add').onclick = () => { flow.stages.push({title:'Новый этап', kicker:'', messages:[''], buttons:[], note:''}); render(); };
+$('#copy').onclick = async () => { try { await navigator.clipboard.writeText(location.href); $('#status').textContent = 'Ссылка скопирована'; setTimeout(() => $('#status').textContent = '', 2200); } catch { $('#status').textContent = 'Не удалось скопировать'; } };
+$('#download').onclick = () => { const blob = new Blob([JSON.stringify(flow, null, 2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${slug}-flow.json`; a.click(); URL.revokeObjectURL(a.href); };
+load();
+</script>
+</body>
+</html>
