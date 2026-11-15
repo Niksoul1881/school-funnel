@@ -1,0 +1,43 @@
+flowchart TB
+  classDef start fill:#ffb4bd,stroke:#8b3b4b,color:#22131a,font-weight:bold
+  classDef step fill:#141b25,stroke:#55606f,color:#f4ede4
+  classDef owner fill:#3a2f1f,stroke:#ffd166,color:#ffe9b3
+  classDef done fill:#1f3a2a,stroke:#7bd88f,color:#d9ffe4
+  classDef menu fill:#2a2140,stroke:#b69cff,color:#efe8ff
+
+  subgraph ONB["ПЛАТФОРМА · ОНБОРДИНГ"]
+    direction TB
+    A0([/start]):::start --> A1["Приветствие<br/>+ картинка меню"]:::step
+    A1 --> A2{"Выбор шаблона"}:::menu
+    A2 -->|💅| B1["Студия красоты"]:::menu
+    A2 -->|🛍| S1["Витрина товаров"]:::menu
+    A2 -->|🎁| G1["Подарок за подписку"]:::menu
+    B1 --> B2["1. Название"]:::step --> B3["2. Услуги"]:::step --> B4["3. Описание и цены"]:::step --> B5["4. Свободные окошки"]:::step --> B6["5. Контакт"]:::step
+    S1 --> S2["1. Магазин"]:::step --> S3["2. Товары + фото"]:::step --> S4["3. Доставка"]:::step --> S5["4. Контакт"]:::step --> S6["5. Оплата"]:::step
+    G1 --> G2["1. Проект"]:::step --> G3["2. Канал"]:::step --> G4["3. Подарок"]:::step --> G5["4. Контакт"]:::step
+    B6 --> F1["BotFather<br/>/newbot → имя → username → токен"]:::step
+    S6 --> F1
+    G5 --> F1
+    F1 --> F2["Приём токена"]:::step --> F3["Сборка бота"]:::step --> F4["Успех:<br/>ссылка + кабинет"]:::done
+  end
+
+  subgraph BEAUTY["КЛИЕНТ · СТУДИЯ КРАСОТЫ"]
+    direction TB
+    C0([/start]):::start --> C1["Приветствие<br/>+ адрес"]:::step --> C2["Выбор услуги"]:::step --> C3["Дата<br/>7 дней"]:::step --> C4["Время<br/>только свободные"]:::step --> C5["Имя"]:::step --> C6["Телефон"]:::step --> C7["Подтверждение"]:::step --> C8["Запись создана"]:::done
+    C8 --> C9["Владельцу:<br/>новая заявка"]:::owner
+    C7 -. "Перенести" .-> C3
+    C8 -. "Отменить" .-> C10["Слот освобождён<br/>уведомление"]:::owner
+  end
+
+  subgraph SHOP["КЛИЕНТ · ВИТРИНА"]
+    direction TB
+    D0([/start]):::start --> D1["Каталог / категории"]:::step --> D2["Карточка товара"]:::step --> D3["Корзина"]:::step --> D4["Имя"]:::step --> D5["Телефон"]:::step --> D6["Доставка / самовывоз"]:::step --> D7["Заказ ORD-XXXXXX"]:::done
+    D7 --> D8["Владельцу:<br/>новый заказ"]:::owner
+    D7 -. "Если задана оплата" .-> D9["Ссылка на оплату"]:::step
+  end
+
+  subgraph GIFT["КЛИЕНТ · ПОДАРОК"]
+    direction TB
+    E0([/start]):::start --> E1["Приветствие"]:::step --> E2["Подписаться на канал"]:::step --> E3["Проверка подписки"]:::step --> E4["Подарок выдан"]:::done
+    E4 --> E5["Владельцу:<br/>кто получил"]:::owner
+  end
