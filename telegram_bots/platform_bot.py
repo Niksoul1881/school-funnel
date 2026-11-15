@@ -239,14 +239,15 @@ def field_prompt(template: str, index: int) -> str:
     field = fields[index]
     icon = FIELD_EMOJI.get(field["key"], "✏️")
     hint = f"\n\n<i>{html.escape(field.get('hint', ''))}</i>" if field.get("hint") else ""
-    example = EXAMPLES.get(field["key"])
+    example = EXAMPLES.get(field["key"]) if not field.get("prompt") else None
     example_html = f"\n\n<i>Пример:</i>\n<pre>{html.escape(example[:300])}</pre>" if example else ""
     skip = "\n\n<i>Можно написать /skip, если не хочешь заполнять.</i>" if not field.get("required") else ""
     tip = f"\n\n🎓 <b>Совет профи:</b> {html.escape(field['tip'])}" if field.get("tip") else ""
+    body = f"\n{html.escape(field['prompt'])}" if field.get("prompt") else ""
     return (
         f"{icon} <b>Шаг {index + 1} из {len(fields)}</b>\n"
         f"<code>{progress(index, len(fields))}</code>\n\n"
-        f"<b>{html.escape(field['label'])}</b>{hint}{example_html}{skip}{tip}"
+        f"<b>{html.escape(field['label'])}</b>{body}{hint}{example_html}{skip}{tip}"
     )
 
 
@@ -638,7 +639,9 @@ async def start(message: Message, state: FSMContext):
         await link_telegram(message, parts[1][5:])
     text = (
         "👋 <b>Рад видеть тебя на практике!</b>\n\n"
-        "На связи школа AI-автоматизации. Ты в одном шаге от своего первого умного бота.\n\n"
+        "На связи школа AI-автоматизации — мы готовим техспецов нового поколения.\n\n"
+        "Ты находишься буквально в одном шаге от создания своего первого умного бота. "
+        "Это будет быстро, просто и без единой строчки кода.\n\n"
         "🚀 <b>Погнали!</b> Выбирай, какой проект хочешь реализовать прямо сейчас:"
     )
     markup = InlineKeyboardMarkup(inline_keyboard=[
@@ -732,7 +735,9 @@ async def choose_template(call: CallbackQuery, state: FSMContext):
         InlineKeyboardButton(text="🪄 Оставить готовый шаблон", callback_data="field:skip")
     ]])
     sent = await call.message.answer(
-        f"{meta['icon']} <b>{html.escape(meta['name'])}</b>\n\n" + field_prompt(template, 0),
+        f"{meta['icon']} <b>{html.escape(meta['name'])}</b>\n\n"
+        f"{html.escape(meta.get('welcome') or '')}\n\n"
+        + field_prompt(template, 0),
         parse_mode="HTML",
         reply_markup=markup,
     )
