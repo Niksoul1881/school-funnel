@@ -1,4 +1,4 @@
-"""FastAPI-приложение MVP платформы «Школа AI-агентов»."""
+﻿"""FastAPI-приложение MVP платформы «Школа AI-агентов»."""
 from __future__ import annotations
 
 import asyncio
@@ -358,7 +358,7 @@ def tg_project_brief(project_id: int, request: Request):
         brief["business_name"] = business["name"]
     if content.get("contact"):
         brief["contact"] = content["contact"]
-    for key in ("greeting", "master_name", "tone", "address"):
+    for key in ("greeting", "master_name", "tone", "address", "details"):
         if content.get(key):
             brief[key] = content[key]
     services = content.get("services")
@@ -1128,5 +1128,6 @@ def spa(full_path: str):
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404, detail="Not found")
     return FileResponse(config.STATIC_DIR / "index.html")
+
 
 

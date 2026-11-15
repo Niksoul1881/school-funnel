@@ -1,9 +1,10 @@
-﻿"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
+"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
 from __future__ import annotations
 
 import asyncio
 import html
 import json
+import time
 import os
 import sys
 import uuid
@@ -45,14 +46,28 @@ class JsonFSMStorage(BaseStorage):
     def __init__(self, path: Path):
         self.path = path
         self._lock = asyncio.Lock()
+        self._timer = None
         try:
             self._data = json.loads(path.read_text(encoding="utf-8"))
         except Exception:
             self._data = {}
 
-    def _flush(self) -> None:
+    def _flush_now(self) -> None:
+        self._timer = None
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps(self._data, ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp = self.path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(self._data, ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp.replace(self.path)
+
+    def _flush(self, force: bool = False) -> None:
+        if force:
+            if self._timer:
+                self._timer.cancel()
+                self._timer = None
+            self._flush_now()
+            return
+        if self._timer is None:
+            self._timer = asyncio.get_running_loop().call_later(0.4, self._flush_now)
 
     async def set_state(self, key: StorageKey, state: State | str | None = None) -> None:
         async with self._lock:
@@ -77,7 +92,7 @@ class JsonFSMStorage(BaseStorage):
         return dict(self._data.get(str(key), {}).get("data") or {})
 
     async def close(self) -> None:
-        self._flush()
+        self._flush(force=True)
 
 
 dp = Dispatcher(storage=JsonFSMStorage(ROOT / "private" / "fsm_state.json"))
@@ -125,10 +140,20 @@ def remember_tenant(record: dict) -> None:
     save_tenants(items)
 
 
-def save_engine_state() -> None:
+_LAST_ENGINE_SAVE = 0.0
+
+
+def save_engine_state(force: bool = False) -> None:
+    global _LAST_ENGINE_SAVE
+    now = time.monotonic()
+    if not force and now - _LAST_ENGINE_SAVE < 1.5:
+        return
+    _LAST_ENGINE_SAVE = now
     try:
         STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-        STATE_FILE.write_text(json.dumps(engine.export_state(), ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp = STATE_FILE.with_suffix(".tmp")
+        tmp.write_text(json.dumps(engine.export_state(), ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp.replace(STATE_FILE)
     except Exception as exc:
         print(f"state save failed: {exc}")
 
@@ -176,8 +201,9 @@ COVER_FILES = {
 }
 LESSON_COVER = ROOT / "platform" / "static" / "covers" / "lesson2.png"
 EXAMPLES = {
-    "business_name": "Студия «Марина»",
-    "services": "Стрижка — 3 500 ₽ — 60 мин\nОкрашивание — от 7 000 ₽ — 120 мин",
+    "business_name": "Marina Beauty Space",
+    "services": "Стрижка, Окрашивание, Маникюр",
+    "details": "Стрижка — от 2500 ₽, 1.5 часа\nОкрашивание — от 7000 ₽, 2 часа",
     "slots": "10:00, 12:00, 14:00, 16:00, 18:00",
     "address": "Москва, ул. Примерная, 10",
     "contact": "@marina_studio",
@@ -191,6 +217,7 @@ FIELD_EMOJI = {
     "business_name": "🏷",
     "niche": "🎯",
     "services": "💅",
+    "details": "💸",
     "slots": "🕐",
     "address": "📍",
     "contact": "📞",
@@ -215,10 +242,11 @@ def field_prompt(template: str, index: int) -> str:
     example = EXAMPLES.get(field["key"])
     example_html = f"\n\n<i>Пример:</i>\n<pre>{html.escape(example[:300])}</pre>" if example else ""
     skip = "\n\n<i>Можно написать /skip, если не хочешь заполнять.</i>" if not field.get("required") else ""
+    tip = f"\n\n🎓 <b>Совет профи:</b> {html.escape(field['tip'])}" if field.get("tip") else ""
     return (
         f"{icon} <b>Шаг {index + 1} из {len(fields)}</b>\n"
         f"<code>{progress(index, len(fields))}</code>\n\n"
-        f"<b>{html.escape(field['label'])}</b>{hint}{example_html}{skip}"
+        f"<b>{html.escape(field['label'])}</b>{hint}{example_html}{skip}{tip}"
     )
 
 
@@ -262,7 +290,10 @@ async def ask_next_field(message: Message, state: FSMContext) -> None:
         remember_ui(message.bot, message.chat.id, sent)
         return
     await state.set_state(Build.fields)
-    sent = await message.answer(field_prompt(template, index), parse_mode="HTML")
+    markup = InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text="🪄 Оставить готовый шаблон", callback_data="field:skip")
+    ]])
+    sent = await message.answer(field_prompt(template, index), parse_mode="HTML", reply_markup=markup)
     remember_ui(message.bot, message.chat.id, sent)
 
 
@@ -394,7 +425,7 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
             await emit(
                 message.bot,
                 message.chat.id,
-                [_msg(
+                [engine._msg(
                     "🆕 Новый пользователь бота\n"
                     f"Бот: @{engine.BOTS.get(bot_id, {}).get('username', '')}\n"
                     f"Имя: {message.from_user.full_name}\n"
@@ -621,7 +652,7 @@ async def start(message: Message, state: FSMContext):
 async def show_templates(message: Message) -> None:
     await clear_ui(message.bot, message.chat.id)
     markup = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="📅 Запись к мастеру", callback_data="tpl2:booking")],
+        [InlineKeyboardButton(text="💅 Студия красоты", callback_data="tpl2:booking")],
         [InlineKeyboardButton(text="🎁 Подарок за подписку", callback_data="tpl2:gift")],
         [InlineKeyboardButton(text="🛍 Витрина товаров", callback_data="tpl2:shop")],
     ])
@@ -685,12 +716,36 @@ async def choose_template(call: CallbackQuery, state: FSMContext):
     await state.set_state(Build.fields)
     meta = engine.TEMPLATES[template]
     await clear_ui(call.message.bot, call.message.chat.id)
+    markup = InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text="🪄 Оставить готовый шаблон", callback_data="field:skip")
+    ]])
     sent = await call.message.answer(
         f"{meta['icon']} <b>{html.escape(meta['name'])}</b>\n\n" + field_prompt(template, 0),
         parse_mode="HTML",
+        reply_markup=markup,
     )
     remember_ui(call.message.bot, call.message.chat.id, sent)
     await call.answer()
+
+
+@dp.callback_query(F.data == "field:skip")
+async def skip_field(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    if not data or "template" not in data:
+        await call.answer("Сначала выбери шаблон.", show_alert=True)
+        return
+    template = data["template"]
+    index = int(data.get("index", 0))
+    fields = engine.TEMPLATES[template]["fields"]
+    if index >= len(fields):
+        await call.answer()
+        return
+    field = fields[index]
+    brief = dict(data.get("brief") or {})
+    brief[field["key"]] = engine.TEMPLATES[template]["defaults"].get(field["key"], "")
+    await state.update_data(index=index + 1, brief=brief)
+    await ask_next_field(call.message, state)
+    await call.answer("Подставил готовый шаблон")
 
 
 @dp.message(F.text == MENU_START)
@@ -975,6 +1030,9 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+
+
 
 
 

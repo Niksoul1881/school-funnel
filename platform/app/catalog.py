@@ -1,4 +1,4 @@
-"""Каталог шаблонов и генерация файлов проекта.
+﻿"""Каталог шаблонов и генерация файлов проекта.
 
 Шаблон — это не «болванка», а набор файлов с манифестом:
 направление, бриф, стек, превью и инструкция запуска.
@@ -389,7 +389,7 @@ def build_content(template_id: str, brief: dict) -> dict:
             **base,
             "greeting": f"Здравствуйте! Это {name}. Запишу вас к мастеру за пару шагов.",
             "master_name": _text(brief.get("master_name"), "Мастер"),
-            "services": _parse_services(_text(brief.get("services"), "")),
+            "services": _parse_services(_text(brief.get("details") or brief.get("services"), "")),
             "slots": slots or ["10:00", "12:00", "14:00", "16:00", "18:00"],
             "address": _text(brief.get("address"), ""),
             "admin_chat_id": _text(brief.get("admin_chat_id"), ""),
@@ -997,3 +997,4 @@ def preview_html(project: dict, files: dict[str, str]) -> str:
     index = index.replace('<link rel="stylesheet" href="styles.css">', f"<style>{css}</style>")
     index = index.replace('<script src="app.js"></script>', f"<script>{js}</script>")
     return index
+

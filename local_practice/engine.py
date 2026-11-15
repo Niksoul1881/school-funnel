@@ -12,22 +12,22 @@ import httpx
 
 TEMPLATES: dict[str, dict[str, Any]] = {
     "booking": {
-        "name": "Запись к мастеру",
-        "icon": "📅",
+        "name": "Студия красоты",
+        "icon": "💅",
         "accent": "#ff6b8a",
-        "tagline": "Услуги, окна и заявка мастеру",
+        "tagline": "Запись на услуги и свободные окна",
         "fields": [
-            {"key": "business_name", "label": "Название студии", "type": "text", "required": True},
-            {"key": "services", "label": "Услуги", "type": "textarea", "hint": "Название — цена — длительность, каждая с новой строки"},
-            {"key": "slots", "label": "Свободные окна", "type": "text", "hint": "Через запятую"},
-            {"key": "address", "label": "Адрес", "type": "text"},
-            {"key": "contact", "label": "Контакт", "type": "text"},
+            {"key": "business_name", "label": "Название", "type": "text", "required": True, "tip": "Название, логотип и фирменные цвета берутся из брифа заказчика, а не придумываются из головы."},
+            {"key": "services", "label": "Услуги", "type": "text", "required": True, "hint": "Через запятую: Стрижка, Окрашивание, Маникюр", "tip": "Обычно заказчик присылает сайт, прайс или старую систему записи — переносишь услуги оттуда."},
+            {"key": "details", "label": "Описание и цены", "type": "textarea", "required": True, "hint": "Каждая услуга с новой строки: Стрижка — от 2500 ₽, 1.5 часа", "tip": "Тексты и цены даёт владелец бизнеса. Твоя задача — красиво упаковать их с отступами и эмодзи."},
+            {"key": "slots", "label": "Свободные окошки", "type": "text", "required": True, "hint": "12:00, 15:30, 19:00", "tip": "В учебном боте время вписывается вручную. В коммерческом проекте подключают YCLIENTS или Dikidi."},
+            {"key": "contact", "label": "Контакт для связи", "type": "text", "required": True, "hint": "@admin", "tip": "Сюда вшивается контакт реального администратора — ему и будут приходить уведомления о записях."},
         ],
         "defaults": {
-            "business_name": "Студия «Марина»",
-            "services": "Стрижка — 3 500 ₽ — 60 мин\nОкрашивание — от 7 000 ₽ — 120 мин\nУкладка — 2 500 ₽ — 45 мин",
+            "business_name": "Marina Beauty Space",
+            "services": "Стрижка, Окрашивание, Маникюр",
+            "details": "Стрижка — от 2500 ₽, 1.5 часа\nОкрашивание — от 7000 ₽, 2 часа\nМаникюр — 3000 ₽, 1 час",
             "slots": "10:00, 12:00, 14:00, 16:00, 18:00",
-            "address": "Москва, ул. Примерная, 10",
             "contact": "@marina_studio",
         },
     },
@@ -176,6 +176,34 @@ def _faq(raw: str) -> list[dict]:
     return items
 
 
+def _service_catalog(base: dict) -> list[dict]:
+    raw = (base.get("services") or "").strip()
+    if not raw:
+        return []
+    if "|" in raw or "—" in raw:
+        return _services(raw)
+    titles = [t.strip() for t in re.split(r"[,;\n]", raw) if t.strip()]
+    details = {}
+    for line in _lines(base.get("details") or ""):
+        name = re.split(r"\s+[—|-]\s+", line, maxsplit=1)[0].strip()
+        if not name:
+            continue
+        price_match = re.search(r"((?:от\s+)?\d[\d\s]*)\s*₽", line, re.I)
+        dur_match = re.search(r"(\d+(?:[.,]\d+)?)\s*(час(?:а|ов)?|ч|мин(?:ут)?)", line, re.I)
+        price = price_match.group(1).strip() + " ₽" if price_match else "по запросу"
+        duration = dur_match.group(0).replace(".", ",") if dur_match else "60 мин"
+        details[name.lower()] = {"price": price, "duration": duration}
+    result = []
+    for title in titles:
+        extra = details.get(title.lower(), {})
+        result.append({
+            "title": title,
+            "price": extra.get("price", "по запросу"),
+            "duration": extra.get("duration", "60 мин"),
+        })
+    return result
+
+
 def create_bot(template: str, brief: dict) -> dict:
     if template not in TEMPLATES:
         raise ValueError("Неизвестный шаблон")
@@ -184,7 +212,7 @@ def create_bot(template: str, brief: dict) -> dict:
     bot_id = uuid.uuid4().hex[:8]
     config: dict[str, Any] = {"template": template, "brief": base}
     if template == "booking":
-        config["services"] = _services(base.get("services", ""))
+        config["services"] = _service_catalog(base)
         config["slots"] = [s.strip() for s in (base.get("slots") or "").split(",") if s.strip()]
     elif template == "lead":
         config["services"] = _services(base.get("services", ""))
