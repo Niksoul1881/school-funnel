@@ -257,9 +257,12 @@ async def ask_token(message: Message, state: FSMContext, template: str) -> None:
         InlineKeyboardButton(text="🤖 Открыть BotFather", url="https://t.me/BotFather")
     ]])
     sent = await message.answer(
-        "🔑 <b>Последний шаг</b>\n\n"
-        "Пришли токен <b>своего нового</b> бота из @BotFather.\n\n"
-        "Токен из урока уже отозван — он не подойдёт.\n\n"
+        "🔑 <b>Последний шаг: BotFather</b>\n\n"
+        "1️⃣ Открой @BotFather.\n"
+        "2️⃣ Отправь /newbot.\n"
+        "3️⃣ Придумай имя бота.\n"
+        "4️⃣ Придумай username, он должен заканчиваться на <code>_bot</code>.\n"
+        "5️⃣ Скопируй токен и пришли его сюда.\n\n"
         "<i>Это ключ от бота — не публикуй его.</i>",
         parse_mode="HTML",
         reply_markup=markup,
@@ -932,7 +935,8 @@ async def receive_token(message: Message, state: FSMContext):
         f"🤖 <b>@{html.escape(bot['username'])}</b>\n"
         f"🧩 {html.escape(engine.TEMPLATES[bot['template']]['name'])}\n\n"
         + ("📁 Проект уже сохранён в твоём кабинете на платформе.\n\n" if project else "")
-        + "Нажми /start в своём боте и проверь сценарий."
+        + "Нажми /start в своём боте и проверь сценарий.\n\n"
+        + "🥳 Поздравляю! Ты собрал инструмент, за который бизнес платит от 15 000 ₽."
     )
     try:
         await message.answer_photo(
