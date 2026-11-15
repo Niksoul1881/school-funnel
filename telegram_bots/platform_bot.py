@@ -634,19 +634,28 @@ async def start(message: Message, state: FSMContext):
     if len(parts) == 2 and parts[1].startswith("link_"):
         await link_telegram(message, parts[1][5:])
     text = (
-        "✨ <b>Платформа практики</b>\n\n"
-        "Урок 2 · <b>Чат-боты</b>\n\n"
-        "Собери своего первого бота за 5 минут:\n"
-        "шаблон → бриф → токен → запуск.\n\n"
-        "Без кода. Всё кнопками."
+        "👋 <b>Рад видеть тебя на практике!</b>\n\n"
+        "На связи школа AI-автоматизации. Ты в одном шаге от своего первого умного бота.\n\n"
+        "🚀 <b>Погнали!</b> Выбирай, какой проект хочешь реализовать прямо сейчас:"
     )
-    markup = main_menu()
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="💅 Студия красоты", callback_data="tpl2:booking")],
+        [InlineKeyboardButton(text="🛍 Витрина товаров", callback_data="tpl2:shop")],
+        [InlineKeyboardButton(text="🎁 Подарок за подписку", callback_data="tpl2:gift")],
+    ])
     await clear_ui(message.bot, message.chat.id)
     try:
-        sent = await message.answer_photo(FSInputFile(LESSON_COVER), caption=text, parse_mode="HTML", reply_markup=markup)
+        sent = await message.answer_photo(
+            FSInputFile(TEMPLATES_COVER),
+            caption=text,
+            parse_mode="HTML",
+            reply_markup=markup,
+        )
     except Exception:
         sent = await message.answer(text, parse_mode="HTML", reply_markup=markup)
     remember_ui(message.bot, message.chat.id, sent)
+    menu = await message.answer("Меню бота 👇", reply_markup=main_menu())
+    remember_ui(message.bot, message.chat.id, menu)
 
 
 async def show_templates(message: Message) -> None:
