@@ -289,7 +289,7 @@ async def save_flow(slug: str, request: Request):
 @app.get("/flow/{slug}")
 def flow_page(slug: str):
     _flow_path(slug)
-    return FileResponse(config.STATIC_DIR / "flow.html")
+    return FileResponse(config.STATIC_DIR / "flow.html", headers={"Cache-Control": "no-store"})
 
 
 @app.post("/api/auth/register")
@@ -1186,6 +1186,7 @@ def spa(full_path: str):
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404, detail="Not found")
     return FileResponse(config.STATIC_DIR / "index.html")
+
 
 
 

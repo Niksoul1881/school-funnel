@@ -70,6 +70,8 @@ const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (v) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 let flow = null;
 let saving = false;
+let saveTimer = null;
+let dirty = false;
 
 function stageHtml(stage, i) {
   const messages = (stage.messages || []).map((m, mi) => `
@@ -93,7 +95,7 @@ function stageHtml(stage, i) {
       <textarea class="buttons" data-buttons>${esc((stage.buttons || []).join('\n'))}</textarea>
     </div>
     <div class="block">
-      <div class="label"><span>Комментарий / ветка</span></div>
+      <div class="label"><span>Комментарий к этапу</span></div>
       <textarea class="note" data-note>${esc(stage.note || '')}</textarea>
     </div>
   </article><div class="arrow">↓</div>`;
@@ -111,14 +113,14 @@ function render() {
 function bind() {
   $$('.stage').forEach((card) => {
     const i = Number(card.dataset.i);
-    card.querySelector('[data-title]').oninput = (e) => flow.stages[i].title = e.target.value;
-    card.querySelector('[data-kicker]').oninput = (e) => flow.stages[i].kicker = e.target.value;
-    card.querySelector('[data-buttons]').oninput = (e) => flow.stages[i].buttons = e.target.value.split('\n').map(x => x.trim()).filter(Boolean);
-    card.querySelector('[data-note]').oninput = (e) => flow.stages[i].note = e.target.value;
-    $$('[data-msg]', card).forEach((ta) => ta.oninput = (e) => flow.stages[i].messages[Number(ta.dataset.msg)] = e.target.value);
-    $$('[data-del-msg]', card).forEach((b) => b.onclick = () => { flow.stages[i].messages.splice(Number(b.dataset.delMsg), 1); render(); });
-    card.querySelector('[data-add-msg]').onclick = () => { flow.stages[i].messages = flow.stages[i].messages || []; flow.stages[i].messages.push(''); render(); };
-    card.querySelector('[data-del-stage]').onclick = () => { if (confirm('Удалить этап?')) { flow.stages.splice(i, 1); render(); } };
+    card.querySelector('[data-title]').oninput = (e) => { flow.stages[i].title = e.target.value; scheduleSave(); };
+    card.querySelector('[data-kicker]').oninput = (e) => { flow.stages[i].kicker = e.target.value; scheduleSave(); };
+    card.querySelector('[data-buttons]').oninput = (e) => { flow.stages[i].buttons = e.target.value.split('\n').map(x => x.trim()).filter(Boolean); scheduleSave(); };
+    card.querySelector('[data-note]').oninput = (e) => { flow.stages[i].note = e.target.value; scheduleSave(); };
+    $$('[data-msg]', card).forEach((ta) => ta.oninput = (e) => { flow.stages[i].messages[Number(ta.dataset.msg)] = e.target.value; scheduleSave(); });
+    $$('[data-del-msg]', card).forEach((b) => b.onclick = () => { flow.stages[i].messages.splice(Number(b.dataset.delMsg), 1); render(); scheduleSave(); });
+    card.querySelector('[data-add-msg]').onclick = () => { flow.stages[i].messages = flow.stages[i].messages || []; flow.stages[i].messages.push(''); render(); scheduleSave(); };
+    card.querySelector('[data-del-stage]').onclick = () => { if (confirm('Удалить этап?')) { flow.stages.splice(i, 1); render(); scheduleSave(); } };
   });
 }
 
@@ -135,20 +137,34 @@ async function load() {
   }
 }
 
-$('#save').onclick = async () => {
+async function saveFlow() {
   if (!flow || saving) return;
-  saving = true; $('#status').textContent = 'Сохраняю…';
+  saving = true; dirty = false; $('#status').textContent = 'Сохраняю…';
   try {
     const res = await fetch(`/api/flows/${slug}?key=${encodeURIComponent(key)}`, {method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(flow)});
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || `Ошибка ${res.status}`);
     $('#status').textContent = 'Сохранено';
-    setTimeout(() => $('#status').textContent = '', 2500);
-  } catch (e) { $('#status').textContent = 'Ошибка: ' + e.message; }
+    setTimeout(() => { if (!dirty) $('#status').textContent = ''; }, 2200);
+  } catch (e) {
+    $('#status').textContent = 'Ошибка: ' + e.message;
+    dirty = true;
+  }
   saving = false;
-};
-$('#add').onclick = () => { flow.stages.push({title:'Новый этап', kicker:'', messages:[''], buttons:[], note:''}); render(); };
+}
+
+function scheduleSave() {
+  dirty = true;
+  $('#status').textContent = 'Сохраняю…';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveFlow, 700);
+}
+
+$('#save').onclick = saveFlow;
+$('#add').onclick = () => { flow.stages.push({title:'Новый этап', kicker:'', messages:[''], buttons:[], note:''}); render(); scheduleSave(); };
 $('#copy').onclick = async () => { try { await navigator.clipboard.writeText(location.href); $('#status').textContent = 'Ссылка скопирована'; setTimeout(() => $('#status').textContent = '', 2200); } catch { $('#status').textContent = 'Не удалось скопировать'; } };
 $('#download').onclick = () => { const blob = new Blob([JSON.stringify(flow, null, 2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${slug}-flow.json`; a.click(); URL.revokeObjectURL(a.href); };
+document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveFlow(); } });
+window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
 load();
 </script>
 </body>
