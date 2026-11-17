@@ -605,9 +605,28 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
     return tenant_dp
 
 
+BEAUTY_DESCRIPTION = (
+    "Добро пожаловать в пространство красоты «Marina Beauty Space» ✨\n\n"
+    "Это место, где стиль встречается с заботой, а вы отдыхаете, пока мы подчеркиваем вашу индивидуальность.\n\n"
+    "Здесь вы можете посмотреть прайс, познакомиться с услугами и выбрать удобное окошко к нашим мастерам в пару кликов.\n\n"
+    "Жмите «СТАРТ» (или /start) внизу экрана, чтобы начать! 👇"
+)
+
+
+async def apply_bot_profile(bot: Bot, template: str, brief: dict) -> None:
+    if template != "booking":
+        return
+    try:
+        await bot.set_my_description(description=BEAUTY_DESCRIPTION)
+        await bot.set_my_short_description(short_description="Запись в студию красоты: услуги, цены и свободные окошки.")
+    except Exception as exc:
+        print(f"profile setup error: {exc}")
+
+
 async def start_tenant(token: str, template: str, brief: dict, tg_id: int = 0, project: dict | None = None, persist: bool = True) -> dict:
     bot = Bot(token)
     me = await bot.get_me()
+    await apply_bot_profile(bot, template, brief)
     bot_id = engine.create_bot(template, brief)["id"]
     engine.BOTS[bot_id]["username"] = me.username
     task = asyncio.create_task(tenant_dispatcher(bot_id, template, tg_id).start_polling(bot))
