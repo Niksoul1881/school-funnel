@@ -46,6 +46,7 @@ TEMPLATES: dict[str, dict[str, Any]] = {
             "details": "Стрижка — от 2500 ₽, 1.5 часа\nОкрашивание — от 7000 ₽, 2 часа\nМаникюр — 3000 ₽, 1 час",
             "slots": "10:00, 12:00, 14:00, 16:00, 18:00",
             "contact": "@marina_studio",
+            "beauty_flow": "1",
         },
     },
     "lead": {
@@ -303,7 +304,7 @@ def _buttons(items: list[tuple[str, str]]) -> list[dict]:
     return [{"label": label, "action": action} for label, action in items]
 
 
-def _msg(text: str, buttons: list[tuple[str, str]] | None = None, image: str = "", admin: bool = False, rows: list[list[tuple[str, str]]] | None = None) -> dict:
+def _msg(text: str, buttons: list[tuple[str, str]] | None = None, image: str = "", admin: bool = False, rows: list[list[tuple[str, str]]] | None = None, contact_request: bool = False, remove_keyboard: bool = False) -> dict:
     out: dict[str, Any] = {"text": text}
     if buttons:
         out["buttons"] = _buttons(buttons)
@@ -314,6 +315,10 @@ def _msg(text: str, buttons: list[tuple[str, str]] | None = None, image: str = "
         out["image"] = image
     if admin:
         out["admin"] = True
+    if contact_request:
+        out["contact_request"] = True
+    if remove_keyboard:
+        out["remove_keyboard"] = True
     return out
 
 
@@ -321,6 +326,8 @@ def _start(bot: dict) -> list[dict]:
     template = bot["template"]
     brief = bot["config"]["brief"]
     if template == "booking":
+        if brief.get("beauty_flow"):
+            return _beauty(bot, {"stage": "start", "data": {}}, "", "start")
         services = bot["config"]["services"]
         greeting = (brief.get("greeting") or f"Здравствуйте! Это {bot['name']}.").strip()
         address = (brief.get("address") or "").strip()
@@ -483,7 +490,125 @@ def _bk_confirm_msg(data: dict, brief: dict) -> list[dict]:
     )]
 
 
+BEAUTY_SERVICES = {
+    "hair": {
+        "label": "✂️ Стрижка и укладка",
+        "title": "Стрижка и укладка ✂️",
+        "text": "Подберем идеальную форму, которая подчеркнет черты лица и не потребует от вас сложной укладки по утрам. В услугу входит мытье головы с расслабляющим массажем и премиальным уходом.\n\n💳 Стоимость: от 2 500 ₽\n⏱ Время: 1–1,5 часа",
+    },
+    "nails": {
+        "label": "💅 Маникюр",
+        "title": "Идеальный маникюр 💅",
+        "text": "Безопасный аппаратный или комбинированный маникюр с идеальными бликами. В нашей палитре более 200 оттенков, а инструменты проходят 3 этапа стерилизации (крафт-пакет вскрываем при вас).\n\n💳 Стоимость: от 2 000 ₽ (с покрытием)\n⏱ Время: 1,5–2 часа",
+    },
+    "pedicure": {
+        "label": "👣 SMART-педикюр",
+        "title": "SMART-педикюр 👣",
+        "text": "Абсолютный релакс для ваших ножек в нашем массажном кресле-реклайнере. Обработка стоп умными дисками делает пяточки идеально гладкими на несколько недель.\n\n💳 Стоимость: от 2 800 ₽\n⏱ Время: 1,5 часа",
+    },
+    "color": {
+        "label": "🎨 Окрашивание",
+        "title": "Окрашивание любой сложности 🎨",
+        "text": "Airtouch, шатуш, балаяж или бережное тонирование. Мы не просто создаем цвет вашей мечты, но и сохраняем безупречное качество волос с помощью защитных плексов.\n\n💳 Стоимость: от 6 000 ₽ (точная сумма после консультации)\n⏱ Время: 2–4 часа",
+    },
+}
+
+
+def _beauty(bot: dict, session: dict, text: str, action: str) -> list[dict]:
+    brief = bot["config"]["brief"]
+    name = brief.get("business_name") or bot["name"]
+    contact = (brief.get("contact") or "@admin").strip()
+    contact_url = contact if contact.startswith("http") else f"https://t.me/{contact.lstrip('@')}"
+    data = session.setdefault("data", {})
+    if action in ("beauty:menu", "start") or (session.get("stage", "start") == "start" and not action):
+        session["stage"] = "menu"
+        data.clear()
+        return [_msg(
+            f"Здравствуйте! Рады видеть вас в «{name}» 🤍\n\n"
+            "Почему выбирают нас?\n"
+            "▫️ Работаем только на премиум-материалах (Luxio, Davines).\n"
+            "▫️ Экономим ваше время: делаем услуги в 4 руки без доплат.\n"
+            "▫️ Гарантия на покрытие и всегда свежий авторский кофе с конфеткой.\n\n"
+            "Выберите, чем мы можем порадовать вас сегодня:",
+            [(s["label"], f"beauty:svc:{key}") for key, s in BEAUTY_SERVICES.items()],
+        )]
+    if action.startswith("beauty:svc:"):
+        key = action.split(":")[-1]
+        service = BEAUTY_SERVICES.get(key)
+        if not service:
+            return [_msg("Выберите услугу:", [(s["label"], f"beauty:svc:{k}") for k, s in BEAUTY_SERVICES.items()])]
+        data["service"] = key
+        session["stage"] = "service"
+        return [_msg(
+            f"{service['title']}\n\n{service['text']}",
+            [("📅 Записаться", f"beauty:book:{key}"), ("💬 Написать Марине", f"url:{contact_url}"), ("🔙 Вернуться к выбору услуг", "beauty:menu")],
+        )]
+    if action.startswith("beauty:book:"):
+        key = action.split(":")[-1]
+        if key not in BEAUTY_SERVICES:
+            key = data.get("service")
+        data["service"] = key
+        session["stage"] = "date"
+        return [_msg(
+            "Прекрасный выбор! ✨ Давайте подберем удобный день. Выберите дату из свободных на этой неделе:",
+            [("📅 Сегодня", "beauty:date:today"), ("📅 Завтра", "beauty:date:tomorrow"), ("📅 Послезавтра", "beauty:date:after"), ("🔙 Назад к услугам", "beauty:menu")],
+        )]
+    if action.startswith("beauty:date:"):
+        day = action.split(":")[-1]
+        labels = {"today": "Сегодня", "tomorrow": "Завтра", "after": "Послезавтра"}
+        data["day"] = labels.get(day, "Сегодня")
+        session["stage"] = "time"
+        slots = ["17:30", "19:00"] if day == "today" else ["10:00", "12:30", "15:00", "18:00"]
+        sl = [(slot, f"beauty:time:{slot}") for slot in slots]
+        return [_msg(
+            f"Вы выбрали: {data['day']} 🗓\n\n"
+            + ("Осталось всего пара свободных окошек. " if day == "today" else "Свободные окошки мастера: ")
+            + "Выберите удобное время:",
+            sl + [("🔙 Выбрать другой день", "beauty:book:" + str(data.get("service")))],
+        )]
+    if action.startswith("beauty:time:"):
+        data["time"] = action.split(":", 2)[-1]
+        session["stage"] = "contact"
+        return [_msg(
+            "Отлично! Окошко предварительно забронировано за вами 🤍\n\n"
+            "Чтобы администратор подтвердил запись и закрепил время, пожалуйста, оставьте ваш номер телефона.\n\n"
+            "Нажмите на кнопку внизу экрана 👇",
+            contact_request=True,
+        )]
+    if action.startswith("beauty:contact:"):
+        phone = action.split(":", 2)[-1]
+        data["phone"] = phone
+        service = BEAUTY_SERVICES.get(data.get("service"), {"title": data.get("service", "Услуга")})
+        slot_key = f"{data.get('day', '')}|{data.get('time', '')}"
+        BOOKED.setdefault(bot["id"], set()).add(slot_key)
+        _bump(bot["id"], "bookings")
+        _remember(bot["id"], {"type": "booking", "service": service.get("title", ""), "date": data.get("day", ""), "time": data.get("time", ""), "phone": phone})
+        return [
+            _msg(
+                f"Запись подтверждена! 🎉\n\n"
+                f"Ждем вас в «{name}». За сутки до визита бот пришлет вам напоминание и схему проезда.\n\n"
+                "До встречи! 🤍",
+                [("🔙 Вернуться в главное меню", "beauty:menu")],
+                remove_keyboard=True,
+            ),
+            _msg(
+                f"🔔 Новая запись\n\n"
+                f"Услуга: {service.get('title', '')}\n"
+                f"Дата: {data.get('day', '')} в {data.get('time', '')}\n"
+                f"Телефон: {phone}",
+                admin=True,
+            ),
+        ]
+    return [_msg("Выберите услугу:", [(s["label"], f"beauty:svc:{k}") for k, s in BEAUTY_SERVICES.items()])]
+
+
 def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
+    if bot["config"]["brief"].get("beauty_flow"):
+        return _beauty(bot, session, text, action)
+    return _booking_legacy(bot, session, text, action)
+
+
+def _booking_legacy(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     brief = bot["config"]["brief"]
     services = bot["config"]["services"]
     slots = bot["config"]["slots"]

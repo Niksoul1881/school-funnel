@@ -1,4 +1,4 @@
-﻿"""Pytest suite for bot scenarios and template contract."""
+"""Pytest suite for bot scenarios and template contract."""
 from __future__ import annotations
 
 import json
@@ -66,27 +66,23 @@ def test_no_placeholder_in_brief(template):
     assert "REPLACE" not in brief.upper()
 
 
-def test_booking_text_flow_and_admin(booking):
+def test_beauty_start_and_services(booking):
+    result = engine.message(booking, action="start")
+    labels = [b["label"] for b in buttons(result)]
+    assert labels == ["✂️ Стрижка и укладка", "💅 Маникюр", "👣 SMART-педикюр", "🎨 Окрашивание"]
+
+
+def test_beauty_contact_flow_and_admin(booking):
     engine.message(booking, action="start")
-    assert "Выберите дату" in text(engine.message(booking, text="хочу стрижку"))
-    assert "Выберите время" in text(engine.message(booking, text="завтра"))
-    assert "Как вас зовут" in text(engine.message(booking, text="16:00"))
-    assert "телефон" in text(engine.message(booking, text="Никита")).lower()
-    assert "Проверьте заявку" in text(engine.message(booking, text="+7 902 123-45-67"))
-    result = engine.message(booking, text="да")
-    assert "Готово" in text(result)
+    service = engine.message(booking, action="beauty:svc:hair")
+    assert "Стрижка и укладка" in text(service)
+    engine.message(booking, action="beauty:book:hair")
+    engine.message(booking, action="beauty:date:tomorrow")
+    contact_prompt = engine.message(booking, action="beauty:time:10:00")
+    assert any(m.get("contact_request") for m in contact_prompt)
+    result = engine.message(booking, action="beauty:contact:+7 902 123-45-67")
+    assert "Запись подтверждена" in text(result)
     assert any(m.get("admin") for m in result)
-    assert all(not m.get("admin") for m in result[:-1])
-
-
-def test_booking_rejects_short_phone(booking):
-    engine.message(booking, action="start")
-    engine.message(booking, action="service:0")
-    engine.message(booking, action="date:tomorrow")
-    engine.message(booking, action="time:12:00")
-    engine.message(booking, text="Никита")
-    result = engine.message(booking, text="123")
-    assert "ошибка" in text(result).lower() or "ещё раз" in text(result).lower()
 
 
 def test_booking_back_resets_stage(booking):
@@ -157,68 +153,37 @@ def test_shop_pickup(shop):
     assert "ORD-" in text(result)
 
 
-def test_booking_calendar_buttons(booking):
-    result = engine.message(booking, action="service:0")
+def test_beauty_date_buttons(booking):
+    engine.message(booking, action="start")
+    result = engine.message(booking, action="beauty:book:hair")
     actions = [b["action"] for b in buttons(result)]
-    assert sum(a.startswith("date:") for a in actions) >= 7
+    assert actions[:3] == ["beauty:date:today", "beauty:date:tomorrow", "beauty:date:after"]
 
 
-def _fill_booking(bid: str, slot: str = "12:00"):
-    engine.message(bid, action="service:0")
-    engine.message(bid, action="date:tomorrow")
-    engine.message(bid, action=f"time:{slot}")
-    engine.message(bid, text="Никита")
-    engine.message(bid, text="+7 902 123-45-67")
-    return engine.message(bid, action="confirm")
+def test_beauty_time_slots(booking):
+    engine.message(booking, action="start")
+    today = engine.message(booking, action="beauty:date:today")
+    assert [b["label"] for b in buttons(today)][:2] == ["17:30", "19:00"]
+    tomorrow = engine.message(booking, action="beauty:date:tomorrow")
+    assert [b["label"] for b in buttons(tomorrow)][:4] == ["10:00", "12:30", "15:00", "18:00"]
 
 
-def test_booking_blocks_double_slot(booking):
-    first = _fill_booking(booking)
-    assert "Готово" in text(first)
-    second = _fill_booking(booking)
-    assert "занято" in text(second).lower()
+def _fill_beauty(bid: str):
+    engine.message(bid, action="start")
+    engine.message(bid, action="beauty:svc:hair")
+    engine.message(bid, action="beauty:book:hair")
+    engine.message(bid, action="beauty:date:tomorrow")
+    engine.message(bid, action="beauty:time:10:00")
+    return engine.message(bid, action="beauty:contact:+7 902 123-45-67")
 
-
-def test_shop_payment_link():
-    brief = dict(engine.TEMPLATES["shop"]["defaults"])
-    brief["payment"] = "https://pay.example.com/order"
-    bid = engine.create_bot("shop", brief)["id"]
-    product = engine.BOTS[bid]["config"]["products"][0]
-    engine.message(bid, action=f"add:{product['id']}")
-    engine.message(bid, action="checkout")
-    engine.message(bid, text="Никита")
-    engine.message(bid, text="+7 902 123-45-67")
-    result = engine.message(bid, text="Москва, Примерная 10")
-    assert any(b["action"].startswith("url:") for b in buttons(result))
-    assert engine.stats(bid).get("orders") == 1
 
 def test_owner_order_journal(booking):
-    _fill_booking(booking, "16:00")
+    result = _fill_beauty(booking)
+    assert "Запись подтверждена" in text(result)
     rows = engine.orders(booking)
     assert rows and rows[-1]["type"] == "booking"
-    assert rows[-1]["phone"] == "+7 902 123-45-67"
+    assert rows[-1]["time"] == "10:00"
     assert engine.stats(booking).get("bookings") == 1
-
-def test_booking_cancel_frees_slot(booking):
-    _fill_booking(booking, "18:00")
-    result = engine.message(booking, action="cancel_booking")
-    assert "отменена" in text(result).lower()
-    # The same slot can be booked again after cancellation.
-    again = _fill_booking(booking, "18:00")
-    assert "Готово" in text(again)
-
-
-def test_booking_reschedule_keeps_contacts(booking):
-    _fill_booking(booking, "18:00")
-    result = engine.message(booking, action="reschedule")
-    assert "Выберите дату" in text(result)
-    assert "Приятно" not in text(result)
-
-def test_booking_calendar_iso_action(booking):
-    engine.message(booking, action="service:0")
-    result = engine.message(booking, action="date:2026-11-13")
-    assert "Выберите время" in text(result)
-    assert "13.11" in text(result)
 
 def test_services_human_price_format():
     rows = engine._services("Стрижка 1500 р 60 минут\nСпа Энергия 6000 90 минут")

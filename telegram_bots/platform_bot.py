@@ -25,6 +25,7 @@ from aiogram.types import (
     KeyboardButton,
     Message,
     ReplyKeyboardMarkup,
+    ReplyKeyboardRemove,
 )
 from dotenv import load_dotenv
 
@@ -326,6 +327,14 @@ def templates_kb():
 
 
 def reply_markup(message):
+    if message.get("contact_request"):
+        return ReplyKeyboardMarkup(
+            keyboard=[[KeyboardButton(text="📱 Отправить мой номер телефона", request_contact=True)]],
+            resize_keyboard=True,
+            one_time_keyboard=True,
+        )
+    if message.get("remove_keyboard"):
+        return ReplyKeyboardRemove()
     rows = []
     for row in message.get("button_rows") or []:
         line = []
@@ -576,6 +585,17 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
             contact = brief.get("contact", "владелец свяжется с вами")
             await message.answer(f"📞 {contact}")
         await message.answer("Меню бота 👇", reply_markup=tenant_menu(template))
+
+    @tenant_dp.message(F.contact)
+    async def contact(message: Message):
+        phone = message.contact.phone_number if message.contact else ""
+        await clear_ui(message.bot, message.chat.id)
+        await emit(
+            message.bot,
+            message.chat.id,
+            engine.message(bot_id, action=f"beauty:contact:{phone}"),
+            owner_tg_id,
+        )
 
     @tenant_dp.message(F.text)
     async def text(message: Message):
