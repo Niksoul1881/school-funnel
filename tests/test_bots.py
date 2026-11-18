@@ -101,9 +101,15 @@ def test_gift_has_channel_url_and_grants(gift):
     result = engine.message(gift, action="start")
     assert any(b["action"].startswith("url:") for b in buttons(result))
     granted = engine.message(gift, action="check")
-    assert "Спасибо за подписку" in text(granted)
+    assert "Проверка пройдена" in text(granted)
     assert any(b["action"].startswith("url:") for b in buttons(granted))
     assert any(m.get("admin") for m in granted)
+
+
+def test_gift_not_subscribed_branch(gift):
+    result = engine.message(gift, action="not_sub")
+    assert "не видит твоей подписки" in text(result)
+    assert any(b["action"] == "check" for b in buttons(result))
 
 
 def test_shop_showcase_and_prices(shop):

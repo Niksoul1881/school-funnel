@@ -1,4 +1,4 @@
-"""Local practice bench: three bot scenarios and brief-driven configuration."""
+﻿"""Local practice bench: three bot scenarios and brief-driven configuration."""
 from __future__ import annotations
 
 import os
@@ -80,9 +80,12 @@ TEMPLATES: dict[str, dict[str, Any]] = {
         ],
         "defaults": {
             "business_name": "Школа AI-агентов",
-            "channel": "https://t.me/platform_test_soulnik_bot",
-            "gift": "Гайд «5 ботов, которые можно продать» — https://example.com/gift",
-            "contact": "@soulnik",
+            "channel": "https://t.me/your_channel",
+            "gift": "https://t.me/your_constructor_bot",
+            "contact": "https://t.me/your_curator",
+            "form": "https://t.me/your_form",
+            "egor": "https://t.me/your_egor",
+            "funnel_flow": "1",
         },
     },
     "ai": {
@@ -340,15 +343,7 @@ def _start(bot: dict) -> list[dict]:
             _msg("Что вас интересует?", [(s["title"] + " · " + s["price"], f"service:{i}") for i, s in enumerate(services)]),
         ]
     if template == "gift":
-        channel = (brief.get("channel") or "").strip()
-        link = channel if channel.startswith("http") else f"https://t.me/{channel.lstrip('@')}"
-        buttons = [("✅ Я подписался", "check")]
-        if channel:
-            buttons.insert(0, ("📣 Подписаться", f"url:{link}"))
-        return [
-            _msg(f"Здравствуйте! Это {bot['name']}.\nПодпишитесь на канал и заберите подарок 🎁"),
-            _msg("Как только подпишетесь — нажмите кнопку ниже.", buttons),
-        ]
+        return _gift(bot, {"stage": "start", "data": {}}, "", "start")
     if template == "lead":
         services = bot["config"].get("services") or []
         return [
@@ -822,25 +817,53 @@ def _llm_answer(bot: dict, session: dict, text: str) -> str | None:
 
 def _gift(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     brief = bot["config"]["brief"]
-    lowered = (text or "").lower()
-    if action in ("check", "grant") or any(word in lowered for word in ("подписал", "готово", "получить", "забрать", "да")):
-        gift = brief.get("gift", "")
-        match = re.search(r"https?://\S+", gift)
-        buttons = [("🎁 Забрать подарок", f"url:{match.group(0)}")] if match else []
-        result = [_msg(
-            "🎁 Спасибо за подписку!\n\n"
-            f"{gift}\n\n"
-            f"Вопросы: {brief.get('contact', '')}",
-            buttons,
-        )]
+    channel = (brief.get("channel") or "https://t.me/your_channel").strip()
+    channel_url = channel if channel.startswith("http") else f"https://t.me/{channel.lstrip('@')}"
+    constructor = (brief.get("gift") or "https://t.me/your_constructor_bot").strip()
+    form = (brief.get("form") or "https://t.me/your_form").strip()
+    curator = (brief.get("contact") or "https://t.me/your_curator").strip()
+    if action in ("check", "grant"):
         _bump(bot["id"], "gifts")
-        _remember(bot["id"], {"type": "gift", "gift": gift, "user": session.get("user", "")})
-        result.append(_msg(f"🎁 Подарок выдан\nБот: {bot['name']}\nПользователь: @{session.get('user', '')}", admin=True))
-        return result
-    channel = (brief.get("channel") or "").strip()
-    link = channel if channel.startswith("http") else f"https://t.me/{channel.lstrip('@')}"
-    buttons = [("📣 Подписаться", f"url:{link}"), ("✅ Я подписался", "check")] if channel else [("✅ Я подписался", "check")]
-    return [_msg("Сначала подпишитесь на канал, потом нажмите «Я подписался».", buttons)]
+        _remember(bot["id"], {"type": "gift", "user": session.get("user", "")})
+        return [
+            _msg(
+                "Проверка пройдена! ✅ Добро пожаловать в комьюнити Школы ИИ-автоматизации.\n\n"
+                "Держи прямой доступ к нашему практическому тренажеру: 🛠\n"
+                f"Запустить конструктор ботов: 👉 {constructor}\n\n"
+                "💡 Маленький совет: начни со сборки шаблона «Студия красоты» — там зашита самая востребованная на рынке логика записи клиентов, за которую бизнес платит от 15 000 ₽.\n\n"
+                "И еще кое-что. Если ты хочешь не просто собирать ботов по шаблонам, а глубоко разобраться в ИИ-автоматизации, научиться интегрировать нейросети, CRM и выйти на стабильный доход в новой профессии — приходи на стратегический разбор. Мы посмотрим на твою текущую точку и составим пошаговый план развития.\n\n"
+                "Жми кнопку ниже, чтобы занять место 👇",
+                [
+                    ("🔥 Записаться на разбор", f"url:{form}"),
+                    ("💬 Задать вопрос куратору", f"url:{curator}"),
+                ],
+            ),
+            _msg(f"🔔 Подписка подтверждена\nБот: {bot['name']}\nПользователь: @{session.get('user', '')}", admin=True),
+        ]
+    if action == "not_sub":
+        return [_msg(
+            "Упс! 🫣 Система пока не видит твоей подписки. Возможно, Telegram немного тормозит.\n\n"
+            "Пожалуйста, подпишись на канал Школы ИИ-автоматизации, чтобы открыть доступ к тренажеру. Это займет всего пару секунд!",
+            [("👉 Подписаться на канал", f"url:{channel_url}"), ("🔄 Проверить подписку", "check")],
+        )]
+    if action in ("followup_2h", "followup_24h"):
+        if action == "followup_2h":
+            return [_msg(
+                "Привет! ✌️ Вижу, ты запустил бота, но так и не активировал конструктор для сборки ботов 🛠\n\n"
+                "Возможно, отвлекли дела или возникли трудности с подпиской. Просто подпишись на канал по кнопке ниже и нажми «Проверить подписку» — ссылка на тренажер сразу появится здесь!",
+                [("👉 Подписаться на канал", f"url:{channel_url}"), ("🔄 Проверить подписку", "check")],
+            )]
+        return [_msg(
+            "Привет! ✌️ Вчера бот отправил тебе ссылку на конструктор ботов от Школы ИИ-автоматизации.\n\n"
+            "Удалось затестить? Какого бота попробовал собрать первым? Буду рад обратной связи — можно написать прямо сюда, мне правда интересно, как всё прошло.\n\n"
+            "P.S. На этой неделе у наших кураторов появилось 2 свободных окна на личный стратегический разбор. Если хочешь понять, как монетизировать навыки создания ИИ-ботов в твоей ситуации — жми кнопку ниже, пока места еще есть 👇",
+            [("✍️ Поделиться результатом", f"url:{curator}"), ("🔥 Хочу на разбор", f"url:{form}")],
+        )]
+    return [_msg(
+        "Привет! 👋 Рад видеть тебя. Мы подготовили для тебя интерактивный тренажер по сборке ботов. Внутри — готовые шаблоны и пошаговые подсказки, с которыми ты соберешь рабочего бота для бизнеса или личного блога без навыков программирования.\n\n"
+        "Чтобы забрать инструмент, выполни одно простое условие: подпишись на наш авторский канал Школы ИИ-автоматизации 👇, возвращайся сюда и жми кнопку «Я подписался».",
+        [("👉 Подписаться на канал", f"url:{channel_url}"), ("✅ Я подписался", "check")],
+    )]
 
 
 def _lead(bot: dict, session: dict, text: str, action: str) -> list[dict]:
@@ -1272,6 +1295,7 @@ def message(bot_id: str, text: str = "", action: str = "") -> list[dict]:
     if bot["template"] == "ai":
         return _ai(bot, session, text, action)
     return _shop(bot, session, text, action)
+
 
 
 

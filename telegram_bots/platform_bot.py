@@ -39,6 +39,7 @@ OWNER_ID = os.getenv("OWNER_TG_ID", "").strip()
 TENANTS: dict[str, dict] = {}
 MY_BOTS: list[dict] = []
 TENANT_USERS: dict[str, set[int]] = {}
+GIFT_FOLLOWUPS: set[tuple[str, int]] = set()
 
 
 class JsonFSMStorage(BaseStorage):
@@ -485,7 +486,13 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
                     member = await call.bot.get_chat_member(channel, call.from_user.id)
                     status = getattr(member, "status", "")
                     if status not in ("member", "administrator", "creator"):
-                        await call.answer("Сначала подпишитесь на канал.", show_alert=True)
+                        await emit(
+                            call.message.bot,
+                            call.message.chat.id,
+                            engine.message(bot_id, action="not_sub"),
+                            owner_tg_id,
+                        )
+                        await call.answer()
                         return
                     action = "grant"
                 except Exception as exc:
@@ -493,6 +500,16 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
                     action = "grant"
         await call.answer()
         await emit(call.message.bot, call.message.chat.id, engine.message(bot_id, action=action), owner_tg_id)
+        if template == "gift" and action == "grant" and (bot_id, call.message.chat.id) not in GIFT_FOLLOWUPS:
+            GIFT_FOLLOWUPS.add((bot_id, call.message.chat.id))
+
+            async def followups():
+                await asyncio.sleep(2 * 60 * 60)
+                await emit(call.message.bot, call.message.chat.id, engine.message(bot_id, action="followup_2h"), owner_tg_id)
+                await asyncio.sleep(22 * 60 * 60)
+                await emit(call.message.bot, call.message.chat.id, engine.message(bot_id, action="followup_24h"), owner_tg_id)
+
+            asyncio.create_task(followups())
 
     @tenant_dp.message(Command("manage"))
     async def manage_cmd(message: Message):
@@ -619,17 +636,27 @@ SHOP_DESCRIPTION = (
     "Жмите «СТАРТ» внизу экрана, чтобы открыть меню 👇"
 )
 
+FUNNEL_DESCRIPTION = (
+    "🛠️ Интерактивный конструктор Telegram-ботов от Школы ИИ-автоматизации.\n\n"
+    "Здесь ты за 10 минут без единой строчки кода соберёшь своего первого рабочего бота по готовым шаблонам "
+    "(для бьюти-студии, магазина или автоворонки).\n\n"
+    "Никакой воды и спама — только практика. Жми «СТАРТ» внизу экрана, чтобы запустить тренажёр 👇"
+)
+
 
 async def apply_bot_profile(bot: Bot, template: str, brief: dict) -> None:
-    if template not in ("booking", "shop"):
+    if template not in ("booking", "shop", "gift"):
         return
     try:
         if template == "booking":
             await bot.set_my_description(description=BEAUTY_DESCRIPTION)
             await bot.set_my_short_description(short_description="Запись в студию красоты: услуги, цены и свободные окошки.")
-        else:
+        elif template == "shop":
             await bot.set_my_description(description=SHOP_DESCRIPTION)
             await bot.set_my_short_description(short_description="Авторские десерты «Крем & Ваниль»: витрина и заказ.")
+        else:
+            await bot.set_my_description(description=FUNNEL_DESCRIPTION)
+            await bot.set_my_short_description(short_description="Тренажёр по сборке Telegram-ботов за 10 минут.")
     except Exception as exc:
         print(f"profile setup error: {exc}")
 
