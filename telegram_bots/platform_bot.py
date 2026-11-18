@@ -612,13 +612,24 @@ BEAUTY_DESCRIPTION = (
     "Жмите «СТАРТ» (или /start) внизу экрана, чтобы начать! 👇"
 )
 
+SHOP_DESCRIPTION = (
+    "Добро пожаловать в студию авторских десертов «Крем & Ваниль» 🍰\n\n"
+    "Готовим нежные торты и пирожные из 100% натуральных ингредиентов без заменителей и лишнего сахара. "
+    "Здесь можно посмотреть актуальную витрину, собрать свой набор сладостей в корзину и оформить заказ за пару кликов.\n\n"
+    "Жмите «СТАРТ» внизу экрана, чтобы открыть меню 👇"
+)
+
 
 async def apply_bot_profile(bot: Bot, template: str, brief: dict) -> None:
-    if template != "booking":
+    if template not in ("booking", "shop"):
         return
     try:
-        await bot.set_my_description(description=BEAUTY_DESCRIPTION)
-        await bot.set_my_short_description(short_description="Запись в студию красоты: услуги, цены и свободные окошки.")
+        if template == "booking":
+            await bot.set_my_description(description=BEAUTY_DESCRIPTION)
+            await bot.set_my_short_description(short_description="Запись в студию красоты: услуги, цены и свободные окошки.")
+        else:
+            await bot.set_my_description(description=SHOP_DESCRIPTION)
+            await bot.set_my_short_description(short_description="Авторские десерты «Крем & Ваниль»: витрина и заказ.")
     except Exception as exc:
         print(f"profile setup error: {exc}")
 

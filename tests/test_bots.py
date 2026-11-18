@@ -106,51 +106,40 @@ def test_gift_has_channel_url_and_grants(gift):
     assert any(m.get("admin") for m in granted)
 
 
-def test_shop_has_prices_with_currency(shop):
-    result = engine.message(shop, action="cat:Все")
-    cards = [m for m in result if "₽" in m.get("text", "")]
-    assert cards
+def test_shop_showcase_and_prices(shop):
+    result = engine.message(shop, action="start")
+    labels = [b["label"] for b in buttons(result)]
+    assert labels[:4] == ["🍯 Медовик", "❤️ Красный бархат", "🍬 Набор макарон", "✨ Корпусные десерты"]
 
 
-def test_shop_search_and_cart(shop):
-    engine.message(shop, action="start")
-    product = engine.BOTS[shop]["config"]["products"][0]
-    assert product["title"] in text(engine.message(shop, text=product["title"]))
-    engine.message(shop, action=f"add:{product['id']}")
-    cart = engine.message(shop, action="cart")
-    assert product["title"] in text(cart)
-    assert "Итого" in text(cart)
-    assert any(b["action"].startswith("qty:+") for b in buttons(cart))
+def test_shop_product_card(shop):
+    result = engine.message(shop, action="shop:product:1")
+    assert "Классический Медовик" in text(result)
+    assert "2 600 ₽" in text(result)
+    assert any(b["action"] == "shop:add:1" for b in buttons(result))
 
 
-def test_shop_quantity_and_remove(shop):
-    product = engine.BOTS[shop]["config"]["products"][0]
-    engine.message(shop, action=f"add:{product['id']}")
-    assert "× 2" in text(engine.message(shop, action=f"qty:+{product['id']}"))
-    assert "× 1" in text(engine.message(shop, action=f"qty:-{product['id']}"))
-    assert "пустая" in text(engine.message(shop, action=f"remove:{product['id']}")).lower()
+def test_shop_add_and_cart(shop):
+    result = engine.message(shop, action="shop:add:1")
+    assert "«Медовик» добавлен" in text(result)
+    cart = engine.message(shop, action="shop:cart")
+    assert "Медовик" in text(cart)
+    assert "2 600 ₽" in text(cart)
+    assert any(b["action"] == "shop:checkout" for b in buttons(cart))
 
 
-def test_shop_checkout_requires_address(shop):
-    product = engine.BOTS[shop]["config"]["products"][0]
-    engine.message(shop, action=f"add:{product['id']}")
-    engine.message(shop, action="checkout")
-    engine.message(shop, text="Никита")
-    engine.message(shop, text="+7 902 123-45-67")
-    result = engine.message(shop, text="Москва, Примерная 10")
-    assert "ORD-" in text(result)
+def test_shop_checkout_contact(shop):
+    engine.message(shop, action="shop:add:1")
+    prompt = engine.message(shop, action="shop:checkout")
+    assert "номер телефона" in text(prompt)
+    result = engine.message(shop, text="+7 999 123-45-67, на субботу к 15:00")
+    assert "Заказ принят" in text(result)
     assert any(m.get("admin") for m in result)
 
 
-def test_shop_pickup(shop):
-    product = engine.BOTS[shop]["config"]["products"][0]
-    engine.message(shop, action=f"add:{product['id']}")
-    engine.message(shop, action="checkout")
-    engine.message(shop, text="Никита")
-    engine.message(shop, text="+7 902 123-45-67")
-    result = engine.message(shop, action="pickup")
-    assert "Самовывоз" in text(result)
-    assert "ORD-" in text(result)
+def test_shop_empty_cart(shop):
+    result = engine.message(shop, action="shop:cart")
+    assert "пуста" in text(result).lower()
 
 
 def test_beauty_date_buttons(booking):

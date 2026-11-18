@@ -123,6 +123,7 @@ TEMPLATES: dict[str, dict[str, Any]] = {
             "delivery": "Самовывоз: Москва, ул. Примерная, 10\nДоставка по Москве: 500 ₽, от 5 000 ₽ — бесплатно",
             "contact": "@miod_dom",
             "payment": "",
+            "shop_flow": "1",
         },
     },
 }
@@ -361,6 +362,8 @@ def _start(bot: dict) -> list[dict]:
             _msg("Можно начать с частого вопроса:", [(f["q"], f"q:{i}") for i, f in enumerate(faq[:3])] + [("Связаться", "contact")]),
         ]
     products = bot["config"]["products"]
+    if bot["config"]["brief"].get("shop_flow"):
+        return _shop_new(bot, {"stage": "start", "data": {}}, "", "start")
     cats = ["Все"] + bot["config"]["categories"]
     buttons = [(c, f"cat:{c}") for c in cats]
     buttons += [(p["title"] + " · " + p["price"], f"product:{p['id']}") for p in products[:2]]
@@ -978,7 +981,146 @@ def _cart_msg(bot: dict, cart: dict) -> list[dict]:
     )]
 
 
+SHOP_CATALOG = [
+    {
+        "id": 1,
+        "title": "Медовик",
+        "label": "🍯 Медовик",
+        "price": "2 600 ₽",
+        "text": "Классический Медовик с заварным кремом 🍯\nТонкие ароматные медовые коржи, пропитанные нежным сметанно-заварным кремом с легкой кислинкой. Тает во рту и совсем не приторный.\n\n⚖️ Вес: 1,2 кг (на 6–8 персон)\n💰 Стоимость: 2 600 ₽",
+        "image": "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=1200&q=85&auto=format&fit=crop",
+    },
+    {
+        "id": 2,
+        "title": "Красный бархат",
+        "label": "❤️ Красный бархат",
+        "price": "3 100 ₽",
+        "text": "Торт «Красный бархат» с ягодным конфи ❤️\nВлажные шоколадно-сливочные коржи бархатного цвета, воздушный крем-чиз на сливках и прослойка из свежей малины.\n\n⚖️ Вес: 1,4 кг (на 8–10 персон)\n💰 Стоимость: 3 100 ₽",
+        "image": "https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?w=1200&q=85&auto=format&fit=crop",
+    },
+    {
+        "id": 3,
+        "title": "Набор макарон",
+        "label": "🍬 Набор макарон",
+        "price": "1 450 ₽",
+        "text": "Подарочный набор макарон (9 шт.) 🍬\nХрустящая миндальная корочка и насыщенные начинки: соленая карамель, фисташка-малина и бельгийский шоколад. Идеально к кофе или в подарок.\n\n📦 Упаковка: фирменная коробка с атласной лентой\n💰 Стоимость: 1 450 ₽",
+        "image": "https://images.unsplash.com/photo-1558326567-98ae2405596b?w=1200&q=85&auto=format&fit=crop",
+    },
+    {
+        "id": 4,
+        "title": "Корпусные десерты",
+        "label": "✨ Корпусные десерты",
+        "price": "1 800 ₽",
+        "text": "Набор корпусных пирожных (4 шт.) ✨\nНевесомый мусс в тонком корпусе из бельгийского шоколада с яркой фруктовой начинкой (манго-маракуйя и вишня-боб тонка). Выглядят как арт-объект.\n\n📦 В наборе: 4 авторских пирожных\n💰 Стоимость: 1 800 ₽",
+        "image": "https://images.unsplash.com/photo-1571115177098-24ec42ed204d?w=1200&q=85&auto=format&fit=crop",
+    },
+]
+
+
+def _price_num(value: str) -> int:
+    return int(re.sub(r"\D", "", value or "") or 0)
+
+
+def _money(value: int) -> str:
+    return f"{value:,}".replace(",", " ")
+
+
+def _shop_cart(bot: dict, cart: dict) -> list[dict]:
+    by_id = {p["id"]: p for p in SHOP_CATALOG}
+    if not cart:
+        return [_msg(
+            "Ваша корзина пока пуста 🧁 Загляните на нашу витрину и добавьте десерты, которые хотите попробовать!",
+            [("🔙 Вернуться на витрину", "shop:start")],
+        )]
+    lines = [f"{i}. {by_id[int(pid)]['title']} — {by_id[int(pid)]['price']}" for i, (pid, qty) in enumerate(cart.items(), 1)]
+    total = sum(_price_num(by_id[int(pid)]["price"]) * qty for pid, qty in cart.items())
+    return [_msg(
+        "🛒 Ваш заказ в «Крем & Ваниль»:\n\n" + "\n".join(lines) +
+        f"\n\n💰 Итого к оплате: {_money(total)} ₽\n\nВсё верно? Нажмите «Оформить заказ», чтобы указать контакты и дату доставки 👇",
+        [("✅ Оформить заказ", "shop:checkout"), ("➕ Добавить еще десерты", "shop:start"), ("🗑 Очистить корзину", "shop:clear")],
+    )]
+
+
+def _shop_new(bot: dict, session: dict, text: str, action: str) -> list[dict]:
+    brief = bot["config"]["brief"]
+    data = session.setdefault("data", {})
+    cart = data.setdefault("cart", {})
+    contact = (brief.get("contact") or "@admin").strip()
+    contact_url = contact if contact.startswith("http") else f"https://t.me/{contact.lstrip('@')}"
+    if action in ("shop:start", "start"):
+        session["stage"] = "menu"
+        return [_msg(
+            "Привет! 👋 Рады видеть вас в «Крем & Ваниль». Каждый наш десерт собирается вручную в день выдачи — только фермерские сливки, бельгийский шоколад и свежие ягоды.\n\n"
+            "Выберите десерт ниже, чтобы посмотреть состав и добавить его в корзину 👇",
+            [(p["label"], f"shop:product:{p['id']}") for p in SHOP_CATALOG] +
+            [("🛒 Перейти к оформлению", "shop:cart"), ("💬 Задать вопрос кондитеру", f"url:{contact_url}")],
+        )]
+    if action.startswith("shop:product:"):
+        pid = int(action.split(":")[-1])
+        product = next((p for p in SHOP_CATALOG if p["id"] == pid), None)
+        if not product:
+            return _shop_new(bot, session, "", "shop:start")
+        session["stage"] = "product"
+        return [_msg(product["text"], [("➕ В корзину", f"shop:add:{pid}"), ("🛒 Перейти к оформлению", "shop:cart"), ("🔙 Назад к витрине", "shop:start")], image=product["image"])]
+    if action.startswith("shop:add:"):
+        pid = int(action.split(":")[-1])
+        product = next((p for p in SHOP_CATALOG if p["id"] == pid), None)
+        if not product:
+            return _shop_new(bot, session, "", "shop:start")
+        cart[str(pid)] = cart.get(str(pid), 0) + 1
+        count = sum(cart.values())
+        total = sum(_price_num(next(p for p in SHOP_CATALOG if p["id"] == int(k))["price"]) * qty for k, qty in cart.items())
+        return [_msg(
+            f"✅ «{product['title']}» добавлен в корзину! Сейчас в вашей корзине: {count} шт. на сумму {_money(total)} ₽.\n\n"
+            "Хотите добавить к заказу еще что-нибудь вкусное или переходим к оформлению?",
+            [("🛍 Добавить еще десерты", "shop:start"), ("🛒 Перейти к оформлению", "shop:cart")],
+        )]
+    if action == "shop:cart":
+        session["stage"] = "cart"
+        return _shop_cart(bot, cart)
+    if action == "shop:clear":
+        data["cart"] = {}
+        session["stage"] = "menu"
+        return _shop_new(bot, session, "", "shop:start")
+    if action == "shop:checkout":
+        if not cart:
+            return _shop_cart(bot, cart)
+        session["stage"] = "contact"
+        return [_msg(
+            "Почти готово! 📝\n\nНапишите в одном ответном сообщении ваш номер телефона и желаемую дату доставки / самовывоза 👇\n(Например: +7 999 123-45-67, на субботу к 15:00)",
+            [("❌ Отменить и вернуться в корзину", "shop:cart")],
+        )]
+    if session.get("stage") == "contact" and text:
+        lines = [f"• {next(p for p in SHOP_CATALOG if p['id'] == int(pid))['title']} × {qty} — {next(p for p in SHOP_CATALOG if p['id'] == int(pid))['price']}" for pid, qty in cart.items()]
+        total = sum(_price_num(next(p for p in SHOP_CATALOG if p["id"] == int(pid))["price"]) * qty for pid, qty in cart.items())
+        _bump(bot["id"], "orders")
+        _remember(bot["id"], {"type": "order", "order_id": "CONFECTIONERY", "items": lines, "total": total, "phone": text})
+        data["cart"] = {}
+        session["stage"] = "done"
+        return [
+            _msg(
+                "Спасибо! Заказ принят ✅\n\n🧁 Состав заказа:\n" + "\n".join(lines) +
+                f"\n\n💰 Сумма: {_money(total)} ₽\n📞 Ваши данные: {text}\n\n"
+                "Кондитер уже получил вашу заявку и свяжется с вами в ближайшие 15 минут для подтверждения и уточнения деталей.",
+                [("🔙 Вернуться на витрину", "shop:start")],
+                remove_keyboard=True,
+            ),
+            _msg(
+                "🔔 Новый заказ «Крем & Ваниль»\n\n" + "\n".join(lines) +
+                f"\nИтого: {_money(total)} ₽\nКонтакт и дата: {text}",
+                admin=True,
+            ),
+        ]
+    return _shop_new(bot, session, "", "shop:start")
+
+
 def _shop(bot: dict, session: dict, text: str, action: str) -> list[dict]:
+    if bot["config"]["brief"].get("shop_flow"):
+        return _shop_new(bot, session, text, action)
+    return _shop_legacy(bot, session, text, action)
+
+
+def _shop_legacy(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     brief = bot["config"]["brief"]
     products = bot["config"]["products"]
     by_id = {p["id"]: p for p in products}
@@ -1130,6 +1272,9 @@ def message(bot_id: str, text: str = "", action: str = "") -> list[dict]:
     if bot["template"] == "ai":
         return _ai(bot, session, text, action)
     return _shop(bot, session, text, action)
+
+
+
 
 
 
