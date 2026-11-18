@@ -1,4 +1,4 @@
-"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
+﻿"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
 from __future__ import annotations
 
 import asyncio
@@ -40,6 +40,7 @@ TENANTS: dict[str, dict] = {}
 MY_BOTS: list[dict] = []
 TENANT_USERS: dict[str, set[int]] = {}
 GIFT_FOLLOWUPS: set[tuple[str, int]] = set()
+GIFT_TASKS: dict[tuple[str, int], asyncio.Task] = {}
 
 
 class JsonFSMStorage(BaseStorage):
@@ -419,6 +420,22 @@ async def emit(bot: Bot, chat_id: int, replies: list[dict], admin_chat_id: int =
     save_engine_state()
 
 
+def schedule_gift_followup(bot: Bot, bot_id: str, chat_id: int, owner_id: int, delay: int, action: str) -> None:
+    key = (bot_id, chat_id)
+    old = GIFT_TASKS.get(key)
+    if old and not old.done():
+        old.cancel()
+
+    async def worker():
+        try:
+            await asyncio.sleep(delay)
+            await emit(bot, chat_id, engine.message(bot_id, action=action), owner_id)
+        finally:
+            GIFT_TASKS.pop(key, None)
+
+    GIFT_TASKS[key] = asyncio.create_task(worker())
+
+
 def tenant_menu(template: str) -> ReplyKeyboardMarkup:
     if template == "shop":
         rows = [[KeyboardButton(text="🛍 Каталог"), KeyboardButton(text="🛒 Корзина")], [KeyboardButton(text="🚀 Старт"), KeyboardButton(text="📞 Связаться")]]
@@ -450,6 +467,8 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
         except Exception:
             pass
         await emit(message.bot, message.chat.id, engine.message(bot_id, action="start"), owner_tg_id)
+        if template == "gift" and (bot_id, message.chat.id) not in GIFT_FOLLOWUPS:
+            schedule_gift_followup(message.bot, bot_id, message.chat.id, owner_tg_id, 2 * 60 * 60, "followup_2h")
         await message.answer("Меню бота 👇", reply_markup=tenant_menu(template))
         if message.from_user.id == owner_tg_id:
             await message.answer("⚙️ Цены и услуги: /manage")
@@ -500,16 +519,9 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
                     action = "grant"
         await call.answer()
         await emit(call.message.bot, call.message.chat.id, engine.message(bot_id, action=action), owner_tg_id)
-        if template == "gift" and action == "grant" and (bot_id, call.message.chat.id) not in GIFT_FOLLOWUPS:
+        if template == "gift" and action == "grant":
             GIFT_FOLLOWUPS.add((bot_id, call.message.chat.id))
-
-            async def followups():
-                await asyncio.sleep(2 * 60 * 60)
-                await emit(call.message.bot, call.message.chat.id, engine.message(bot_id, action="followup_2h"), owner_tg_id)
-                await asyncio.sleep(22 * 60 * 60)
-                await emit(call.message.bot, call.message.chat.id, engine.message(bot_id, action="followup_24h"), owner_tg_id)
-
-            asyncio.create_task(followups())
+            schedule_gift_followup(call.message.bot, bot_id, call.message.chat.id, owner_tg_id, 24 * 60 * 60, "followup_24h")
 
     @tenant_dp.message(Command("manage"))
     async def manage_cmd(message: Message):
@@ -638,9 +650,9 @@ SHOP_DESCRIPTION = (
 
 FUNNEL_DESCRIPTION = (
     "🛠️ Интерактивный конструктор Telegram-ботов от Школы ИИ-автоматизации.\n\n"
-    "Здесь ты за 10 минут без единой строчки кода соберёшь своего первого рабочего бота по готовым шаблонам "
+    "Здесь ты за 10 минут без единой строчки кода соберешь своего первого рабочего бота по готовым шаблонам "
     "(для бьюти-студии, магазина или автоворонки).\n\n"
-    "Никакой воды и спама — только практика. Жми «СТАРТ» внизу экрана, чтобы запустить тренажёр 👇"
+    "Никакой воды и спама — только практика. Жми «СТАРТ» внизу экрана, чтобы запустить тренажер 👇"
 )
 
 
@@ -1149,6 +1161,7 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 
