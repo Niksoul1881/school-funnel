@@ -346,7 +346,45 @@ GIFT_PROMPTS = {
 }
 
 
+
+_DOC_STEPS = {}
+
+def doc_step(template: str, index: int) -> str:
+    if not _DOC_STEPS:
+        path = ROOT / "docs" / "source" / "bots" / "БОТ Конструктор.txt"
+        try:
+            _DOC_STEPS["text"] = path.read_text(encoding="utf-8")
+        except Exception:
+            _DOC_STEPS["text"] = ""
+    text = _DOC_STEPS.get("text", "")
+    if not text:
+        return ""
+    markers = {
+        "booking": "ВЕТКА «СТУДИЯ КРАСОТЫ»",
+        "gift": "ВЕТКА «ПОДАРОК ЗА ПОДПИСКУ»",
+        "shop": "ВЕТКА «ВИТРИНА ТОВАРОВ»",
+    }
+    marker = markers.get(template, "")
+    start = text.find(marker)
+    if start < 0:
+        return ""
+    nxt = text.find("⬇️ ВЕТКА", start + 1)
+    branch = text[start:nxt if nxt > 0 else len(text)]
+    needle = f"Шаг {index + 1} из"
+    at = branch.find(needle)
+    if at < 0:
+        return ""
+    end = branch.find("Кнопка (Inline):", at)
+    if end < 0:
+        end = branch.find(f"Шаг {index + 2} из", at)
+    if end < 0:
+        end = len(branch)
+    return branch[at:end].strip()
+
 def field_prompt(template: str, index: int) -> str:
+    exact = doc_step(template, index)
+    if exact:
+        return exact
     fields = builder_fields(template)
     field = fields[index]
     icon = FIELD_EMOJI.get(field["key"], "✏️")
@@ -419,7 +457,22 @@ async def go_back(message: Message, state: FSMContext) -> None:
 async def show_summary(message: Message, state: FSMContext, template: str) -> None:
     data = await state.get_data()
     brief = data.get("brief", {})
-    lines = [f"🏢 Проект: {brief.get('business_name', '—')}"]
+    fields = builder_fields(template)
+    summary_index = next((i for i, f in enumerate(fields) if f["key"] == "summary"), len(fields) - 1)
+    text = field_prompt(template, summary_index)
+    replacements = {
+        "{Название}": brief.get("business_name", "—"),
+        "{Загружено / Шаблон}": "Загружено" if brief.get("photo") else "Шаблон",
+        "{Кол-во}": str(len(brief.get("services", "").split(",")) if brief.get("services") else 0),
+        "{Окошки}": brief.get("slots", "—"),
+        "{Юзернейм}": brief.get("contact", "—"),
+        "{Адрес}": brief.get("confirmation", "—"),
+        "{Канал}": brief.get("channel", "—"),
+        "{Обложка}": "Загружено" if brief.get("photo") else "Шаблон",
+    }
+    for key, value in replacements.items():
+        text = text.replace(key, value)
+    lines = [text]
     if "photo" in brief:
         lines.append(f"🖼 Фото: {'загружено' if brief.get('photo') else 'шаблон'}")
     if template == "booking":
@@ -444,13 +497,8 @@ async def show_summary(message: Message, state: FSMContext, template: str) -> No
         [InlineKeyboardButton(text="✅ Всё супер, публикуем!", callback_data="summary:publish")],
         [InlineKeyboardButton(text="✏️ Редактировать", callback_data="summary:edit")],
     ])
-    opening = (
-        "🔍 <b>Отличная работа! Давай проверим, всё ли мы собрали правильно:</b>"
-        if template == "booking"
-        else "🔍 <b>Проверка данных</b>"
-    )
     sent = await message.answer(
-        opening + "\n\n" + "\n".join(lines) + "\n\nВсё верно? Если где-то опечатка, жми «Редактировать».",
+        "\n".join(lines),
         parse_mode="HTML",
         reply_markup=markup,
     )
