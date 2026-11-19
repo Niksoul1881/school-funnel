@@ -1086,8 +1086,12 @@ async def fill_field(message: Message, state: FSMContext):
     await ask_next_field(message, state)
 
 
-@dp.message(Build.product_photo, F.photo)
+@dp.message(F.photo)
 async def product_photo(message: Message, state: FSMContext):
+    current = await state.get_state()
+    leaf = str(getattr(current, "state", current) or "").split(":")[-1]
+    if leaf not in ("product_photo", "product_title", "product_price", "product_desc", "product_category"):
+        return
     photo = message.photo[-1]
     is_group = bool(message.media_group_id)
     if not is_group:
@@ -1239,6 +1243,20 @@ async def product_title(message: Message, state: FSMContext):
     value = (message.text or "").strip()
     if value.lower().startswith("/start"):
         await start(message, state)
+        return
+    if re.search(r"\d", value):
+        data = await state.get_data()
+        card = _card_line(value, data.get("pending_image", ""))
+        parts = [part.strip() for part in card.split("|")]
+        products = list(data.get("shop_products", []))
+        products.append(card)
+        await state.update_data(shop_products=products, pending_image="")
+        await state.set_state(Build.product_photo)
+        await message.answer(
+            f"✅ Принято: «{html.escape(parts[0])}» за {html.escape(parts[1])}.\n\n"
+            "Пришли фото следующего товара или напиши «Готово».",
+            parse_mode="HTML",
+        )
         return
     if not value:
         await message.answer("Напиши название товара.")
