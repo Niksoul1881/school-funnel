@@ -525,7 +525,7 @@ def _beauty(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     data = session.setdefault("data", {})
     services = BEAUTY_SERVICES
     configured = bot["config"].get("services") or []
-    if len(configured) >= 4:
+    if configured and brief.get("services") != "Стрижка, Окрашивание, Маникюр":
         services = {
             str(i): {
                 "label": item.get("title", "Услуга"),
