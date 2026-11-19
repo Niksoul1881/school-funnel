@@ -345,10 +345,10 @@ async def ask_next_field(message: Message, state: FSMContext) -> None:
         remember_ui(message.bot, message.chat.id, sent)
         return
     await state.set_state(Build.fields)
-    markup = InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="🪄 Оставить готовый шаблон", callback_data="field:skip"),
-        InlineKeyboardButton(text="🔙 Назад", callback_data="field:back"),
-    ]])
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🪄 Оставить готовый шаблон", callback_data="field:skip")],
+        [InlineKeyboardButton(text="🔙 Назад", callback_data="field:back")],
+    ])
     sent = await message.answer(field_prompt(template, index), parse_mode="HTML", reply_markup=markup)
     remember_ui(message.bot, message.chat.id, sent)
 
@@ -939,10 +939,10 @@ async def choose_template(call: CallbackQuery, state: FSMContext):
     await state.set_state(Build.fields)
     meta = engine.TEMPLATES[template]
     await clear_ui(call.message.bot, call.message.chat.id)
-    markup = InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="🪄 Оставить готовый шаблон", callback_data="field:skip"),
-        InlineKeyboardButton(text="🔙 Назад", callback_data="field:back"),
-    ]])
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🪄 Оставить готовый шаблон", callback_data="field:skip")],
+        [InlineKeyboardButton(text="🔙 Назад", callback_data="field:back")],
+    ])
     sent = await call.message.answer(
         f"{meta['icon']} <b>{html.escape(meta['name'])}</b>\n\n"
         f"{html.escape(meta.get('welcome') or '')}\n\n"
