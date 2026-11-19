@@ -456,8 +456,8 @@ async def ask_next_field(message: Message, state: FSMContext) -> None:
     if field["key"] == "services":
         await state.set_state(Build.services_menu)
         sent = await message.answer(
-            "📋 <b>Наполнение услугами</b>\n\n"
-            "Добавляй услуги по одной: название, цена, описание. Или возьми готовые 4 услуги.",
+            field_prompt("booking", index),
+            parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                 [InlineKeyboardButton(text="➕ Добавить услугу", callback_data="service:add")],
                 [InlineKeyboardButton(text="🪄 Оставить готовый шаблон", callback_data="service:skip")],
