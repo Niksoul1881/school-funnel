@@ -100,6 +100,11 @@ class JsonFSMStorage(BaseStorage):
 
 dp = Dispatcher(storage=JsonFSMStorage(ROOT / "private" / "fsm_state.json"))
 
+
+@dp.message(CommandStart())
+async def priority_start(message: Message, state: FSMContext):
+    await start(message, state)
+
 MENU_START = "🚀 Старт"
 MENU_BUILD = "🛠 Собрать бота"
 MENU_MY = "📦 Мои боты"
