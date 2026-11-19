@@ -1310,7 +1310,7 @@ async def skip_field(call: CallbackQuery, state: FSMContext):
         return
     template = data["template"]
     index = int(data.get("index", 0))
-    fields = engine.TEMPLATES[template]["fields"]
+    fields = builder_fields(template)
     if index >= len(fields):
         await call.answer()
         return
