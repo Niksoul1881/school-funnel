@@ -1334,12 +1334,24 @@ async def choose_template(call: CallbackQuery, state: FSMContext):
     meta = engine.TEMPLATES[template]
     await clear_ui(call.message.bot, call.message.chat.id)
     markup = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🪄 Оставить готовый шаблон", callback_data="field:skip")],
+        [InlineKeyboardButton(
+            text="🪄 Оставить готовый шаблон (Marina Beauty Space)" if template == "booking" else "🪄 Оставить готовый шаблон",
+            callback_data="field:skip",
+        )],
         [InlineKeyboardButton(text="🔙 Назад", callback_data="field:back")],
     ])
+    mini = (
+        "\n\n💡 <b>Мини-правило перед стартом (важно!):</b> Ты можешь собрать этого бота двумя способами:\n"
+        "1️⃣ Под свой проект — тогда на каждом шаге пиши свои тексты и ссылки.\n"
+        "2️⃣ На базе готового шаблона — тогда на каждом шаге нажимай «🪄 Оставить готовый шаблон».\n\n"
+        "Пожалуйста, не миксуй оба варианта! Внутри готового шаблона все сообщения жестко связаны по смыслу. "
+        "Если часть взять из шаблона, а часть написать от себя — картинка не сложится. Выбирай один путь и иди по нему до конца 👇"
+    )
     sent = await call.message.answer(
         f"{meta['icon']} <b>{html.escape(meta['name'])}</b>\n\n"
-        f"{html.escape(meta.get('welcome') or '')}\n\n"
+        f"{html.escape(meta.get('welcome') or '')}"
+        + mini
+        + "\n\n"
         + field_prompt(template, 0),
         parse_mode="HTML",
         reply_markup=markup,
