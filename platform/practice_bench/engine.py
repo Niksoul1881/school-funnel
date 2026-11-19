@@ -1176,7 +1176,10 @@ def _shop_new(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     if action in ("shop:start", "start"):
         session["stage"] = "menu"
         is_cafe = "крем" in name.lower()
-        if is_cafe:
+        greeting = (brief.get("greeting") or "").strip()
+        if greeting:
+            intro = greeting
+        elif is_cafe:
             intro = (
                 f"Привет! 👋 Рады видеть вас в «{name}». Каждый наш десерт собирается вручную в день выдачи — только фермерские сливки, бельгийский шоколад и свежие ягоды.\n\n"
                 "Выберите десерт ниже, чтобы посмотреть состав и добавить его в корзину 👇"
@@ -1188,6 +1191,7 @@ def _shop_new(bot: dict, session: dict, text: str, action: str) -> list[dict]:
                 "Выберите товар ниже, чтобы посмотреть описание и добавить его в корзину 👇"
             )
             contact_label = "💬 Задать вопрос менеджеру"
+        contact_label = "💬 Задать вопрос кондитеру" if is_cafe else "💬 Задать вопрос менеджеру"
         return [_msg(
             intro,
             [(p["label"], f"shop:product:{p['id']}") for p in catalog] +
