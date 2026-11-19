@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import html
 import json
+import re
 import time
 import os
 import sys
@@ -1141,6 +1142,60 @@ async def product_batch(message: Message, state: FSMContext):
     await message.answer(
         f"✅ Добавил {len(images)} товаров.\n\n"
         "Пришли ещё фото или напиши «Готово»."
+    )
+
+
+@dp.message(Build.product_photo, F.text)
+async def products_done_or_text(message: Message, state: FSMContext):
+    value = (message.text or "").strip()
+    if value.lower().startswith("/start"):
+        await start(message, state)
+        return
+    data = await state.get_data()
+    products = list(data.get("shop_products", []))
+    if value.lower() in ("готово", "хватит", "всё", "все", "/skip", "пропустить"):
+        if not products:
+            await state.set_state(Build.product_photo)
+            await message.answer(
+                "⚠️ Пока нет ни одного товара.\n\n"
+                "Пришли фото с подписью:\n"
+                "<code>Название | Цена | Описание | Категория</code>\n\n"
+                "Или сначала фото, потом я спрошу по шагам.",
+                parse_mode="HTML",
+            )
+            return
+        brief = dict(data.get("brief", {}))
+        brief["products"] = "\n".join(products)
+        await state.update_data(brief=brief, index=2)
+        await state.set_state(Build.fields)
+        await message.answer(f"✅ Принято товаров: {len(products)}. Дальше — доставка.")
+        await ask_next_field(message, state)
+        return
+    if "|" in value:
+        image = data.get("pending_image", "")
+        products.append(_card_line(value, image))
+        await state.update_data(shop_products=products, pending_image="")
+        await message.answer(
+            f"✅ Принято: {len(products)} товар(ов).\n\n"
+            "Пришли фото следующего товара с подписью или напиши «Готово»."
+        )
+        return
+    loose = value.split(maxsplit=2)
+    if len(loose) >= 2 and re.search(r"\d", loose[1]):
+        line = " | ".join([loose[0], loose[1], loose[2] if len(loose) > 2 else "", "Другое"])
+        products.append(_card_line(line, data.get("pending_image", "")))
+        await state.update_data(shop_products=products, pending_image="")
+        await message.answer(
+            f"✅ Принято: «{html.escape(loose[0])}» за {html.escape(loose[1])}.\n\n"
+            "Пришли фото следующего товара или напиши «Готово».",
+            parse_mode="HTML",
+        )
+        return
+    await message.answer(
+        "Не понял карточку. Пришли фото и подпись в формате:\n"
+        "<code>Название | Цена | Описание | Категория</code>\n\n"
+        "Например: <code>Медовик | 2600 | медовые коржи | Торты</code>",
+        parse_mode="HTML",
     )
 
 
