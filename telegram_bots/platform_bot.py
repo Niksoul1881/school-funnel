@@ -357,6 +357,7 @@ class Build(StatesGroup):
     template = State()
     fields = State()
     product_photo = State()
+    product_batch = State()
     product_title = State()
     product_price = State()
     product_desc = State()
@@ -367,6 +368,52 @@ class Build(StatesGroup):
 
 UPLOADS = ROOT / "platform" / "static" / "uploads"
 UPLOADS.mkdir(parents=True, exist_ok=True)
+BATCH_TASKS: dict[int, asyncio.Task] = {}
+
+
+def _card_line(line: str, image: str) -> str:
+    parts = [part.strip() for part in line.split("|")]
+    title = parts[0] if parts and parts[0] else "Товар"
+    price = parts[1] if len(parts) > 1 and parts[1] else "по запросу"
+    desc = parts[2] if len(parts) > 2 else ""
+    category = parts[3] if len(parts) > 3 and parts[3] else "Другое"
+    return f"{title} | {price} | {desc} | {category} | 🛍 | {image}"
+
+
+def _schedule_batch(bot: Bot, chat_id: int, state: FSMContext) -> None:
+    old = BATCH_TASKS.get(chat_id)
+    if old and not old.done():
+        old.cancel()
+
+    async def worker():
+        await asyncio.sleep(1.5)
+        data = await state.get_data()
+        images = list(data.get("batch_images", []))
+        if not images:
+            return
+        caption = (data.get("batch_caption") or "").strip()
+        lines = [line.strip() for line in caption.splitlines() if line.strip()]
+        if len(lines) == len(images) and len(images) > 1:
+            products = list(data.get("shop_products", []))
+            products.extend(_card_line(line, image) for line, image in zip(lines, images))
+            await state.update_data(shop_products=products, batch_images=[], batch_caption="", batch_group="")
+            await state.set_state(Build.product_photo)
+            await bot.send_message(chat_id, f"✅ Добавил {len(images)} товаров из подписи к пачке.")
+            return
+        await state.set_state(Build.product_batch)
+        await bot.send_message(
+            chat_id,
+            f"📦 Принял {len(images)} фото.\n\n"
+            "Пришли карточки одним сообщением, по одной на строку:\n"
+            "<code>Название | Цена | Описание | Категория</code>\n\n"
+            "Строки сопоставлю с фото по порядку.",
+            parse_mode="HTML",
+        )
+
+    BATCH_TASKS[chat_id] = asyncio.create_task(worker())
+
+
+
 
 
 def kb(items):
@@ -1005,7 +1052,9 @@ async def fill_field(message: Message, state: FSMContext):
 @dp.message(Build.product_photo, F.photo)
 async def product_photo(message: Message, state: FSMContext):
     photo = message.photo[-1]
-    await message.answer("📥 Фото получил, сохраняю…")
+    is_group = bool(message.media_group_id)
+    if not is_group:
+        await message.answer("📥 Фото получил, сохраняю…")
     try:
         file = await asyncio.wait_for(message.bot.get_file(photo.file_id), timeout=15)
         name = f"{uuid.uuid4().hex}.jpg"
@@ -1016,7 +1065,23 @@ async def product_photo(message: Message, state: FSMContext):
     except Exception as exc:
         await message.answer(f"⚠️ Не смог сохранить фото: {html.escape(str(exc))}", parse_mode="HTML")
         return
-    await state.update_data(pending_image=f"/static/uploads/{name}")
+    image = f"/static/uploads/{name}"
+    if is_group:
+        data = await state.get_data()
+        if data.get("batch_group") != message.media_group_id:
+            await state.update_data(batch_images=[], batch_caption="", batch_group=message.media_group_id)
+            data = await state.get_data()
+        images = list(data.get("batch_images", []))
+        images.append(image)
+        caption = data.get("batch_caption", "")
+        if (message.caption or "").strip():
+            caption = (message.caption or "").strip()
+        await state.update_data(batch_images=images, batch_caption=caption)
+        if len(images) == 1:
+            await message.answer(f"📥 Принял пачку, сохраняю фото…")
+        _schedule_batch(message.bot, message.chat.id, state)
+        return
+    await state.update_data(pending_image=image)
     caption = (message.caption or "").strip()
     if caption:
         parts = [part.strip() for part in caption.split("|")]
@@ -1024,7 +1089,7 @@ async def product_photo(message: Message, state: FSMContext):
         price = parts[1] if len(parts) > 1 and parts[1] else "по запросу"
         desc = parts[2] if len(parts) > 2 else ""
         category = parts[3] if len(parts) > 3 and parts[3] else "Другое"
-        line = f"{title} | {price} | {desc} | {category} | 🛍 | /static/uploads/{name}"
+        line = f"{title} | {price} | {desc} | {category} | 🛍 | {image}"
         data = await state.get_data()
         products = list(data.get("shop_products", []))
         products.append(line)
@@ -1042,6 +1107,40 @@ async def product_photo(message: Message, state: FSMContext):
         "Как называется товар?\n"
         "Например: <code>Медовик</code>",
         parse_mode="HTML",
+    )
+
+
+@dp.message(Build.product_batch, F.text)
+async def product_batch(message: Message, state: FSMContext):
+    value = (message.text or "").strip()
+    if value.lower().startswith("/start"):
+        await start(message, state)
+        return
+    data = await state.get_data()
+    images = list(data.get("batch_images", []))
+    lines = [line.strip() for line in value.splitlines() if line.strip()]
+    if not images:
+        await state.set_state(Build.product_photo)
+        await message.answer("Фото уже нет. Пришли пачку заново.")
+        return
+    if len(lines) != len(images):
+        await message.answer(
+            f"Фото: {len(images)}, строк: {len(lines)}.\n\n"
+            "Нужно ровно по одной строке на каждое фото. Пришли список ещё раз."
+        )
+        return
+    products = list(data.get("shop_products", []))
+    products.extend(_card_line(line, image) for line, image in zip(lines, images))
+    await state.update_data(
+        shop_products=products,
+        batch_images=[],
+        batch_caption="",
+        batch_group="",
+    )
+    await state.set_state(Build.product_photo)
+    await message.answer(
+        f"✅ Добавил {len(images)} товаров.\n\n"
+        "Пришли ещё фото или напиши «Готово»."
     )
 
 
