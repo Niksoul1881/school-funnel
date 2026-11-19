@@ -1074,6 +1074,7 @@ def _shop_catalog(bot: dict) -> list[dict]:
 
 
 def _shop_cart(bot: dict, cart: dict) -> list[dict]:
+    name = bot["config"]["brief"].get("business_name") or "Крем & Ваниль"
     catalog = _shop_catalog(bot)
     by_id = {p["id"]: p for p in catalog}
     if not cart:
@@ -1084,7 +1085,7 @@ def _shop_cart(bot: dict, cart: dict) -> list[dict]:
     lines = [f"{i}. {by_id[int(pid)]['title']} — {by_id[int(pid)]['price']}" for i, (pid, qty) in enumerate(cart.items(), 1)]
     total = sum(_price_num(by_id[int(pid)]["price"]) * qty for pid, qty in cart.items())
     return [_msg(
-        "🛒 Ваш заказ в «Крем & Ваниль»:\n\n" + "\n".join(lines) +
+        f"🛒 Ваш заказ в «{name}»:\n\n" + "\n".join(lines) +
         f"\n\n💰 Итого к оплате: {_money(total)} ₽\n\nВсё верно? Нажмите «Оформить заказ», чтобы указать контакты и дату доставки 👇",
         [("✅ Оформить заказ", "shop:checkout"), ("➕ Добавить еще десерты", "shop:start"), ("🗑 Очистить корзину", "shop:clear")],
     )]
@@ -1092,6 +1093,7 @@ def _shop_cart(bot: dict, cart: dict) -> list[dict]:
 
 def _shop_new(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     brief = bot["config"]["brief"]
+    name = brief.get("business_name") or "Крем & Ваниль"
     catalog = _shop_catalog(bot)
     data = session.setdefault("data", {})
     cart = data.setdefault("cart", {})
@@ -1100,7 +1102,7 @@ def _shop_new(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     if action in ("shop:start", "start"):
         session["stage"] = "menu"
         return [_msg(
-            "Привет! 👋 Рады видеть вас в «Крем & Ваниль». Каждый наш десерт собирается вручную в день выдачи — только фермерские сливки, бельгийский шоколад и свежие ягоды.\n\n"
+            f"Привет! 👋 Рады видеть вас в «{name}». Каждый наш десерт собирается вручную в день выдачи — только фермерские сливки, бельгийский шоколад и свежие ягоды.\n\n"
             "Выберите десерт ниже, чтобы посмотреть состав и добавить его в корзину 👇",
             [(p["label"], f"shop:product:{p['id']}") for p in catalog] +
             [("🛒 Перейти к оформлению", "shop:cart"), ("💬 Задать вопрос кондитеру", f"url:{contact_url}")],
@@ -1322,6 +1324,7 @@ def message(bot_id: str, text: str = "", action: str = "") -> list[dict]:
     if bot["template"] == "ai":
         return _ai(bot, session, text, action)
     return _shop(bot, session, text, action)
+
 
 
 

@@ -300,17 +300,14 @@ async def ask_next_field(message: Message, state: FSMContext) -> None:
         return
     field = fields[index]
     if template == "shop" and field["key"] == "products":
-        await state.set_state(Build.fields)
-        markup = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🍰 Готовое кафе «Крем & Ваниль»", callback_data="shop:preset")],
-            [InlineKeyboardButton(text="📸 Загрузить свои товары", callback_data="shop:custom")],
-        ])
+        await state.update_data(shop_products=[])
+        await state.set_state(Build.product_photo)
         sent = await message.answer(
-            "🍰 <b>Витрина десертов</b>\n\n"
-            "Для кафе «Крем & Ваниль» уже есть готовое меню из 4 десертов с фото, ценами и описаниями.\n\n"
-            "Можно взять его сразу или загрузить свои товары.",
+            "📸 <b>Фото товаров</b>\n\n"
+            "Пришли фото товара — я сохраню его в веб-формате.\n"
+            "Можно несколько. После каждого фото спрошу название, цену и описание.\n\n"
+            "Когда закончишь — напиши «Готово».",
             parse_mode="HTML",
-            reply_markup=markup,
         )
         remember_ui(message.bot, message.chat.id, sent)
         return
@@ -678,8 +675,10 @@ async def apply_bot_profile(bot: Bot, template: str, brief: dict) -> None:
             await bot.set_my_description(description=BEAUTY_DESCRIPTION)
             await bot.set_my_short_description(short_description="Запись в студию красоты: услуги, цены и свободные окошки.")
         elif template == "shop":
-            await bot.set_my_description(description=SHOP_DESCRIPTION)
-            await bot.set_my_short_description(short_description="Авторские десерты «Крем & Ваниль»: витрина и заказ.")
+            shop_name = (brief.get("business_name") or "Крем & Ваниль").strip()
+            description = SHOP_DESCRIPTION.replace("«Крем & Ваниль»", f"«{shop_name}»")
+            await bot.set_my_description(description=description)
+            await bot.set_my_short_description(short_description=f"Авторские десерты «{shop_name}»: витрина и заказ.")
         else:
             await bot.set_my_description(description=FUNNEL_DESCRIPTION)
             await bot.set_my_short_description(short_description="Тренажёр по сборке Telegram-ботов за 10 минут.")
