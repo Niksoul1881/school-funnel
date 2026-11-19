@@ -373,9 +373,24 @@ BATCH_TASKS: dict[int, asyncio.Task] = {}
 
 
 def _card_line(line: str, image: str) -> str:
-    parts = [part.strip() for part in line.split("|")]
+    if "|" in line:
+        parts = [part.strip() for part in line.split("|")]
+    else:
+        words = line.split()
+        price_at = next((i for i, word in enumerate(words) if re.search(r"\d", word)), None)
+        if price_at is None:
+            parts = [line, "по запросу"]
+        else:
+            parts = [
+                " ".join(words[:price_at]) or "Товар",
+                words[price_at],
+                " ".join(words[price_at + 1:]),
+            ]
     title = parts[0] if parts and parts[0] else "Товар"
     price = parts[1] if len(parts) > 1 and parts[1] else "по запросу"
+    price = re.sub(r"(?i)(руб\.?|р\.?|₽)$", "", price).strip() or price
+    if price.isdigit():
+        price = f"{int(price):,}".replace(",", " ") + " ₽"
     desc = parts[2] if len(parts) > 2 else ""
     category = parts[3] if len(parts) > 3 and parts[3] else "Другое"
     return f"{title} | {price} | {desc} | {category} | 🛍 | {image}"
@@ -1085,15 +1100,13 @@ async def product_photo(message: Message, state: FSMContext):
     await state.update_data(pending_image=image)
     caption = (message.caption or "").strip()
     if caption:
-        parts = [part.strip() for part in caption.split("|")]
-        title = parts[0] if parts and parts[0] else "Товар"
-        price = parts[1] if len(parts) > 1 and parts[1] else "по запросу"
-        desc = parts[2] if len(parts) > 2 else ""
-        category = parts[3] if len(parts) > 3 and parts[3] else "Другое"
-        line = f"{title} | {price} | {desc} | {category} | 🛍 | {image}"
+        card = _card_line(caption, image)
+        parts = [part.strip() for part in card.split("|")]
+        title = parts[0]
+        price = parts[1]
         data = await state.get_data()
         products = list(data.get("shop_products", []))
-        products.append(line)
+        products.append(card)
         await state.update_data(shop_products=products, pending_image="")
         await state.set_state(Build.product_photo)
         await message.answer(
@@ -1180,13 +1193,14 @@ async def products_done_or_text(message: Message, state: FSMContext):
             "Пришли фото следующего товара с подписью или напиши «Готово»."
         )
         return
-    loose = value.split(maxsplit=2)
-    if len(loose) >= 2 and re.search(r"\d", loose[1]):
-        line = " | ".join([loose[0], loose[1], loose[2] if len(loose) > 2 else "", "Другое"])
-        products.append(_card_line(line, data.get("pending_image", "")))
+    if re.search(r"\d", value):
+        image = data.get("pending_image", "")
+        card = _card_line(value, image)
+        parts = [part.strip() for part in card.split("|")]
+        products.append(card)
         await state.update_data(shop_products=products, pending_image="")
         await message.answer(
-            f"✅ Принято: «{html.escape(loose[0])}» за {html.escape(loose[1])}.\n\n"
+            f"✅ Принято: «{html.escape(parts[0])}» за {html.escape(parts[1])}.\n\n"
             "Пришли фото следующего товара или напиши «Готово».",
             parse_mode="HTML",
         )
