@@ -296,6 +296,12 @@ def builder_fields(template: str) -> list[dict]:
     return engine.TEMPLATES[template]["fields"]
 
 
+BUILDER_SECTIONS = {
+    "booking": ["Название проекта", "Визуальное оформление", "Описание до старта", "Приветствие и УТП", "Наполнение услугами", "Свободные окошки", "Контакт администратора", "Подтверждение и адрес", "Сводка и Предпросмотр"],
+    "gift": ["Название проекта или школы", "Визуальное оформление (Обложка)", "Описание до старта (Description)", "Приветствие и условие подписки", "Канал для проверки подписки", "Таймер №1 — Дожим до подписки", "Выдача подарка и призыв к действию", "Таймер №2 — Контрольное касание", "Контакт для связи", "Сводка и Предпросмотр"],
+    "shop": ["Название магазина или бренда", "Главное фото витрины", "Описание до старта (Description)", "Приветствие на витрине", "Наполнение витрины товарами", "Контакт менеджера / продавца", "Сводка и Предпросмотр"],
+}
+
 BUILDER_PROMPTS = {
     "timer2h": "Пришли текст сообщения, которое бот отправит через 2 часа тем, кто не подписался.",
     "timer24h": "Пришли текст сообщения, которое бот отправит через 24 часа после выдачи подарка.",
@@ -350,7 +356,8 @@ def field_prompt(template: str, index: int) -> str:
     skip = "\n\n<i>Можно написать /skip, если не хочешь заполнять.</i>" if not field.get("required") else ""
     tip = f"\n\n🎓 <b>Совет профи:</b> {html.escape(field['tip'])}" if field.get("tip") else ""
     body = f"\n{html.escape(field['prompt'])}" if field.get("prompt") else f"\n{html.escape((GIFT_PROMPTS.get(field['key']) if template == 'gift' else SHOP_PROMPTS.get(field['key']) if template == 'shop' else BEAUTY_PROMPTS.get(field['key']) if template == 'booking' else None) or BUILDER_PROMPTS.get(field['key'], ''))}"
-    section = f"Шаг {index + 1}: Визуальное оформление\n" if field["key"] == "photo" else ""
+    sections = BUILDER_SECTIONS.get(template, [field["label"]] * len(fields))
+    section = f"Шаг {index + 1}: {sections[index]}\n"
     return (
         f"{section}{icon} <b>Шаг {index + 1} из {len(fields)}</b>\n"
         f"<code>{progress(index, len(fields))}</code>\n\n"
