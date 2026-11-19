@@ -1,4 +1,4 @@
-﻿"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
+"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
 from __future__ import annotations
 
 import asyncio
@@ -296,6 +296,18 @@ def builder_fields(template: str) -> list[dict]:
     return engine.TEMPLATES[template]["fields"]
 
 
+BUILDER_PROMPTS = {
+    "timer2h": "Пришли текст сообщения, которое бот отправит через 2 часа тем, кто не подписался.",
+    "timer24h": "Пришли текст сообщения, которое бот отправит через 24 часа после выдачи подарка.",
+    "channel": "Пришли ссылку на Telegram-канал (t.me/... или @username). Бот должен быть админом канала.",
+    "description": "Пришли текст, который клиент увидит до нажатия «Старт».",
+    "greeting": "Пришли приветствие и УТП, которое клиент увидит после /start.",
+    "confirmation": "Пришли текст подтверждения записи и адрес студии.",
+    "photo": "Пришли главное фото бота.",
+    "summary": "Проверь данные и опубликуй бота.",
+}
+
+
 def field_prompt(template: str, index: int) -> str:
     fields = builder_fields(template)
     field = fields[index]
@@ -305,9 +317,7 @@ def field_prompt(template: str, index: int) -> str:
     example_html = f"\n\n<i>Пример:</i>\n<pre>{html.escape(example[:300])}</pre>" if example else ""
     skip = "\n\n<i>Можно написать /skip, если не хочешь заполнять.</i>" if not field.get("required") else ""
     tip = f"\n\n🎓 <b>Совет профи:</b> {html.escape(field['tip'])}" if field.get("tip") else ""
-    body = f"\n{html.escape(field['prompt'])}" if field.get("prompt") else ""
-    if not body:
-        body = f"\n{html.escape(field['label'])}"
+    body = f"\n{html.escape(field['prompt'])}" if field.get("prompt") else f"\n{html.escape(BUILDER_PROMPTS.get(field['key'], ''))}"
     return (
         f"{icon} <b>Шаг {index + 1} из {len(fields)}</b>\n"
         f"<code>{progress(index, len(fields))}</code>\n\n"
