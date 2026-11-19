@@ -1040,6 +1040,33 @@ SHOP_CATALOG = [
 ]
 
 
+SHOP_FALLBACK_IMAGES = {
+    "Торты": "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=1200&q=85&auto=format&fit=crop",
+    "Десерты": "https://images.unsplash.com/photo-1558326567-98ae2405596b?w=1200&q=85&auto=format&fit=crop",
+    "Выпечка": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=1200&q=85&auto=format&fit=crop",
+    "Напитки": "https://images.unsplash.com/photo-1544145945-f90425340c7e?w=1200&q=85&auto=format&fit=crop",
+    "Цветы": "https://images.unsplash.com/photo-1526047932273-341f2a7631f9?w=1200&q=85&auto=format&fit=crop",
+    "Подарки": "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=1200&q=85&auto=format&fit=crop",
+}
+
+
+def _fallback_image(title: str, category: str) -> str:
+    lowered = (title or "").lower()
+    if "медов" in lowered:
+        return "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=1200&q=85&auto=format&fit=crop"
+    if "бархат" in lowered:
+        return "https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?w=1200&q=85&auto=format&fit=crop"
+    if "макарон" in lowered:
+        return "https://images.unsplash.com/photo-1558326567-98ae2405596b?w=1200&q=85&auto=format&fit=crop"
+    if "корпус" in lowered:
+        return "https://images.unsplash.com/photo-1571115177098-24ec42ed204d?w=1200&q=85&auto=format&fit=crop"
+    if any(word in lowered for word in ("торт", "чизкейк")):
+        return SHOP_FALLBACK_IMAGES["Торты"]
+    if any(word in lowered for word in ("десерт", "пирож", "эклер", "капкейк")):
+        return SHOP_FALLBACK_IMAGES["Десерты"]
+    return SHOP_FALLBACK_IMAGES.get(category, "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=1200&q=85&auto=format&fit=crop")
+
+
 def _price_num(value: str) -> int:
     return int(re.sub(r"\D", "", value or "") or 0)
 
@@ -1056,8 +1083,20 @@ def _shop_catalog(bot: dict) -> list[dict]:
     for product in products:
         title = product.get("title") or "Товар"
         price = product.get("price") or "по запросу"
-        emoji = product.get("emoji") or ""
         description = product.get("description") or ""
+        category = product.get("category") or "Другое"
+        lowered = title.lower()
+        if category == "Другое":
+            if any(word in lowered for word in ("торт", "медов", "бархат", "чизкейк")):
+                category = "Торты"
+            elif any(word in lowered for word in ("макарон", "десерт", "пирож", "эклер", "капкейк")):
+                category = "Десерты"
+        emoji = product.get("emoji") or ""
+        if not emoji or emoji == "🛍":
+            emoji = {
+                "Торты": "🍰", "Десерты": "🍬", "Напитки": "☕",
+                "Цветы": "🌸", "Подарки": "🎁", "Выпечка": "🥐",
+            }.get(category, "🛍")
         text = f"{title}\n{description}".strip()
         if price and "₽" not in price and "руб" not in price.lower():
             price = f"{price} ₽"
@@ -1068,7 +1107,7 @@ def _shop_catalog(bot: dict) -> list[dict]:
             "label": f"{emoji} {title}".strip(),
             "price": price,
             "text": text,
-            "image": product.get("image", ""),
+            "image": product.get("image") or _fallback_image(title, category),
         })
     return catalog
 

@@ -1052,9 +1052,17 @@ SHOP_FALLBACK_IMAGES = {
 
 def _fallback_image(title: str, category: str) -> str:
     lowered = (title or "").lower()
-    if any(word in lowered for word in ("торт", "медов", "бархат", "чизкейк")):
+    if "медов" in lowered:
+        return "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=1200&q=85&auto=format&fit=crop"
+    if "бархат" in lowered:
+        return "https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?w=1200&q=85&auto=format&fit=crop"
+    if "макарон" in lowered:
+        return "https://images.unsplash.com/photo-1558326567-98ae2405596b?w=1200&q=85&auto=format&fit=crop"
+    if "корпус" in lowered:
+        return "https://images.unsplash.com/photo-1571115177098-24ec42ed204d?w=1200&q=85&auto=format&fit=crop"
+    if any(word in lowered for word in ("торт", "чизкейк")):
         return SHOP_FALLBACK_IMAGES["Торты"]
-    if any(word in lowered for word in ("макарон", "десерт", "пирож", "эклер", "капкейк")):
+    if any(word in lowered for word in ("десерт", "пирож", "эклер", "капкейк")):
         return SHOP_FALLBACK_IMAGES["Десерты"]
     return SHOP_FALLBACK_IMAGES.get(category, "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=1200&q=85&auto=format&fit=crop")
 

@@ -1092,6 +1092,9 @@ async def product_photo(message: Message, state: FSMContext):
     leaf = str(getattr(current, "state", current) or "").split(":")[-1]
     if leaf not in ("product_photo", "product_title", "product_price", "product_desc", "product_category"):
         return
+    if leaf != "product_photo":
+        await message.answer("Сначала заверши текущую карточку, потом пришли следующее фото.")
+        return
     photo = message.photo[-1]
     is_group = bool(message.media_group_id)
     if not is_group:
