@@ -467,12 +467,9 @@ async def ask_next_field(message: Message, state: FSMContext) -> None:
         return
     if field["key"] == "photo":
         await state.set_state(Build.photo)
-        photo_text = GIFT_PROMPTS["photo"] if template == "gift" else SHOP_PROMPTS["photo"] if template == "shop" else BEAUTY_PROMPTS["photo"] if template == "booking" else (
-            "📸 Пришли главное фото — оно будет встречать клиентов в боте.\n\n"
-            "Если фото нет, нажми «Оставить шаблонное фото»."
-        )
         sent = await message.answer(
-            photo_text,
+            field_prompt(template, index),
+            parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(text="🪄 Оставить шаблонное фото", callback_data="field:skip_photo"),
             ]]),
