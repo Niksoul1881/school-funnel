@@ -1,4 +1,4 @@
-"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
+﻿"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
 from __future__ import annotations
 
 import asyncio
@@ -254,8 +254,50 @@ def progress(index: int, total: int) -> str:
     return filled + empty
 
 
+BUILDER_STEPS = {
+    "booking": [
+        ("business_name", "Название проекта"),
+        ("photo", "Главное фото"),
+        ("description", "Описание до старта"),
+        ("greeting", "Приветствие и УТП"),
+        ("services", "Наполнение услугами"),
+        ("slots", "Свободные окошки"),
+        ("contact", "Контакт администратора"),
+        ("confirmation", "Подтверждение и адрес"),
+        ("summary", "Проверка данных"),
+    ],
+    "gift": [
+        ("business_name", "Название проекта"),
+        ("photo", "Главное фото / Обложка"),
+        ("description", "Описание до старта"),
+        ("greeting", "Приветствие и условие подписки"),
+        ("channel", "Канал для проверки подписки"),
+        ("timer2h", "Догонялка №1 (2 часа)"),
+        ("gift", "Выдача подарка и CTA"),
+        ("timer24h", "Догонялка №2 (24 часа)"),
+        ("contact", "Контакт для связи"),
+        ("summary", "Проверка данных"),
+    ],
+    "shop": [
+        ("business_name", "Название магазина"),
+        ("photo", "Главное фото витрины"),
+        ("description", "Описание до старта"),
+        ("greeting", "Приветствие на витрине"),
+        ("products", "Наполнение витрины товарами"),
+        ("contact", "Контакт менеджера"),
+        ("summary", "Проверка данных"),
+    ],
+}
+
+
+def builder_fields(template: str) -> list[dict]:
+    if template in BUILDER_STEPS:
+        return [{"key": key, "label": label, "type": "text"} for key, label in BUILDER_STEPS[template]]
+    return engine.TEMPLATES[template]["fields"]
+
+
 def field_prompt(template: str, index: int) -> str:
-    fields = engine.TEMPLATES[template]["fields"]
+    fields = builder_fields(template)
     field = fields[index]
     icon = FIELD_EMOJI.get(field["key"], "✏️")
     hint = f"\n\n<i>{html.escape(field.get('hint', ''))}</i>" if field.get("hint") else ""
@@ -264,6 +306,8 @@ def field_prompt(template: str, index: int) -> str:
     skip = "\n\n<i>Можно написать /skip, если не хочешь заполнять.</i>" if not field.get("required") else ""
     tip = f"\n\n🎓 <b>Совет профи:</b> {html.escape(field['tip'])}" if field.get("tip") else ""
     body = f"\n{html.escape(field['prompt'])}" if field.get("prompt") else ""
+    if not body:
+        body = f"\n{html.escape(field['label'])}"
     return (
         f"{icon} <b>Шаг {index + 1} из {len(fields)}</b>\n"
         f"<code>{progress(index, len(fields))}</code>\n\n"
@@ -321,16 +365,67 @@ async def go_back(message: Message, state: FSMContext) -> None:
     await ask_next_field(message, state)
 
 
+async def show_summary(message: Message, state: FSMContext, template: str) -> None:
+    data = await state.get_data()
+    brief = data.get("brief", {})
+    lines = [f"🏢 Проект: {brief.get('business_name', '—')}"]
+    if "photo" in brief:
+        lines.append(f"🖼 Фото: {'загружено' if brief.get('photo') else 'шаблон'}")
+    if template == "booking":
+        lines += [
+            f"📋 Услуг: {len(brief.get('services', '').split(',')) if brief.get('services') else 0}",
+            f"🗓 Окошки: {brief.get('slots', '—')}",
+            f"👤 Админ: {brief.get('contact', '—')}",
+            f"📍 Адрес: {brief.get('confirmation', '—')}",
+        ]
+    elif template == "gift":
+        lines += [
+            f"🔗 Канал: {brief.get('channel', '—')}",
+            f"🎁 Подарок: {brief.get('gift', '—')}",
+            f"👤 Контакт: {brief.get('contact', '—')}",
+        ]
+    else:
+        lines += [
+            f"🧁 Товаров: {len(data.get('shop_products', []))}",
+            f"👤 Контакт: {brief.get('contact', '—')}",
+        ]
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="✅ Всё супер, публикуем!", callback_data="summary:publish")],
+        [InlineKeyboardButton(text="✏️ Редактировать", callback_data="summary:edit")],
+    ])
+    sent = await message.answer(
+        "🔍 <b>Проверка данных</b>\n\n" + "\n".join(lines) + "\n\nВсё верно?",
+        parse_mode="HTML",
+        reply_markup=markup,
+    )
+    remember_ui(message.bot, message.chat.id, sent)
+
+
 async def ask_next_field(message: Message, state: FSMContext) -> None:
     data = await state.get_data()
     template = data["template"]
     index = data["index"]
-    fields = engine.TEMPLATES[template]["fields"]
+    fields = builder_fields(template)
     await clear_ui(message.bot, message.chat.id)
     if index >= len(fields):
         await ask_token(message, state, template)
         return
     field = fields[index]
+    if field["key"] == "photo":
+        await state.set_state(Build.photo)
+        sent = await message.answer(
+            "📸 Пришли главное фото — оно будет встречать клиентов в боте.\n\n"
+            "Если фото нет, нажми «Оставить шаблонное фото».",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+                InlineKeyboardButton(text="🪄 Оставить шаблонное фото", callback_data="field:skip_photo"),
+            ]]),
+        )
+        remember_ui(message.bot, message.chat.id, sent)
+        return
+    if field["key"] == "summary":
+        await state.set_state(Build.summary)
+        await show_summary(message, state, template)
+        return
     if template == "shop" and field["key"] == "products":
         await state.update_data(shop_products=[])
         await state.set_state(Build.product_photo)
@@ -357,6 +452,8 @@ async def ask_next_field(message: Message, state: FSMContext) -> None:
 class Build(StatesGroup):
     template = State()
     fields = State()
+    photo = State()
+    summary = State()
     product_photo = State()
     product_batch = State()
     product_title = State()
@@ -370,6 +467,48 @@ class Build(StatesGroup):
 UPLOADS = ROOT / "platform" / "static" / "uploads"
 UPLOADS.mkdir(parents=True, exist_ok=True)
 BATCH_TASKS: dict[int, asyncio.Task] = {}
+
+
+@dp.message(Build.photo, F.photo)
+async def builder_photo(message: Message, state: FSMContext):
+    photo = message.photo[-1]
+    try:
+        file = await asyncio.wait_for(message.bot.get_file(photo.file_id), timeout=15)
+        name = f"{uuid.uuid4().hex}.jpg"
+        await asyncio.wait_for(message.bot.download_file(file.file_path, destination=UPLOADS / name), timeout=35)
+    except Exception as exc:
+        await message.answer(f"⚠️ Не смог сохранить фото: {html.escape(str(exc))}", parse_mode="HTML")
+        return
+    data = await state.get_data()
+    brief = dict(data.get("brief", {}))
+    brief["photo"] = f"/static/uploads/{name}"
+    await state.update_data(brief=brief, index=int(data.get("index", 0)) + 1)
+    await message.answer("✅ Фото сохранил.")
+    await ask_next_field(message, state)
+
+
+@dp.callback_query(F.data == "field:skip_photo")
+async def skip_photo(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    brief = dict(data.get("brief", {}))
+    brief["photo"] = ""
+    await state.update_data(brief=brief, index=int(data.get("index", 0)) + 1)
+    await call.answer("Оставил шаблонное фото")
+    await ask_next_field(call.message, state)
+
+
+@dp.callback_query(F.data == "summary:publish")
+async def summary_publish(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    await call.answer()
+    await ask_token(call.message, state, data["template"])
+
+
+@dp.callback_query(F.data == "summary:edit")
+async def summary_edit(call: CallbackQuery, state: FSMContext):
+    await state.update_data(index=0)
+    await call.answer("Начинаем редактирование")
+    await ask_next_field(call.message, state)
 
 
 def _card_line(line: str, image: str) -> str:
@@ -1001,7 +1140,7 @@ async def shop_preset(call: CallbackQuery, state: FSMContext):
         return
     brief = dict(data.get("brief") or {})
     brief["products"] = engine.TEMPLATES["shop"]["defaults"]["products"]
-    await state.update_data(brief=brief, index=2, shop_products=[])
+    await state.update_data(brief=brief, index=5, shop_products=[])
     await state.set_state(Build.fields)
     await ask_next_field(call.message, state)
     await call.answer("Готовое кафе подставлено")
@@ -1077,7 +1216,7 @@ async def fill_field(message: Message, state: FSMContext):
     print(f"[brief] text from {message.from_user.id}: {(message.text or '')[:80]!r} state={await state.get_state()} data_keys={list(data)}", flush=True)
     template = data["template"]
     index = data["index"]
-    fields = engine.TEMPLATES[template]["fields"]
+    fields = builder_fields(template)
     brief = dict(data["brief"])
     value = (message.text or "").strip()
     if value.lower() in ("/skip", "пропустить"):
@@ -1209,7 +1348,7 @@ async def products_done_or_text(message: Message, state: FSMContext):
             return
         brief = dict(data.get("brief", {}))
         brief["products"] = "\n".join(products)
-        await state.update_data(brief=brief, index=2)
+        await state.update_data(brief=brief, index=5)
         await state.set_state(Build.fields)
         await message.answer(f"✅ Принято товаров: {len(products)}. Дальше — доставка.")
         await ask_next_field(message, state)
@@ -1374,7 +1513,7 @@ async def product_back(call: CallbackQuery, state: FSMContext):
             return
         brief = dict(data.get("brief", {}))
         brief["products"] = "\n".join(products)
-        await state.update_data(brief=brief, index=2)
+        await state.update_data(brief=brief, index=5)
         await state.set_state(Build.fields)
         await message.answer(f"🛍 Товаров: {len(products)}. Дальше — доставка.", parse_mode="HTML")
         await ask_next_field(message, state)
@@ -1610,6 +1749,8 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+
 
 
 
