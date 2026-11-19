@@ -1,4 +1,4 @@
-﻿"""Local practice bench: three bot scenarios and brief-driven configuration."""
+"""Local practice bench: three bot scenarios and brief-driven configuration."""
 from __future__ import annotations
 
 import os
@@ -816,6 +816,9 @@ def _llm_answer(bot: dict, session: dict, text: str) -> str | None:
     return answer
 
 
+PLATFORM_URL = "https://t.me/platform_test_soulnik_bot"
+
+
 def _gift(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     brief = bot["config"]["brief"]
     channel = (brief.get("channel") or "https://t.me/your_channel").strip()
@@ -829,12 +832,9 @@ def _gift(bot: dict, session: dict, text: str, action: str) -> list[dict]:
         return [
             _msg(
                 "Проверка пройдена! ✅ Добро пожаловать в комьюнити.\n\n"
-                f"Держи прямой доступ к материалу: 👉 {gift_link}\n\n"
-                "💡 Маленький совет: начни изучение с самого главного блока — там зашита основа результата.\n\n"
-                "И еще кое-что. Если ты хочешь внедрить эти инструменты под свою ситуацию без ошибок — приходи на стратегический разбор. Жми кнопку ниже, чтобы занять место 👇",
+                "Держи доступ к нашей платформе — там соберёшь своего бота из трёх шаблонов за 10 минут.",
                 [
-                    ("🔥 Записаться на разбор", f"url:{form}"),
-                    ("💬 Задать вопрос куратору", f"url:{curator}"),
+                    ("🚀 Перейти на платформу", f"url:{PLATFORM_URL}"),
                 ],
             ),
             _msg(f"🔔 Подписка подтверждена\nБот: {bot['name']}\nПользователь: @{session.get('user', '')}", admin=True),
