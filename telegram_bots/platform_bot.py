@@ -105,6 +105,11 @@ dp = Dispatcher(storage=JsonFSMStorage(ROOT / "private" / "fsm_state.json"))
 async def priority_start(message: Message, state: FSMContext):
     await start(message, state)
 
+
+@dp.message(Command("back"))
+async def priority_back(message: Message, state: FSMContext):
+    await go_back(message, state)
+
 MENU_START = "🚀 Старт"
 MENU_BUILD = "🛠 Собрать бота"
 MENU_MY = "📦 Мои боты"
@@ -289,6 +294,32 @@ async def ask_token(message: Message, state: FSMContext, template: str) -> None:
     remember_ui(message.bot, message.chat.id, sent)
 
 
+async def go_back(message: Message, state: FSMContext) -> None:
+    data = await state.get_data()
+    if not data or "template" not in data:
+        await message.answer("Сначала выбери шаблон.")
+        return
+    current = await state.get_state()
+    product_back = {
+        Build.product_title.state: Build.product_photo,
+        Build.product_price.state: Build.product_title,
+        Build.product_desc.state: Build.product_price,
+        Build.product_category.state: Build.product_desc,
+    }
+    if current in product_back:
+        await state.set_state(product_back[current])
+        await message.answer("Вернулся на шаг назад. Напиши значение ещё раз.")
+        return
+    index = int(data.get("index", 0))
+    if index <= 0:
+        await message.answer("Это первый шаг, назад некуда.")
+        return
+    await state.update_data(index=index - 1)
+    await state.set_state(Build.fields)
+    await message.answer("Вернулся на шаг назад.")
+    await ask_next_field(message, state)
+
+
 async def ask_next_field(message: Message, state: FSMContext) -> None:
     data = await state.get_data()
     template = data["template"]
@@ -304,8 +335,10 @@ async def ask_next_field(message: Message, state: FSMContext) -> None:
         await state.set_state(Build.product_photo)
         sent = await message.answer(
             "📸 <b>Фото товаров</b>\n\n"
-            "Пришли фото товара — я сохраню его в веб-формате.\n"
-            "Можно несколько. После каждого фото спрошу название, цену и описание.\n\n"
+            "Пришли фото и подпиши его одной строкой:\n"
+            "<code>Название | Цена | Описание | Категория</code>\n\n"
+            "Например: <code>Медовик | 2600 | медовые коржи | Торты</code>\n"
+            "Можно несколько фото. Без подписи спрошу по шагам.\n\n"
             "Когда закончишь — напиши «Готово».",
             parse_mode="HTML",
         )
@@ -313,7 +346,8 @@ async def ask_next_field(message: Message, state: FSMContext) -> None:
         return
     await state.set_state(Build.fields)
     markup = InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="🪄 Оставить готовый шаблон", callback_data="field:skip")
+        InlineKeyboardButton(text="🪄 Оставить готовый шаблон", callback_data="field:skip"),
+        InlineKeyboardButton(text="🔙 Назад", callback_data="field:back"),
     ]])
     sent = await message.answer(field_prompt(template, index), parse_mode="HTML", reply_markup=markup)
     remember_ui(message.bot, message.chat.id, sent)
@@ -323,6 +357,10 @@ class Build(StatesGroup):
     template = State()
     fields = State()
     product_photo = State()
+    product_title = State()
+    product_price = State()
+    product_desc = State()
+    product_category = State()
     product_info = State()
     token = State()
 
@@ -855,7 +893,8 @@ async def choose_template(call: CallbackQuery, state: FSMContext):
     meta = engine.TEMPLATES[template]
     await clear_ui(call.message.bot, call.message.chat.id)
     markup = InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="🪄 Оставить готовый шаблон", callback_data="field:skip")
+        InlineKeyboardButton(text="🪄 Оставить готовый шаблон", callback_data="field:skip"),
+        InlineKeyboardButton(text="🔙 Назад", callback_data="field:back"),
     ]])
     sent = await call.message.answer(
         f"{meta['icon']} <b>{html.escape(meta['name'])}</b>\n\n"
@@ -889,12 +928,20 @@ async def shop_custom(call: CallbackQuery, state: FSMContext):
     await state.set_state(Build.product_photo)
     sent = await call.message.answer(
         "📸 <b>Фото товаров</b>\n\n"
-        "Пришли фото товара — я сохраню его в веб-формате.\n"
-        "Можно несколько. После каждого фото спрошу название, цену и описание.\n\n"
+        "Пришли фото и подпиши его одной строкой:\n"
+        "<code>Название | Цена | Описание | Категория</code>\n\n"
+        "Например: <code>Медовик | 2600 | медовые коржи | Торты</code>\n"
+        "Можно несколько фото. Без подписи спрошу по шагам.\n\n"
         "Когда закончишь — напиши «Готово».",
         parse_mode="HTML",
     )
     remember_ui(call.message.bot, call.message.chat.id, sent)
+    await call.answer()
+
+
+@dp.callback_query(F.data == "field:back")
+async def back_field(call: CallbackQuery, state: FSMContext):
+    await go_back(call.message, state)
     await call.answer()
 
 
@@ -970,19 +1017,132 @@ async def product_photo(message: Message, state: FSMContext):
         await message.answer(f"⚠️ Не смог сохранить фото: {html.escape(str(exc))}", parse_mode="HTML")
         return
     await state.update_data(pending_image=f"/static/uploads/{name}")
-    await state.set_state(Build.product_info)
+    caption = (message.caption or "").strip()
+    if caption:
+        parts = [part.strip() for part in caption.split("|")]
+        title = parts[0] if parts and parts[0] else "Товар"
+        price = parts[1] if len(parts) > 1 and parts[1] else "по запросу"
+        desc = parts[2] if len(parts) > 2 else ""
+        category = parts[3] if len(parts) > 3 and parts[3] else "Другое"
+        line = f"{title} | {price} | {desc} | {category} | 🛍 | /static/uploads/{name}"
+        data = await state.get_data()
+        products = list(data.get("shop_products", []))
+        products.append(line)
+        await state.update_data(shop_products=products, pending_image="")
+        await state.set_state(Build.product_photo)
+        await message.answer(
+            f"✅ «{html.escape(title)}» — {html.escape(price)} добавлен.\n\n"
+            "Пришли фото следующего товара с подписью или напиши «Готово».",
+            parse_mode="HTML",
+        )
+        return
+    await state.set_state(Build.product_title)
     await message.answer(
         "✅ Фото сохранил.\n\n"
-        "Теперь напиши товар в формате:\n"
-        "<code>Название | Цена | Описание | Категория</code>\n\n"
-        "Например:\n"
-        "<code>Медовик | 3200 | медовые коржи | Торты</code>",
+        "Как называется товар?\n"
+        "Например: <code>Медовик</code>",
         parse_mode="HTML",
     )
 
 
-@dp.message(Build.product_photo, F.text)
-async def products_done_or_text(message: Message, state: FSMContext):
+@dp.message(Build.product_title, F.text)
+async def product_title(message: Message, state: FSMContext):
+    value = (message.text or "").strip()
+    if value.lower().startswith("/start"):
+        await start(message, state)
+        return
+    if not value:
+        await message.answer("Напиши название товара.")
+        return
+    await state.update_data(pending_title=value[:100])
+    await state.set_state(Build.product_price)
+    await message.answer(
+        "💰 Какая цена?\nНапример: <code>2600</code> или <code>2 600 ₽</code>",
+        parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔙 Назад", callback_data="product:back")]]),
+    )
+
+
+@dp.message(Build.product_price, F.text)
+async def product_price(message: Message, state: FSMContext):
+    value = (message.text or "").strip()
+    if value.lower().startswith("/start"):
+        await start(message, state)
+        return
+    if not value:
+        await message.answer("Напиши цену товара.")
+        return
+    await state.update_data(pending_price=value[:40])
+    await state.set_state(Build.product_desc)
+    await message.answer(
+        "📝 Добавь короткое описание товара.\nМожно написать /skip.",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔙 Назад", callback_data="product:back")]]),
+    )
+
+
+@dp.message(Build.product_desc, F.text)
+async def product_desc(message: Message, state: FSMContext):
+    value = (message.text or "").strip()
+    if value.lower().startswith("/start"):
+        await start(message, state)
+        return
+    if value.lower() in ("/skip", "пропустить"):
+        value = ""
+    await state.update_data(pending_desc=value[:500])
+    await state.set_state(Build.product_category)
+    await message.answer(
+        "🏷 Категория товара?\nНапример: <code>Торты</code>. Можно /skip.",
+        parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔙 Назад", callback_data="product:back")]]),
+    )
+
+
+@dp.message(Build.product_category, F.text)
+async def product_category(message: Message, state: FSMContext):
+    value = (message.text or "").strip()
+    if value.lower().startswith("/start"):
+        await start(message, state)
+        return
+    if value.lower() in ("/skip", "пропустить") or not value:
+        value = "Другое"
+    data = await state.get_data()
+    line = (
+        f"{data.get('pending_title', 'Товар')} | {data.get('pending_price', 'по запросу')} | "
+        f"{data.get('pending_desc', '')} | {value[:40]} | 🛍 | {data.get('pending_image', '')}"
+    )
+    products = list(data.get("shop_products", []))
+    products.append(line)
+    await state.update_data(
+        shop_products=products,
+        pending_image="",
+        pending_title="",
+        pending_price="",
+        pending_desc="",
+    )
+    await state.set_state(Build.product_photo)
+    await message.answer(
+        f"✅ «{data.get('pending_title', 'Товар')}» добавлен в витрину.\n\n"
+        "Пришли фото следующего товара или напиши «Готово».",
+    )
+
+
+@dp.callback_query(F.data == "product:back")
+async def product_back(call: CallbackQuery, state: FSMContext):
+    current = await state.get_state()
+    if current == Build.product_title.state:
+        await state.set_state(Build.product_photo)
+    elif current == Build.product_price.state:
+        await state.set_state(Build.product_title)
+    elif current == Build.product_desc.state:
+        await state.set_state(Build.product_price)
+    elif current == Build.product_category.state:
+        await state.set_state(Build.product_desc)
+    await clear_ui(call.message.bot, call.message.chat.id)
+    await call.message.answer("Вернулся на шаг назад. Напиши значение ещё раз.")
+    await call.answer()
+
+
+
     value = (message.text or "").strip()
     if value.lower().startswith("/start"):
         await start(message, state)
@@ -990,6 +1150,16 @@ async def products_done_or_text(message: Message, state: FSMContext):
     data = await state.get_data()
     products = list(data.get("shop_products", []))
     if value.lower() in ("готово", "хватит", "всё", "все", "/skip", "пропустить"):
+        if not products:
+            await state.set_state(Build.product_photo)
+            await message.answer(
+                "⚠️ Пока нет ни одного товара.\n\n"
+                "Пришли фото товара, затем одним сообщением:\n"
+                "<code>Название | Цена | Описание | Категория</code>\n\n"
+                "И только после этого пиши «Готово».",
+                parse_mode="HTML",
+            )
+            return
         brief = dict(data.get("brief", {}))
         brief["products"] = "\n".join(products)
         await state.update_data(brief=brief, index=2)
@@ -1217,6 +1387,8 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+
 
 
 
