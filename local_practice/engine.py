@@ -1182,9 +1182,7 @@ def _shop_new(bot: dict, session: dict, text: str, action: str) -> list[dict]:
 
 
 def _shop(bot: dict, session: dict, text: str, action: str) -> list[dict]:
-    if bot["config"]["brief"].get("shop_flow"):
-        return _shop_new(bot, session, text, action)
-    return _shop_legacy(bot, session, text, action)
+    return _shop_new(bot, session, text, action)
 
 
 def _shop_legacy(bot: dict, session: dict, text: str, action: str) -> list[dict]:
@@ -1339,6 +1337,7 @@ def message(bot_id: str, text: str = "", action: str = "") -> list[dict]:
     if bot["template"] == "ai":
         return _ai(bot, session, text, action)
     return _shop(bot, session, text, action)
+
 
 
 
