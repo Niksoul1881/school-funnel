@@ -523,26 +523,44 @@ def _beauty(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     contact = (brief.get("contact") or "@admin").strip()
     contact_url = contact if contact.startswith("http") else f"https://t.me/{contact.lstrip('@')}"
     data = session.setdefault("data", {})
+    services = BEAUTY_SERVICES
+    configured = bot["config"].get("services") or []
+    if len(configured) >= 4:
+        services = {
+            str(i): {
+                "label": item.get("title", "Услуга"),
+                "title": item.get("title", "Услуга"),
+                "text": f"{item.get('description', '')}\n\n💳 Стоимость: {item.get('price', '')}",
+            }
+            for i, item in enumerate(configured)
+        }
     if action in ("beauty:menu", "start") or (session.get("stage", "start") == "start" and not action):
         session["stage"] = "menu"
         client_name = (session.get("data", {}).get("user_name") or "").strip()
         data.clear()
         session["data"]["user_name"] = client_name
         hello = f"Здравствуйте, {client_name}!" if client_name else "Здравствуйте!"
+        greeting = (brief.get("greeting") or "").strip()
+        if greeting:
+            text = greeting
+        else:
+            text = (
+                f"{hello} Рады видеть вас в «{name}» 🤍\n\n"
+                "Почему выбирают нас?\n"
+                "▫️ Работаем только на премиум-материалах (Luxio, Davines).\n"
+                "▫️ Экономим ваше время: делаем услуги в 4 руки без доплат.\n"
+                "▫️ Гарантия на покрытие и всегда свежий авторский кофе с конфеткой.\n\n"
+                "Выберите, чем мы можем порадовать вас сегодня:"
+            )
         return [_msg(
-            f"{hello} Рады видеть вас в «{name}» 🤍\n\n"
-            "Почему выбирают нас?\n"
-            "▫️ Работаем только на премиум-материалах (Luxio, Davines).\n"
-            "▫️ Экономим ваше время: делаем услуги в 4 руки без доплат.\n"
-            "▫️ Гарантия на покрытие и всегда свежий авторский кофе с конфеткой.\n\n"
-            "Выберите, чем мы можем порадовать вас сегодня:",
-            [(s["label"], f"beauty:svc:{key}") for key, s in BEAUTY_SERVICES.items()],
+            text,
+            [(s["label"], f"beauty:svc:{key}") for key, s in services.items()],
         )]
     if action.startswith("beauty:svc:"):
         key = action.split(":")[-1]
-        service = BEAUTY_SERVICES.get(key)
+        service = services.get(key)
         if not service:
-            return [_msg("Выберите услугу:", [(s["label"], f"beauty:svc:{k}") for k, s in BEAUTY_SERVICES.items()])]
+            return [_msg("Выберите услугу:", [(s["label"], f"beauty:svc:{k}") for k, s in services.items()])]
         data["service"] = key
         session["stage"] = "service"
         return [_msg(
@@ -551,7 +569,7 @@ def _beauty(bot: dict, session: dict, text: str, action: str) -> list[dict]:
         )]
     if action.startswith("beauty:book:"):
         key = action.split(":")[-1]
-        if key not in BEAUTY_SERVICES:
+        if key not in services:
             key = data.get("service")
         data["service"] = key
         session["stage"] = "date"
@@ -584,17 +602,19 @@ def _beauty(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     if action.startswith("beauty:contact:"):
         phone = action.split(":", 2)[-1]
         data["phone"] = phone
-        service = BEAUTY_SERVICES.get(data.get("service"), {"title": data.get("service", "Услуга")})
+        service = services.get(data.get("service"), {"title": data.get("service", "Услуга")})
         slot_key = f"{data.get('day', '')}|{data.get('time', '')}"
         BOOKED.setdefault(bot["id"], set()).add(slot_key)
         _bump(bot["id"], "bookings")
         _remember(bot["id"], {"type": "booking", "service": service.get("title", ""), "date": data.get("day", ""), "time": data.get("time", ""), "phone": phone})
         return [
             _msg(
-                "Запись подтверждена! 🎉\n\n"
-                f"Ждем вас в «{name}».\n"
-                f"Адрес: {brief.get('address') or 'Москва, ул Великих достижений д.1, кв 1'}\n\n"
-                "До встречи! 🤍",
+                (brief.get("confirmation") or (
+                    "Запись подтверждена! 🎉\n\n"
+                    f"Ждем вас в «{name}».\n"
+                    f"Адрес: {brief.get('address') or 'Москва, ул Великих достижений д.1, кв 1'}\n\n"
+                    "До встречи! 🤍"
+                )).replace("{Дата}", data.get("day", "")).replace("{Время}", data.get("time", "")),
                 [("🔙 Вернуться в главное меню", "beauty:menu")],
                 remove_keyboard=True,
             ),
@@ -606,7 +626,7 @@ def _beauty(bot: dict, session: dict, text: str, action: str) -> list[dict]:
                 admin=True,
             ),
         ]
-    return [_msg("Выберите услугу:", [(s["label"], f"beauty:svc:{k}") for k, s in BEAUTY_SERVICES.items()])]
+    return [_msg("Выберите услугу:", [(s["label"], f"beauty:svc:{k}") for k, s in services.items()])]
 
 
 def _booking(bot: dict, session: dict, text: str, action: str) -> list[dict]:
