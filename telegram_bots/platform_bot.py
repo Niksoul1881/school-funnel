@@ -1,4 +1,4 @@
-﻿"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
+"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
 from __future__ import annotations
 
 import asyncio
@@ -516,7 +516,7 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
                     action = "grant"
                 except Exception as exc:
                     await notify_owner(f"⚠️ Не смог проверить подписку у @{call.from_user.username or call.from_user.id}: {exc}")
-                    action = "grant"
+                    action = "not_sub"
         await call.answer()
         await emit(call.message.bot, call.message.chat.id, engine.message(bot_id, action=action), owner_tg_id)
         if template == "gift" and action == "grant":
