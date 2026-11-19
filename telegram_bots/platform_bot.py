@@ -393,7 +393,13 @@ def _card_line(line: str, image: str) -> str:
         price = f"{int(price):,}".replace(",", " ") + " ₽"
     desc = parts[2] if len(parts) > 2 else ""
     category = parts[3] if len(parts) > 3 and parts[3] else "Другое"
-    return f"{title} | {price} | {desc} | {category} | 🛍 | {image}"
+    emoji = parts[4].strip() if len(parts) > 4 and parts[4].strip() else ""
+    if not emoji:
+        emoji = {
+            "Торты": "🍰", "Десерты": "🍬", "Напитки": "☕",
+            "Цветы": "🌸", "Подарки": "🎁", "Выпечка": "🥐",
+        }.get(category, "🛍")
+    return f"{title} | {price} | {desc} | {category} | {emoji} | {image}"
 
 
 def _schedule_batch(bot: Bot, chat_id: int, state: FSMContext) -> None:
@@ -777,9 +783,16 @@ async def apply_bot_profile(bot: Bot, template: str, brief: dict) -> None:
             await bot.set_my_short_description(short_description="Запись в студию красоты: услуги, цены и свободные окошки.")
         elif template == "shop":
             shop_name = (brief.get("business_name") or "Крем & Ваниль").strip()
-            description = SHOP_DESCRIPTION.replace("«Крем & Ваниль»", f"«{shop_name}»")
+            if "крем" in shop_name.lower():
+                description = SHOP_DESCRIPTION.replace("«Крем & Ваниль»", f"«{shop_name}»")
+            else:
+                description = (
+                    f"Добро пожаловать в «{shop_name}» 👋\n\n"
+                    "Здесь можно посмотреть витрину, выбрать товар и оформить заказ прямо в Telegram за пару кликов.\n\n"
+                    "Жмите «СТАРТ» внизу экрана, чтобы открыть меню 👇"
+                )
             await bot.set_my_description(description=description)
-            await bot.set_my_short_description(short_description=f"Авторские десерты «{shop_name}»: витрина и заказ.")
+            await bot.set_my_short_description(short_description=f"Витрина «{shop_name}»: товары и заказ в Telegram.")
         else:
             await bot.set_my_description(description=FUNNEL_DESCRIPTION)
             await bot.set_my_short_description(short_description="Тренажёр по сборке Telegram-ботов за 10 минут.")

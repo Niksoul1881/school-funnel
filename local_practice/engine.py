@@ -1075,11 +1075,13 @@ def _shop_catalog(bot: dict) -> list[dict]:
 
 def _shop_cart(bot: dict, cart: dict) -> list[dict]:
     name = bot["config"]["brief"].get("business_name") or "Крем & Ваниль"
+    is_cafe = "крем" in name.lower()
+    word = "десерты" if is_cafe else "товары"
     catalog = _shop_catalog(bot)
     by_id = {p["id"]: p for p in catalog}
     if not cart:
         return [_msg(
-            "Ваша корзина пока пуста 🧁 Загляните на нашу витрину и добавьте десерты, которые хотите попробовать!",
+            f"Ваша корзина пока пуста 🧁 Загляните на нашу витрину и добавьте {word}, которые хотите заказать!",
             [("🔙 Вернуться на витрину", "shop:start")],
         )]
     lines = [f"{i}. {by_id[int(pid)]['title']} — {by_id[int(pid)]['price']}" for i, (pid, qty) in enumerate(cart.items(), 1)]
@@ -1087,13 +1089,14 @@ def _shop_cart(bot: dict, cart: dict) -> list[dict]:
     return [_msg(
         f"🛒 Ваш заказ в «{name}»:\n\n" + "\n".join(lines) +
         f"\n\n💰 Итого к оплате: {_money(total)} ₽\n\nВсё верно? Нажмите «Оформить заказ», чтобы указать контакты и дату доставки 👇",
-        [("✅ Оформить заказ", "shop:checkout"), ("➕ Добавить еще десерты", "shop:start"), ("🗑 Очистить корзину", "shop:clear")],
+        [("✅ Оформить заказ", "shop:checkout"), (f"➕ Добавить еще {word}", "shop:start"), ("🗑 Очистить корзину", "shop:clear")],
     )]
 
 
 def _shop_new(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     brief = bot["config"]["brief"]
     name = brief.get("business_name") or "Крем & Ваниль"
+    is_cafe = "крем" in name.lower()
     catalog = _shop_catalog(bot)
     data = session.setdefault("data", {})
     cart = data.setdefault("cart", {})
@@ -1101,11 +1104,23 @@ def _shop_new(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     contact_url = contact if contact.startswith("http") else f"https://t.me/{contact.lstrip('@')}"
     if action in ("shop:start", "start"):
         session["stage"] = "menu"
+        is_cafe = "крем" in name.lower()
+        if is_cafe:
+            intro = (
+                f"Привет! 👋 Рады видеть вас в «{name}». Каждый наш десерт собирается вручную в день выдачи — только фермерские сливки, бельгийский шоколад и свежие ягоды.\n\n"
+                "Выберите десерт ниже, чтобы посмотреть состав и добавить его в корзину 👇"
+            )
+            contact_label = "💬 Задать вопрос кондитеру"
+        else:
+            intro = (
+                f"Привет! 👋 Рады видеть вас в «{name}».\n\n"
+                "Выберите товар ниже, чтобы посмотреть описание и добавить его в корзину 👇"
+            )
+            contact_label = "💬 Задать вопрос менеджеру"
         return [_msg(
-            f"Привет! 👋 Рады видеть вас в «{name}». Каждый наш десерт собирается вручную в день выдачи — только фермерские сливки, бельгийский шоколад и свежие ягоды.\n\n"
-            "Выберите десерт ниже, чтобы посмотреть состав и добавить его в корзину 👇",
+            intro,
             [(p["label"], f"shop:product:{p['id']}") for p in catalog] +
-            [("🛒 Перейти к оформлению", "shop:cart"), ("💬 Задать вопрос кондитеру", f"url:{contact_url}")],
+            [("🛒 Перейти к оформлению", "shop:cart"), (contact_label, f"url:{contact_url}")],
         )]
     if action.startswith("shop:product:"):
         pid = int(action.split(":")[-1])
@@ -1125,7 +1140,7 @@ def _shop_new(bot: dict, session: dict, text: str, action: str) -> list[dict]:
         return [_msg(
             f"✅ «{product['title']}» добавлен в корзину! Сейчас в вашей корзине: {count} шт. на сумму {_money(total)} ₽.\n\n"
             "Хотите добавить к заказу еще что-нибудь вкусное или переходим к оформлению?",
-            [("🛍 Добавить еще десерты", "shop:start"), ("🛒 Перейти к оформлению", "shop:cart")],
+            [("🛍 Добавить еще товары" if not is_cafe else "🛍 Добавить еще десерты", "shop:start"), ("🛒 Перейти к оформлению", "shop:cart")],
         )]
     if action == "shop:cart":
         session["stage"] = "cart"
@@ -1153,12 +1168,12 @@ def _shop_new(bot: dict, session: dict, text: str, action: str) -> list[dict]:
             _msg(
                 "Спасибо! Заказ принят ✅\n\n🧁 Состав заказа:\n" + "\n".join(lines) +
                 f"\n\n💰 Сумма: {_money(total)} ₽\n📞 Ваши данные: {text}\n\n"
-                "Кондитер уже получил вашу заявку и свяжется с вами в ближайшие 15 минут для подтверждения и уточнения деталей.",
+                f"{'Кондитер' if is_cafe else 'Менеджер'} уже получил вашу заявку и свяжется с вами в ближайшие 15 минут для подтверждения и уточнения деталей.",
                 [("🔙 Вернуться на витрину", "shop:start")],
                 remove_keyboard=True,
             ),
             _msg(
-                "🔔 Новый заказ «Крем & Ваниль»\n\n" + "\n".join(lines) +
+                f"🔔 Новый заказ «{name}»\n\n" + "\n".join(lines) +
                 f"\nИтого: {_money(total)} ₽\nКонтакт и дата: {text}",
                 admin=True,
             ),
