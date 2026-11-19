@@ -590,7 +590,7 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
             )
         except Exception:
             pass
-        await emit(message.bot, message.chat.id, engine.message(bot_id, action="start"), owner_tg_id)
+        await emit(message.bot, message.chat.id, engine.message(bot_id, action="start", user_name=message.from_user.first_name or ""), owner_tg_id)
         if template == "gift" and (bot_id, message.chat.id) not in GIFT_FOLLOWUPS:
             schedule_gift_followup(message.bot, bot_id, message.chat.id, owner_tg_id, 2 * 60 * 60, "followup_2h")
         await message.answer("Меню бота 👇", reply_markup=tenant_menu(template))
@@ -725,7 +725,7 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
         brief = engine.BOTS.get(bot_id, {}).get("config", {}).get("brief", {})
         label = message.text
         if label in ("🚀 Старт", "💅 Записаться", "🎁 Подарок"):
-            await emit(message.bot, message.chat.id, engine.message(bot_id, action="start"), owner_tg_id)
+            await emit(message.bot, message.chat.id, engine.message(bot_id, action="start", user_name=message.from_user.first_name or ""), owner_tg_id)
         elif label == "🛍 Каталог":
             action = "shop:start" if template == "shop" else "cat:Все"
             await emit(message.bot, message.chat.id, engine.message(bot_id, action=action), owner_tg_id)
@@ -755,7 +755,7 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
     @tenant_dp.message(F.text)
     async def text(message: Message):
         await clear_ui(message.bot, message.chat.id)
-        await emit(message.bot, message.chat.id, engine.message(bot_id, text=message.text), owner_tg_id)
+        await emit(message.bot, message.chat.id, engine.message(bot_id, text=message.text, user_name=message.from_user.first_name or ""), owner_tg_id)
 
     return tenant_dp
 
@@ -1587,6 +1587,17 @@ async def main() -> None:
     if not PLATFORM_TOKEN:
         raise SystemExit("PLATFORM_BOT_TOKEN не задан")
     bot = Bot(token=PLATFORM_TOKEN)
+    try:
+        await bot.set_my_description(
+            "👋 Рад видеть тебя на практике!\n\n"
+            "На связи школа AI-автоматизации — мы готовим техспецов нового поколения.\n\n"
+            "Ты находишься буквально в одном шаге от создания своего первого умного бота. "
+            "Это будет быстро, просто и без единой строчки кода.\n\n"
+            "Жми «СТАРТ» (или /start) внизу экрана, и давай творить магию! ✨"
+        )
+        await bot.set_my_short_description(short_description="Собери своего первого Telegram-бота по готовым шаблонам.")
+    except Exception as exc:
+        print(f"platform profile error: {exc}")
     await bot.set_my_commands([
         BotCommand(command="start", description="Главное меню"),
         BotCommand(command="mybots", description="Мои боты"),
@@ -1599,6 +1610,7 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 

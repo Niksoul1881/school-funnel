@@ -331,7 +331,8 @@ def _start(bot: dict) -> list[dict]:
     brief = bot["config"]["brief"]
     if template == "booking":
         if brief.get("beauty_flow"):
-            return _beauty(bot, {"stage": "start", "data": {}}, "", "start")
+            session = SESSIONS.setdefault(bot["id"], {"stage": "start", "data": {}, "messages": []})
+            return _beauty(bot, session, "", "start")
         services = bot["config"]["services"]
         greeting = (brief.get("greeting") or f"Здравствуйте! Это {bot['name']}.").strip()
         address = (brief.get("address") or "").strip()
@@ -520,9 +521,12 @@ def _beauty(bot: dict, session: dict, text: str, action: str) -> list[dict]:
     data = session.setdefault("data", {})
     if action in ("beauty:menu", "start") or (session.get("stage", "start") == "start" and not action):
         session["stage"] = "menu"
+        client_name = (session.get("data", {}).get("user_name") or "").strip()
         data.clear()
+        session["data"]["user_name"] = client_name
+        hello = f"Здравствуйте, {client_name}!" if client_name else "Здравствуйте!"
         return [_msg(
-            f"Здравствуйте! Рады видеть вас в «{name}» 🤍\n\n"
+            f"{hello} Рады видеть вас в «{name}» 🤍\n\n"
             "Почему выбирают нас?\n"
             "▫️ Работаем только на премиум-материалах (Luxio, Davines).\n"
             "▫️ Экономим ваше время: делаем услуги в 4 руки без доплат.\n"
@@ -1358,14 +1362,19 @@ def _total(by_id: dict, cart: dict) -> str:
     return f"{total:,}".replace(",", " ")
 
 
-def message(bot_id: str, text: str = "", action: str = "") -> list[dict]:
+def message(bot_id: str, text: str = "", action: str = "", user_name: str = "") -> list[dict]:
     bot = BOTS.get(bot_id)
     if not bot:
         raise ValueError("Бот не найден")
     session = SESSIONS.setdefault(bot_id, {"stage": "start", "data": {}, "messages": []})
     if action in ("reset", "start") or text.strip().lower() in ("/start", "start"):
         reset(bot_id)
+        session = SESSIONS[bot_id]
+        if user_name:
+            session.setdefault("data", {})["user_name"] = user_name
         return _start(BOTS[bot_id])
+    if user_name:
+        session.setdefault("data", {})["user_name"] = user_name
     if bot["template"] == "booking":
         return _booking(bot, session, text, action)
     if bot["template"] == "gift":
