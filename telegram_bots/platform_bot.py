@@ -835,8 +835,11 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
         await clear_ui(message.bot, message.chat.id)
         meta = engine.TEMPLATES[template]
         try:
+            brief = engine.BOTS.get(bot_id, {}).get("config", {}).get("brief", {})
+            photo = (brief.get("photo") or "").strip()
+            cover = ROOT / "platform" / photo.lstrip("/") if photo.startswith("/static/") else COVER_FILES[template]
             await message.answer_photo(
-                FSInputFile(COVER_FILES[template]),
+                FSInputFile(cover),
                 caption=f"{meta['icon']} <b>{html.escape(meta['name'])}</b>",
                 parse_mode="HTML",
             )
@@ -1054,7 +1057,8 @@ async def apply_bot_profile(bot: Bot, template: str, brief: dict) -> None:
             await bot.set_my_description(description=description)
             await bot.set_my_short_description(short_description=f"Витрина «{shop_name}»: товары и заказ в Telegram.")
         else:
-            await bot.set_my_description(description=FUNNEL_DESCRIPTION)
+            description = (brief.get("description") or "").strip() or FUNNEL_DESCRIPTION
+            await bot.set_my_description(description=description)
             await bot.set_my_short_description(short_description="Тренажёр по сборке Telegram-ботов за 10 минут.")
     except Exception as exc:
         print(f"profile setup error: {exc}")
@@ -1334,6 +1338,9 @@ async def fill_field(message: Message, state: FSMContext):
     value = (message.text or "").strip()
     if value.lower() in ("/skip", "пропустить"):
         value = engine.TEMPLATES[template]["defaults"].get(fields[index]["key"], "")
+    if fields[index]["key"] == "contact" and value and "@" not in value and not value.startswith("http"):
+        await message.answer("Кажется, ты забыл @. Попробуй еще раз!")
+        return
     brief[fields[index]["key"]] = value
     index += 1
     editing = bool(data.get("editing"))
@@ -1866,6 +1873,7 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 
