@@ -393,6 +393,12 @@ def _card_line(line: str, image: str) -> str:
         price = f"{int(price):,}".replace(",", " ") + " ₽"
     desc = parts[2] if len(parts) > 2 else ""
     category = parts[3] if len(parts) > 3 and parts[3] else "Другое"
+    if category == "Другое":
+        lowered = title.lower()
+        if any(word in lowered for word in ("торт", "медов", "бархат", "чизкейк")):
+            category = "Торты"
+        elif any(word in lowered for word in ("макарон", "десерт", "пирож", "эклер", "капкейк")):
+            category = "Десерты"
     emoji = parts[4].strip() if len(parts) > 4 and parts[4].strip() else ""
     if not emoji:
         emoji = {
@@ -721,9 +727,11 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
         if label in ("🚀 Старт", "💅 Записаться", "🎁 Подарок"):
             await emit(message.bot, message.chat.id, engine.message(bot_id, action="start"), owner_tg_id)
         elif label == "🛍 Каталог":
-            await emit(message.bot, message.chat.id, engine.message(bot_id, action="cat:Все"), owner_tg_id)
+            action = "shop:start" if template == "shop" else "cat:Все"
+            await emit(message.bot, message.chat.id, engine.message(bot_id, action=action), owner_tg_id)
         elif label == "🛒 Корзина":
-            await emit(message.bot, message.chat.id, engine.message(bot_id, action="cart"), owner_tg_id)
+            action = "shop:cart" if template == "shop" else "cart"
+            await emit(message.bot, message.chat.id, engine.message(bot_id, action=action), owner_tg_id)
         elif label == "📣 Канал":
             channel = brief.get("channel", "")
             link = channel if str(channel).startswith("http") else f"https://t.me/{str(channel).lstrip('@')}"
