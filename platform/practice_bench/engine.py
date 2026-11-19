@@ -1,4 +1,4 @@
-"""Local practice bench: three bot scenarios and brief-driven configuration."""
+﻿"""Local practice bench: three bot scenarios and brief-driven configuration."""
 from __future__ import annotations
 
 import os
@@ -1386,6 +1386,7 @@ def message(bot_id: str, text: str = "", action: str = "", user_name: str = "") 
     if bot["template"] == "ai":
         return _ai(bot, session, text, action)
     return _shop(bot, session, text, action)
+
 
 
 

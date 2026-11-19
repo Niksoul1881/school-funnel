@@ -1,4 +1,4 @@
-﻿"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
+"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
 from __future__ import annotations
 
 import asyncio
@@ -411,6 +411,18 @@ async def ask_next_field(message: Message, state: FSMContext) -> None:
         await ask_token(message, state, template)
         return
     field = fields[index]
+    if field["key"] == "services":
+        await state.set_state(Build.services_menu)
+        sent = await message.answer(
+            "📋 <b>Наполнение услугами</b>\n\n"
+            "Добавляй услуги по одной: название, цена, описание. Или возьми готовые 4 услуги.",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="➕ Добавить услугу", callback_data="service:add")],
+                [InlineKeyboardButton(text="🪄 Оставить готовый шаблон", callback_data="service:skip")],
+            ]),
+        )
+        remember_ui(message.bot, message.chat.id, sent)
+        return
     if field["key"] == "photo":
         await state.set_state(Build.photo)
         sent = await message.answer(
@@ -454,6 +466,10 @@ class Build(StatesGroup):
     fields = State()
     photo = State()
     summary = State()
+    service_name = State()
+    service_price = State()
+    service_desc = State()
+    services_menu = State()
     product_photo = State()
     product_batch = State()
     product_title = State()
@@ -485,6 +501,71 @@ async def builder_photo(message: Message, state: FSMContext):
     await state.update_data(brief=brief, index=int(data.get("index", 0)) + 1)
     await message.answer("✅ Фото сохранил.")
     await ask_next_field(message, state)
+
+
+@dp.callback_query(F.data == "service:add")
+async def service_add(call: CallbackQuery, state: FSMContext):
+    await state.set_state(Build.service_name)
+    await call.message.answer("👇 Поле 1: Название услуги (до 3 слов).")
+    await call.answer()
+
+
+@dp.message(Build.service_name, F.text)
+async def service_name(message: Message, state: FSMContext):
+    await state.update_data(service_name=message.text.strip()[:60])
+    await state.set_state(Build.service_price)
+    await message.answer("💰 Поле 2: Стоимость. Например: от 2 000 ₽")
+
+
+@dp.message(Build.service_price, F.text)
+async def service_price(message: Message, state: FSMContext):
+    await state.update_data(service_price=message.text.strip()[:40])
+    await state.set_state(Build.service_desc)
+    await message.answer("📝 Поле 3: Описание и длительность.")
+
+
+@dp.message(Build.service_desc, F.text)
+async def service_desc(message: Message, state: FSMContext):
+    data = await state.get_data()
+    items = list(data.get("services_items", []))
+    items.append({
+        "title": data.get("service_name", "Услуга"),
+        "price": data.get("service_price", ""),
+        "description": message.text.strip()[:300],
+    })
+    await state.update_data(services_items=items)
+    await state.set_state(Build.services_menu)
+    await message.answer(
+        f"✅ Услуга «{items[-1]['title']}» добавлена. Всего: {len(items)}.",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="➕ Добавить еще услугу", callback_data="service:add")],
+            [InlineKeyboardButton(text="➡️ Сохранить и идти дальше", callback_data="service:done")],
+        ]),
+    )
+
+
+@dp.callback_query(F.data == "service:done")
+async def service_done(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    items = list(data.get("services_items", []))
+    brief = dict(data.get("brief", {}))
+    brief["services"] = ", ".join(item["title"] for item in items)
+    brief["details"] = "\n".join(f"{item['title']} — {item['price']}. {item['description']}" for item in items)
+    await state.update_data(brief=brief, index=int(data.get("index", 0)) + 1)
+    await call.answer("Услуги сохранены")
+    await ask_next_field(call.message, state)
+
+
+@dp.callback_query(F.data == "service:skip")
+async def service_skip(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    brief = dict(data.get("brief", {}))
+    brief["services"] = "Стрижка и укладка, Маникюр, SMART-педикюр, Окрашивание"
+    brief["details"] = "Стрижка и укладка — от 2 500 ₽\nМаникюр — от 2 000 ₽\nSMART-педикюр — от 2 800 ₽\nОкрашивание — от 6 000 ₽"
+    await state.update_data(brief=brief, index=int(data.get("index", 0)) + 1)
+    await call.answer("Добавил 4 услуги")
+    await ask_next_field(call.message, state)
+
 
 
 @dp.callback_query(F.data == "field:skip_photo")
