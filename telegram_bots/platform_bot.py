@@ -1,4 +1,4 @@
-"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
+﻿"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
 from __future__ import annotations
 
 import asyncio
@@ -498,7 +498,8 @@ async def builder_photo(message: Message, state: FSMContext):
     data = await state.get_data()
     brief = dict(data.get("brief", {}))
     brief["photo"] = f"/static/uploads/{name}"
-    await state.update_data(brief=brief, index=int(data.get("index", 0)) + 1)
+    index = len(builder_fields(data["template"])) - 1 if data.get("editing") else int(data.get("index", 0)) + 1
+    await state.update_data(brief=brief, index=index, editing=False)
     await message.answer("✅ Фото сохранил.")
     await ask_next_field(message, state)
 
@@ -551,7 +552,8 @@ async def service_done(call: CallbackQuery, state: FSMContext):
     brief = dict(data.get("brief", {}))
     brief["services"] = ", ".join(item["title"] for item in items)
     brief["details"] = "\n".join(f"{item['title']} — {item['price']}. {item['description']}" for item in items)
-    await state.update_data(brief=brief, index=int(data.get("index", 0)) + 1)
+    index = len(builder_fields(data["template"])) - 1 if data.get("editing") else int(data.get("index", 0)) + 1
+    await state.update_data(brief=brief, index=index, editing=False)
     await call.answer("Услуги сохранены")
     await ask_next_field(call.message, state)
 
@@ -562,7 +564,8 @@ async def service_skip(call: CallbackQuery, state: FSMContext):
     brief = dict(data.get("brief", {}))
     brief["services"] = "Стрижка и укладка, Маникюр, SMART-педикюр, Окрашивание"
     brief["details"] = "Стрижка и укладка — от 2 500 ₽\nМаникюр — от 2 000 ₽\nSMART-педикюр — от 2 800 ₽\nОкрашивание — от 6 000 ₽"
-    await state.update_data(brief=brief, index=int(data.get("index", 0)) + 1)
+    index = len(builder_fields(data["template"])) - 1 if data.get("editing") else int(data.get("index", 0)) + 1
+    await state.update_data(brief=brief, index=index, editing=False)
     await call.answer("Добавил 4 услуги")
     await ask_next_field(call.message, state)
 
@@ -573,7 +576,8 @@ async def skip_photo(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     brief = dict(data.get("brief", {}))
     brief["photo"] = ""
-    await state.update_data(brief=brief, index=int(data.get("index", 0)) + 1)
+    index = len(builder_fields(data["template"])) - 1 if data.get("editing") else int(data.get("index", 0)) + 1
+    await state.update_data(brief=brief, index=index, editing=False)
     await call.answer("Оставил шаблонное фото")
     await ask_next_field(call.message, state)
 
@@ -605,7 +609,7 @@ async def summary_edit(call: CallbackQuery, state: FSMContext):
 @dp.callback_query(F.data.startswith("edit:"))
 async def edit_step(call: CallbackQuery, state: FSMContext):
     index = int(call.data.split(":", 1)[1])
-    await state.update_data(index=index)
+    await state.update_data(index=index, editing=True)
     await call.answer("Открываю шаг")
     await ask_next_field(call.message, state)
 
@@ -1322,7 +1326,11 @@ async def fill_field(message: Message, state: FSMContext):
         value = engine.TEMPLATES[template]["defaults"].get(fields[index]["key"], "")
     brief[fields[index]["key"]] = value
     index += 1
-    await state.update_data(index=index, brief=brief)
+    editing = bool(data.get("editing"))
+    if editing:
+        index = len(fields) - 1
+    await state.update_data(index=index, brief=brief, editing=False)
+    await state.set_state(Build.fields)
     await ask_next_field(message, state)
 
 
@@ -1848,6 +1856,8 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+
 
 
 
