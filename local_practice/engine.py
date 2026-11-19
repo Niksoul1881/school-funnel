@@ -1,4 +1,4 @@
-﻿"""Local practice bench: three bot scenarios and brief-driven configuration."""
+"""Local practice bench: three bot scenarios and brief-driven configuration."""
 from __future__ import annotations
 
 import os
@@ -71,12 +71,12 @@ TEMPLATES: dict[str, dict[str, Any]] = {
         "name": "Подарок за подписку",
         "icon": "🎁",
         "accent": "#ff7a45",
-        "tagline": "Подписка на канал → подарок в боте",
+        "tagline": "Подписка → конструктор → разбор",
         "fields": [
             {"key": "business_name", "label": "Название проекта", "type": "text", "required": True},
-            {"key": "channel", "label": "Канал для подписки", "type": "text", "hint": "Ссылка или @username"},
-            {"key": "gift", "label": "Что дарим", "type": "text", "hint": "Ссылка на файл, промокод или текст подарка"},
-            {"key": "contact", "label": "Контакт", "type": "text"},
+            {"key": "channel", "label": "Канал для подписки", "type": "text", "hint": "Ссылка на канал или @username"},
+            {"key": "gift", "label": "Ссылка на конструктор", "type": "text", "hint": "https://t.me/ваш_конструктор_bot"},
+            {"key": "contact", "label": "Куратор", "type": "text", "hint": "https://t.me/куратор"},
         ],
         "defaults": {
             "business_name": "Школа AI-агентов",

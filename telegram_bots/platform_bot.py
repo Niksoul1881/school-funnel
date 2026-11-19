@@ -216,6 +216,12 @@ EXAMPLES = {
     "delivery": "Самовывоз: Москва, ул. Примерная, 10",
     "niche": "салон красоты",
 }
+
+TEMPLATE_EXAMPLES = {
+    "booking": {"business_name": "Marina Beauty Space", "contact": "@marina_studio"},
+    "shop": {"business_name": "Крем & Ваниль", "contact": "@krem_vanil"},
+    "gift": {"business_name": "Школа AI-агентов", "channel": "https://t.me/your_channel", "contact": "https://t.me/your_curator"},
+}
 FIELD_EMOJI = {
     "business_name": "🏷",
     "niche": "🎯",
@@ -242,7 +248,7 @@ def field_prompt(template: str, index: int) -> str:
     field = fields[index]
     icon = FIELD_EMOJI.get(field["key"], "✏️")
     hint = f"\n\n<i>{html.escape(field.get('hint', ''))}</i>" if field.get("hint") else ""
-    example = EXAMPLES.get(field["key"]) if not field.get("prompt") else None
+    example = (TEMPLATE_EXAMPLES.get(template, {}).get(field["key"]) or EXAMPLES.get(field["key"])) if not field.get("prompt") else None
     example_html = f"\n\n<i>Пример:</i>\n<pre>{html.escape(example[:300])}</pre>" if example else ""
     skip = "\n\n<i>Можно написать /skip, если не хочешь заполнять.</i>" if not field.get("required") else ""
     tip = f"\n\n🎓 <b>Совет профи:</b> {html.escape(field['tip'])}" if field.get("tip") else ""
