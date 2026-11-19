@@ -1,4 +1,4 @@
-"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
+﻿"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
 from __future__ import annotations
 
 import asyncio
@@ -900,6 +900,9 @@ async def menu_my(message: Message):
 
 @dp.message(Build.fields)
 async def fill_field(message: Message, state: FSMContext):
+    if (message.text or "").strip().lower().startswith("/start"):
+        await start(message, state)
+        return
     data = await state.get_data()
     print(f"[brief] text from {message.from_user.id}: {(message.text or '')[:80]!r} state={await state.get_state()} data_keys={list(data)}", flush=True)
     template = data["template"]
@@ -940,6 +943,9 @@ async def product_photo(message: Message, state: FSMContext):
 @dp.message(Build.product_photo, F.text)
 async def products_done_or_text(message: Message, state: FSMContext):
     value = (message.text or "").strip()
+    if value.lower().startswith("/start"):
+        await start(message, state)
+        return
     data = await state.get_data()
     products = list(data.get("shop_products", []))
     if value.lower() in ("готово", "хватит", "всё", "все", "/skip", "пропустить"):
@@ -962,6 +968,9 @@ async def products_done_or_text(message: Message, state: FSMContext):
 @dp.message(Build.product_info, F.text)
 async def product_info(message: Message, state: FSMContext):
     value = (message.text or "").strip()
+    if value.lower().startswith("/start"):
+        await start(message, state)
+        return
     data = await state.get_data()
     image = data.get("pending_image", "")
     parts = [p.strip() for p in value.split("|")]
@@ -1167,6 +1176,7 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 
