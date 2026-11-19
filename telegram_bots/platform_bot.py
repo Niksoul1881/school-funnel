@@ -587,8 +587,26 @@ async def summary_publish(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query(F.data == "summary:edit")
 async def summary_edit(call: CallbackQuery, state: FSMContext):
-    await state.update_data(index=0)
-    await call.answer("Начинаем редактирование")
+    data = await state.get_data()
+    template = data["template"]
+    fields = builder_fields(template)
+    rows = [
+        [InlineKeyboardButton(text=field["label"], callback_data=f"edit:{i}")]
+        for i, field in enumerate(fields)
+        if field["key"] != "summary"
+    ]
+    await call.message.answer(
+        "⚙️ Что именно нужно исправить?",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=rows),
+    )
+    await call.answer()
+
+
+@dp.callback_query(F.data.startswith("edit:"))
+async def edit_step(call: CallbackQuery, state: FSMContext):
+    index = int(call.data.split(":", 1)[1])
+    await state.update_data(index=index)
+    await call.answer("Открываю шаг")
     await ask_next_field(call.message, state)
 
 
