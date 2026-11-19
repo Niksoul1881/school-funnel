@@ -1,4 +1,4 @@
-﻿"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
+"""Главный бот-платформа: доступ → шаблон → бриф → токен → бот ученика."""
 from __future__ import annotations
 
 import asyncio
@@ -295,14 +295,17 @@ async def ask_next_field(message: Message, state: FSMContext) -> None:
         return
     field = fields[index]
     if template == "shop" and field["key"] == "products":
-        await state.update_data(shop_products=[])
-        await state.set_state(Build.product_photo)
+        await state.set_state(Build.fields)
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🍰 Готовое кафе «Крем & Ваниль»", callback_data="shop:preset")],
+            [InlineKeyboardButton(text="📸 Загрузить свои товары", callback_data="shop:custom")],
+        ])
         sent = await message.answer(
-            "📸 <b>Фото товаров</b>\n\n"
-            "Пришли фото товара — я сохраню его в веб-формате.\n"
-            "Можно несколько. После каждого фото спрошу название, цену и описание.\n\n"
-            "Когда закончишь — напиши «Готово».",
+            "🍰 <b>Витрина десертов</b>\n\n"
+            "Для кафе «Крем & Ваниль» уже есть готовое меню из 4 десертов с фото, ценами и описаниями.\n\n"
+            "Можно взять его сразу или загрузить свои товары.",
             parse_mode="HTML",
+            reply_markup=markup,
         )
         remember_ui(message.bot, message.chat.id, sent)
         return
@@ -856,6 +859,36 @@ async def choose_template(call: CallbackQuery, state: FSMContext):
         + field_prompt(template, 0),
         parse_mode="HTML",
         reply_markup=markup,
+    )
+    remember_ui(call.message.bot, call.message.chat.id, sent)
+    await call.answer()
+
+
+@dp.callback_query(F.data == "shop:preset")
+async def shop_preset(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    if not data or data.get("template") != "shop":
+        await call.answer("Это доступно только для витрины.", show_alert=True)
+        return
+    brief = dict(data.get("brief") or {})
+    brief["products"] = engine.TEMPLATES["shop"]["defaults"]["products"]
+    await state.update_data(brief=brief, index=2, shop_products=[])
+    await state.set_state(Build.fields)
+    await ask_next_field(call.message, state)
+    await call.answer("Готовое кафе подставлено")
+
+
+@dp.callback_query(F.data == "shop:custom")
+async def shop_custom(call: CallbackQuery, state: FSMContext):
+    await clear_ui(call.message.bot, call.message.chat.id)
+    await state.update_data(shop_products=[])
+    await state.set_state(Build.product_photo)
+    sent = await call.message.answer(
+        "📸 <b>Фото товаров</b>\n\n"
+        "Пришли фото товара — я сохраню его в веб-формате.\n"
+        "Можно несколько. После каждого фото спрошу название, цену и описание.\n\n"
+        "Когда закончишь — напиши «Готово».",
+        parse_mode="HTML",
     )
     remember_ui(call.message.bot, call.message.chat.id, sent)
     await call.answer()
