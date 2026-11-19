@@ -424,7 +424,7 @@ async def show_summary(message: Message, state: FSMContext, template: str) -> No
         lines.append(f"🖼 Фото: {'загружено' if brief.get('photo') else 'шаблон'}")
     if template == "booking":
         lines += [
-            f"📋 Услуг: {len(brief.get('services', '').split(',')) if brief.get('services') else 0}",
+            f"📋 Количество добавленных услуг: {len(brief.get('services', '').split(',')) if brief.get('services') else 0}",
             f"🗓 Окошки: {brief.get('slots', '—')}",
             f"👤 Админ: {brief.get('contact', '—')}",
             f"📍 Адрес: {brief.get('confirmation', '—')}",
@@ -444,8 +444,13 @@ async def show_summary(message: Message, state: FSMContext, template: str) -> No
         [InlineKeyboardButton(text="✅ Всё супер, публикуем!", callback_data="summary:publish")],
         [InlineKeyboardButton(text="✏️ Редактировать", callback_data="summary:edit")],
     ])
+    opening = (
+        "🔍 <b>Отличная работа! Давай проверим, всё ли мы собрали правильно:</b>"
+        if template == "booking"
+        else "🔍 <b>Проверка данных</b>"
+    )
     sent = await message.answer(
-        "🔍 <b>Проверка данных</b>\n\n" + "\n".join(lines) + "\n\nВсё верно?",
+        opening + "\n\n" + "\n".join(lines) + "\n\nВсё верно? Если где-то опечатка, жми «Редактировать».",
         parse_mode="HTML",
         reply_markup=markup,
     )
@@ -598,9 +603,9 @@ async def service_desc(message: Message, state: FSMContext):
     await state.update_data(services_items=items)
     await state.set_state(Build.services_menu)
     await message.answer(
-        f"✅ Услуга «{items[-1]['title']}» добавлена. Всего: {len(items)}.",
+        "✅ Услуга успешно добавлена в меню твоего бота! Что делаем дальше?",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="➕ Добавить еще услугу", callback_data="service:add")],
+            [InlineKeyboardButton(text="➕ Добавить еще одну услугу", callback_data="service:add")],
             [InlineKeyboardButton(text="➡️ Сохранить и идти дальше", callback_data="service:done")],
         ]),
     )
