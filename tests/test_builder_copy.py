@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -43,3 +43,13 @@ def test_required_doc_phrases_present():
         fields = builder_fields(template)
         index = next(i for i, f in enumerate(fields) if f["key"] == key)
         assert phrase in field_prompt(template, index)
+
+
+def test_beauty_tips_are_not_truncated():
+    fields = builder_fields("booking")
+    by_key = {f["key"]: i for i, f in enumerate(fields)}
+    description = field_prompt("booking", by_key["description"])
+    greeting = field_prompt("booking", by_key["greeting"])
+    assert "чтобы текст красиво висел над кнопкой «Старт»" in description
+    assert "разбить на удобные абзацы и добавить пару смайликов" in greeting
+    assert "чтобы клиентам было приятно и легко читать" in greeting
