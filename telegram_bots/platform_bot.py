@@ -954,10 +954,14 @@ async def fill_field(message: Message, state: FSMContext):
 @dp.message(Build.product_photo, F.photo)
 async def product_photo(message: Message, state: FSMContext):
     photo = message.photo[-1]
+    await message.answer("📥 Фото получил, сохраняю…")
     try:
-        file = await message.bot.get_file(photo.file_id)
+        file = await asyncio.wait_for(message.bot.get_file(photo.file_id), timeout=15)
         name = f"{uuid.uuid4().hex}.jpg"
-        await message.bot.download_file(file.file_path, destination=UPLOADS / name)
+        await asyncio.wait_for(
+            message.bot.download_file(file.file_path, destination=UPLOADS / name),
+            timeout=35,
+        )
     except Exception as exc:
         await message.answer(f"⚠️ Не смог сохранить фото: {html.escape(str(exc))}", parse_mode="HTML")
         return
