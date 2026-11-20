@@ -540,7 +540,6 @@ async def ask_next_field(message: Message, state: FSMContext) -> None:
             parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(text="🪄 Оставить шаблонное фото", callback_data="field:skip_photo"),
-                InlineKeyboardButton(text="🔙 Назад", callback_data="field:back"),
             ]]),
         )
         remember_ui(message.bot, message.chat.id, sent)
