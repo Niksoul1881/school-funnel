@@ -364,14 +364,12 @@ def doc_step(template: str, index: int) -> str:
         "gift": "ВЕТКА «ПОДАРОК ЗА ПОДПИСКУ»",
         "shop": "ВЕТКА «ВИТРИНА ТОВАРОВ»",
     }
-    marker = markers.get(template, "")
-    start = text.find(marker)
+    start = text.find(markers.get(template, ""))
     if start < 0:
         return ""
     nxt = text.find("⬇️ ВЕТКА", start + 1)
     branch = text[start:nxt if nxt > 0 else len(text)]
-    needle = f"Шаг {index + 1} из"
-    at = branch.find(needle)
+    at = branch.find(f"Шаг {index + 1} из")
     if at < 0:
         return ""
     end = branch.find("Кнопка (Inline):", at)
@@ -379,7 +377,11 @@ def doc_step(template: str, index: int) -> str:
         end = branch.find(f"Шаг {index + 2} из", at)
     if end < 0:
         end = len(branch)
-    return branch[at:end].strip()
+    result = html.escape(branch[at:end].strip())
+    result = re.sub(r"(Шаг \d+ из \d+:)", r"<b>\1</b>", result, count=1)
+    result = result.replace("🎓 Совет профи:", "\n🎓 <b>Совет профи:</b>")
+    result = result.replace("📝 Шаблон для копирования:", "\n📝 <b>Шаблон для копирования:</b>")
+    return result
 
 def field_prompt(template: str, index: int) -> str:
     exact = doc_step(template, index)
