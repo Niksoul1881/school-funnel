@@ -608,11 +608,15 @@ async def builder_photo(message: Message, state: FSMContext):
         return
     await message.answer("📥 Фото получил, сохраняю…")
     try:
-        file = await asyncio.wait_for(message.bot.get_file(photo.file_id), timeout=15)
+        file = await asyncio.wait_for(message.bot.get_file(photo.file_id), timeout=45)
         name = f"{uuid.uuid4().hex}.jpg"
-        await asyncio.wait_for(message.bot.download_file(file.file_path, destination=UPLOADS / name), timeout=35)
+        await asyncio.wait_for(message.bot.download_file(file.file_path, destination=UPLOADS / name), timeout=90)
+    except asyncio.TimeoutError:
+        await message.answer("⚠️ Telegram не успел отдать фото. Попробуй отправить ещё раз.")
+        return
     except Exception as exc:
-        await message.answer(f"⚠️ Не смог сохранить фото: {html.escape(str(exc))}", parse_mode="HTML")
+        print(f"[photo] {type(exc).__name__}: {exc!r}", flush=True)
+        await message.answer(f"⚠️ Не смог сохранить фото: {html.escape(str(exc) or type(exc).__name__)}", parse_mode="HTML")
         return
     data = await state.get_data()
     brief = dict(data.get("brief", {}))
