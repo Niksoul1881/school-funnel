@@ -588,8 +588,13 @@ UPLOADS.mkdir(parents=True, exist_ok=True)
 BATCH_TASKS: dict[int, asyncio.Task] = {}
 
 
-@dp.message(Build.photo, F.photo)
+@dp.message(F.photo)
 async def builder_photo(message: Message, state: FSMContext):
+    current = await state.get_state()
+    leaf = str(getattr(current, "state", current) or "").split(":")[-1]
+    if leaf != "photo":
+        await product_photo(message, state)
+        return
     photo = message.photo[-1]
     try:
         file = await asyncio.wait_for(message.bot.get_file(photo.file_id), timeout=15)
