@@ -1473,7 +1473,10 @@ async def back_field(call: CallbackQuery, state: FSMContext):
 async def skip_field(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     if not data or "template" not in data:
-        await call.answer("Сначала выбери шаблон.", show_alert=True)
+        await call.answer("Это кнопка от старого шага. Открываю выбор шаблона заново.", show_alert=True)
+        await state.clear()
+        await state.set_state(Build.template)
+        await show_templates(call.message)
         return
     template = data["template"]
     index = int(data.get("index", 0))
