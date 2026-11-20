@@ -1240,7 +1240,7 @@ def success_copy(template: str, username: str, project: bool) -> str:
 
 async def start_tenant(token: str, template: str, brief: dict, tg_id: int = 0, project: dict | None = None, persist: bool = True) -> dict:
     bot = Bot(token)
-    me = await bot.get_me()
+    me = await asyncio.wait_for(bot.get_me(), timeout=10)
     await apply_bot_profile(bot, template, brief)
     bot_id = engine.create_bot(template, brief)["id"]
     engine.BOTS[bot_id]["username"] = me.username
@@ -2030,20 +2030,23 @@ async def main() -> None:
         raise SystemExit("PLATFORM_BOT_TOKEN не задан")
     bot = Bot(token=PLATFORM_TOKEN)
     try:
-        await bot.set_my_description(
+        await asyncio.wait_for(bot.set_my_description(
             "👋 Рад видеть тебя на практике!\n\n"
             "На связи школа AI-автоматизации — мы готовим техспецов нового поколения.\n\n"
             "Ты находишься буквально в одном шаге от создания своего первого умного бота. "
             "Это будет быстро, просто и без единой строчки кода.\n\n"
             "Жми «СТАРТ» (или /start) внизу экрана, и давай творить магию! ✨"
-        )
-        await bot.set_my_short_description(short_description="Собери своего первого Telegram-бота по готовым шаблонам.")
+        ), timeout=12)
+        await asyncio.wait_for(bot.set_my_short_description(short_description="Собери своего первого Telegram-бота по готовым шаблонам."), timeout=12)
     except Exception as exc:
         print(f"platform profile error: {exc}")
-    await bot.set_my_commands([
-        BotCommand(command="start", description="Главное меню"),
-        BotCommand(command="mybots", description="Мои боты"),
-    ])
+    try:
+        await asyncio.wait_for(bot.set_my_commands([
+            BotCommand(command="start", description="Главное меню"),
+            BotCommand(command="mybots", description="Мои боты"),
+        ]), timeout=12)
+    except Exception as exc:
+        print(f"commands setup error: {type(exc).__name__}", flush=True)
     await restore_tenants()
     load_engine_state()
     asyncio.create_task(sync_projects())
@@ -2052,6 +2055,7 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 
