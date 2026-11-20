@@ -372,11 +372,14 @@ def doc_step(template: str, index: int) -> str:
     at = branch.find(f"Шаг {index + 1} из")
     if at < 0:
         return ""
-    end = branch.find("Кнопка (Inline):", at)
-    if end < 0:
-        end = branch.find(f"Шаг {index + 2} из", at)
-    if end < 0:
-        end = len(branch)
+    candidates = [
+        pos for pos in (
+            branch.find("Кнопка (Inline):", at),
+            branch.find("Кнопки (Inline):", at),
+            branch.find(f"Шаг {index + 2} из", at),
+        ) if pos > 0
+    ]
+    end = min(candidates) if candidates else len(branch)
     result = html.escape(branch[at:end].strip())
     result = re.sub(r"(Шаг \d+ из \d+:)", r"<b>\1</b>", result, count=1)
     result = result.replace("🎓 Совет профи:", "\n🎓 <b>Совет профи:</b>")
@@ -525,6 +528,7 @@ async def ask_next_field(message: Message, state: FSMContext) -> None:
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                 [InlineKeyboardButton(text="➕ Добавить услугу", callback_data="service:add")],
                 [InlineKeyboardButton(text="🪄 Оставить готовый шаблон (Добавит 4 услуги автоматически)", callback_data="service:skip")],
+                [InlineKeyboardButton(text="🔙 Назад", callback_data="field:back")],
             ]),
         )
         remember_ui(message.bot, message.chat.id, sent)
@@ -536,6 +540,7 @@ async def ask_next_field(message: Message, state: FSMContext) -> None:
             parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(text="🪄 Оставить шаблонное фото", callback_data="field:skip_photo"),
+                InlineKeyboardButton(text="🔙 Назад", callback_data="field:back"),
             ]]),
         )
         remember_ui(message.bot, message.chat.id, sent)
