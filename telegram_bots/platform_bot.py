@@ -592,14 +592,21 @@ UPLOADS.mkdir(parents=True, exist_ok=True)
 BATCH_TASKS: dict[int, asyncio.Task] = {}
 
 
-@dp.message(F.photo)
+@dp.message(F.photo | F.document)
 async def builder_photo(message: Message, state: FSMContext):
     current = await state.get_state()
     leaf = str(getattr(current, "state", current) or "").split(":")[-1]
     if leaf != "photo":
+        if message.document:
+            await message.answer("Для товара отправь обычное фото, не файл.")
+            return
         await product_photo(message, state)
         return
-    photo = message.photo[-1]
+    photo = message.photo[-1] if message.photo else message.document
+    if message.document and not (message.document.mime_type or "").startswith("image/"):
+        await message.answer("Пожалуйста, отправь именно картинку или фото товара.")
+        return
+    await message.answer("📥 Фото получил, сохраняю…")
     try:
         file = await asyncio.wait_for(message.bot.get_file(photo.file_id), timeout=15)
         name = f"{uuid.uuid4().hex}.jpg"
