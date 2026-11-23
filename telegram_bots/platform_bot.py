@@ -390,7 +390,9 @@ def doc_step(template: str, index: int) -> str:
 def field_prompt(template: str, index: int) -> str:
     exact = doc_step(template, index)
     if exact:
-        return exact
+        sections = BUILDER_SECTIONS.get(template, [])
+        section = sections[index] if index < len(sections) else ""
+        return (f"Шаг {index + 1}: {section}\n\n" if section else "") + exact
     fields = builder_fields(template)
     field = fields[index]
     icon = FIELD_EMOJI.get(field["key"], "✏️")
