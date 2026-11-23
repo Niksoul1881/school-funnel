@@ -477,12 +477,14 @@ async def show_summary(message: Message, state: FSMContext, template: str) -> No
         "{Адрес}": brief.get("confirmation", "—"),
         "{Канал}": brief.get("channel", "—"),
         "{Обложка}": "Загружено" if brief.get("photo") else "Шаблон",
+        "{Заполнено}": "Заполнено",
+        "{Настроен}": "Настроен",
+        "{Подарок и CTA}": "Заполнено",
+        "{Магазин}": brief.get("business_name", "—"),
     }
     for key, value in replacements.items():
         text = text.replace(key, value)
     lines = [text]
-    if "photo" in brief:
-        lines.append(f"🖼 Фото: {'загружено' if brief.get('photo') else 'шаблон'}")
     if template == "booking":
         lines += [
             f"📋 Количество добавленных услуг: {len(brief.get('services', '').split(',')) if brief.get('services') else 0}",
