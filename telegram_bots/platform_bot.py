@@ -13,6 +13,7 @@ from pathlib import Path
 
 import httpx
 from aiogram import Bot, Dispatcher, F
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -1141,6 +1142,13 @@ def tenant_dispatcher(bot_id: str, template: str, owner_tg_id: int = 0):
     return tenant_dp
 
 
+
+def make_bot(token: str) -> Bot:
+    proxy = os.getenv("TELEGRAM_PROXY", "").strip()
+    if proxy:
+        return Bot(token, session=AiohttpSession(proxy=proxy))
+    return Bot(token)
+
 BEAUTY_DESCRIPTION = (
     "Добро пожаловать в пространство красоты «Marina Beauty Space» ✨\n\n"
     "Это место, где стиль встречается с заботой, а вы отдыхаете, пока мы подчеркиваем вашу индивидуальность.\n\n"
@@ -1239,7 +1247,7 @@ def success_copy(template: str, username: str, project: bool) -> str:
 
 
 async def start_tenant(token: str, template: str, brief: dict, tg_id: int = 0, project: dict | None = None, persist: bool = True) -> dict:
-    bot = Bot(token)
+    bot = make_bot(token)
     me = await asyncio.wait_for(bot.get_me(), timeout=10)
     await apply_bot_profile(bot, template, brief)
     bot_id = engine.create_bot(template, brief)["id"]
@@ -2028,7 +2036,7 @@ async def sync_projects() -> None:
 async def main() -> None:
     if not PLATFORM_TOKEN:
         raise SystemExit("PLATFORM_BOT_TOKEN не задан")
-    bot = Bot(token=PLATFORM_TOKEN)
+    bot = make_bot(PLATFORM_TOKEN)
     try:
         await asyncio.wait_for(bot.set_my_description(
             "👋 Рад видеть тебя на практике!\n\n"
@@ -2050,11 +2058,19 @@ async def main() -> None:
     await restore_tenants()
     load_engine_state()
     asyncio.create_task(sync_projects())
-    await dp.start_polling(bot)
+    while True:
+        try:
+            await dp.start_polling(bot)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            print(f"polling error: {type(exc).__name__}: {exc}", flush=True)
+            await asyncio.sleep(5)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 
